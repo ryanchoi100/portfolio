@@ -152,6 +152,15 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
   .pop-facts dd + dt { margin-top: 10px; }
 }
 
+/* Keyboard access to the scene objects: invisible until a key-user tabs into it, then shown as glass chips */
+.scene-nav { position: absolute; top: 12px; left: 12px; z-index: 15; display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--font-mono); }
+.scene-nav:not(:focus-within) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
+.scene-nav__item {
+  min-height: 32px; padding: 0 12px; font: inherit; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+  transition: box-shadow var(--dur-hover) var(--ease-hover), background-color var(--dur-hover) var(--ease-hover);
+}
+.scene-nav__item:focus-visible { outline: 2px solid var(--ink); outline-offset: 0; background: var(--glass-bg-hover); }
+
 /* Staggered entry: items carry data-reveal and --i (set in JS). Hidden only while closed, so closing never snaps. */
 .popup[data-state="closed"] [data-reveal] { opacity: 0; transform: translateY(6px); }
 .popup[data-state="open"] [data-reveal] {
@@ -295,6 +304,14 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
       <span style="display:block;line-height:1;letter-spacing:0;transform:translateY(-0.5px)">→</span>
     </div>
   </div>
+
+  <!-- Keyboard / screen-reader access to the pop-ups (the scene objects themselves are pointer-only). Hidden until focused. -->
+  <nav class="scene-nav" aria-label="Portfolio sections" data-scene-nav="">
+    <button class="scene-nav__item glass" type="button" data-open="about">About Me</button>
+    <button class="scene-nav__item glass" type="button" data-open="resume">Resume</button>
+    <button class="scene-nav__item glass" type="button" data-open="experience">Experience &amp; Projects</button>
+    <button class="scene-nav__item glass" type="button" data-open="playground">Playground</button>
+  </nav>
 
   <!-- ==== POP-UP SHELL — one reusable glass dialog (styles: .popup in <head>). Clicking a scene object calls openPopup(key):
        the matching <template data-popup-page> below is cloned into [data-popup-content]. To edit a page, edit only its template.
@@ -1217,6 +1234,7 @@ class SeasonsScene {
     const speed = () => (this.props.scrollSpeed ?? 1) / 900;
     this.onWheel = e => { e.preventDefault(); const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; this.target += d * (e.deltaMode === 1 ? 30 : 1) * speed(); this.lastInput = performance.now(); };
     this.onKey = e => {
+      if ((e.key === ' ' || e.key === 'Enter') && e.target.closest?.('button, a')) return; // let focused controls activate
       if (this.pgOpen) { if (e.key === 'Escape') { e.preventDefault(); this.closePopup(); } else if (e.key === 'Tab') this.trapFocus(e); return; }
       if (['ArrowDown','ArrowRight','PageDown',' '].includes(e.key)) { this.target = Math.round(this.target) + 1; }
       else if (['ArrowUp','ArrowLeft','PageUp'].includes(e.key)) { this.target = Math.round(this.target) - 1; } else return;
@@ -1238,6 +1256,14 @@ class SeasonsScene {
       if (page) this.openPopup(page, { x: e.clientX, y: e.clientY });
       else if (!hadMouse) this.mouse = null;
     };
+    // Keyboard nav: open a page with the panel growing out of its scene object
+    const centres = { about: [745, 432], resume: [897, 395], experience: [428, 529], playground: [612, 490] };
+    el.querySelector('[data-scene-nav]').addEventListener('click', e => {
+      e.stopPropagation();
+      const b = e.target.closest('[data-open]'); if (!b) return;
+      const r = el.querySelector('[data-slide] > div').getBoundingClientRect(), [X, Y] = centres[b.dataset.open];
+      this.openPopup(b.dataset.open, { x: r.left + X / 1456 * r.width, y: r.top + Y / 813 * r.height });
+    });
     // Pop-up shell: stop every input at the overlay so the scene (season scroll, hover, swipe) never receives it.
     const pop = el.querySelector('[data-popup]');
     ['wheel', 'pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(ev => pop.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
