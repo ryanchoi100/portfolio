@@ -762,10 +762,17 @@ class SeasonsScene {
     const el = this.rootRef.current, pop = el?.querySelector('[data-popup]'); if (!pop || !this.pgOpen) return;
     this.pgOpen = false;
     pop.dataset.state = 'closing';
-    this.popupTimer = setTimeout(() => {
+    // Empty the shell only once its fade has ended (transitionend), with a timer as a fallback; runs once.
+    let done = false;
+    const finish = () => {
+      if (done || this.pgOpen) return; done = true;
+      pop.removeEventListener('transitionend', onEnd); clearTimeout(this.popupTimer);
       pop.dataset.state = 'closed'; pop.querySelector('[data-popup-content]').replaceChildren();
       delete el.querySelector('[data-scene-nav]')?.dataset.held; // focus is back on the nav, so :focus-within keeps it shown
-    }, 320);
+    };
+    const onEnd = e => { if (e.target === pop && e.propertyName === 'opacity') finish(); };
+    pop.addEventListener('transitionend', onEnd);
+    this.popupTimer = setTimeout(finish, 400);
     if (this.popupReturn?.isConnected) this.popupReturn.focus({ preventScroll: true });
   }
   // keep Tab inside the open dialog
