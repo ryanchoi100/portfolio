@@ -9,9 +9,173 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>html,body{margin:0;height:100%;overflow:hidden;background:#1d2630;overscroll-behavior:none}a{color:#1f2a33}a:hover{color:#000}</style>
 <style>
-/* hover states (inline styles in the markup hold the resting state) */
-.hv0:hover{background:rgba(255,255,255,0.8) !important;box-shadow:0 4px 14px rgba(20,28,38,0.10), 0 0 14px rgba(255,222,156,0.6), inset 0 1px 0 rgba(255,255,255,0.35) !important}
-.hv1:hover{transform:translateY(-3px) !important;box-shadow:0 10px 24px rgba(20,28,38,0.14), 0 0 18px rgba(255,222,156,0.55), inset 0 1px 0 rgba(255,255,255,0.35) !important}
+/* ======================================================================
+   GLASS TOKENS — extracted verbatim from the original hover label + Playground pop-up.
+   Every glass surface (hover label, pop-up panel, close button, cards, rows) reads these.
+   ====================================================================== */
+:root {
+  --ink: #141c24;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --glass-bg: rgba(255,255,255,0.62);          /* label, panel, close button */
+  --glass-bg-strong: rgba(255,255,255,0.74);   /* cards sitting on the panel */
+  --glass-bg-hover: rgba(255,255,255,0.8);
+  --glass-filter: blur(10px) saturate(1.4);
+  --glass-border: 1px solid rgba(255,255,255,0.6);
+  --glass-radius: 9px;
+  --glass-highlight: inset 0 1px 0 rgba(255,255,255,0.35);
+  --glass-shadow: 0 4px 14px rgba(20,28,38,0.10), var(--glass-highlight);
+  --glass-glow: 0 0 14px rgba(255,222,156,0.6);
+  --glass-shadow-glow: 0 4px 14px rgba(20,28,38,0.10), var(--glass-glow), var(--glass-highlight);
+  --glass-shadow-lift: 0 10px 24px rgba(20,28,38,0.14), 0 0 18px rgba(255,222,156,0.55), var(--glass-highlight);
+  --scrim-bg: rgba(20,28,38,0.16);
+  --scrim-filter: blur(6px) brightness(0.9);
+  --thumb-radius: 6px;
+  /* motion (chosen with the animate skill): exponential ease-out for arrivals, exits ~25% faster, same curve */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-hover: ease;
+  --dur-open: 300ms;
+  --dur-close: 220ms;
+  --dur-reveal: 280ms;
+  --stagger: 35ms;
+  --dur-hover: 200ms;
+  --dur-press: 120ms;
+}
+.glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter);
+  border: var(--glass-border); border-radius: var(--glass-radius);
+  box-shadow: var(--glass-shadow); color: var(--ink);
+}
+.glass--strong { background: var(--glass-bg-strong); }
+
+/* ======================================================================
+   POP-UP SHELL — one scrim + panel + close button, reused by every page.
+   Pages are <template data-popup-page> blocks; only their content differs.
+   States: data-state="closed" | "open" | "closing" (set by openPopup / closePopup).
+   ====================================================================== */
+.popup {
+  position: absolute; inset: 0; z-index: 20; display: grid; place-items: center;
+  background: var(--scrim-bg);
+  -webkit-backdrop-filter: var(--scrim-filter); backdrop-filter: var(--scrim-filter);
+  font-family: var(--font-mono); color: var(--ink);
+  opacity: 0; visibility: hidden; pointer-events: none;
+  transition: opacity var(--dur-close) var(--ease-out), visibility 0s linear var(--dur-close);
+}
+.popup[data-state="open"] {
+  opacity: 1; visibility: visible; pointer-events: auto;
+  transition: opacity var(--dur-open) var(--ease-out), visibility 0s linear 0s;
+}
+.popup__panel {
+  position: relative; box-sizing: border-box; display: flex; flex-direction: column;
+  width: max(76vw, min(calc(100vw - 24px), 560px)); max-width: 1240px;
+  height: min(calc(100vh - 24px), max(70vh, calc(100vh - 30vw)));
+  padding: clamp(18px, 3vw, 36px);
+  user-select: text; cursor: default;
+  transform: scale(0.96);
+  transition: transform var(--dur-close) var(--ease-out);
+}
+.popup[data-state="open"] .popup__panel { transform: scale(1); transition: transform var(--dur-open) var(--ease-out); }
+.popup__close {
+  position: absolute; top: 12px; right: 12px; z-index: 1; width: 44px; height: 44px;
+  display: grid; place-items: center; padding: 0;
+  font-family: inherit; font-size: 18px; line-height: 1; cursor: pointer;
+  transition: box-shadow var(--dur-hover) var(--ease-hover), background-color var(--dur-hover) var(--ease-hover), transform var(--dur-press) var(--ease-out);
+}
+.popup__close:active { transform: scale(0.94); }
+.popup :focus-visible { outline: 2px solid var(--ink); outline-offset: 0; }
+.popup ::selection { background: rgba(255,222,156,0.75); color: var(--ink); }
+
+/* header + scroll body: the layout every page drops its content into */
+.pop-head { display: flex; flex-direction: column; gap: 8px; padding-right: 52px; }
+.pop-head h2 { margin: 0; font-size: 22px; line-height: 1.1; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
+.pop-head p { margin: 0; font-size: 13px; line-height: 1.5; max-width: 56ch; text-wrap: pretty; }
+.pop-scroll {
+  flex: 1; min-height: 0; margin-top: 22px; padding: 4px; overflow: auto;
+  overscroll-behavior: contain; touch-action: pan-y;
+  scrollbar-width: thin; scrollbar-color: rgba(20,28,38,0.22) transparent;
+}
+
+/* Playground grid + cards (unchanged look; the hover lift moves the inner surface so the hit area stays put) */
+.pop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 14px; align-content: start; }
+.pop-card { display: flex; color: inherit; text-decoration: none; cursor: pointer; border-radius: var(--glass-radius); }
+.pop-card__surface {
+  flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 10px;
+  transition: transform 250ms var(--ease-out), box-shadow 250ms var(--ease-hover);
+}
+.pop-thumb {
+  aspect-ratio: 16/10; border-radius: var(--thumb-radius); display: grid; place-items: center;
+  background: radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), var(--tint);
+  font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.pop-card__text { display: flex; flex-direction: column; gap: 4px; padding: 0 2px 2px; }
+.pop-card__title { font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+.pop-card__caption { font-size: 12px; line-height: 1.45; text-wrap: pretty; }
+
+/* Shared content parts for the text pages (About, Resume, Experience) */
+.pop-section + .pop-section { margin-top: 30px; }
+.pop-section h3 { margin: 0 0 10px; font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+.pop-prose p { margin: 0; font-size: 13px; line-height: 1.6; max-width: 62ch; text-wrap: pretty; }
+.pop-prose p + p { margin-top: 12px; }
+.pop-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+.pop-list > li + li { box-shadow: 0 -1px 0 rgba(20,28,38,0.10); }   /* hairline between rows (no layout cost) */
+.pop-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 20px; align-items: baseline;
+  padding: 12px 14px; border: 1px solid transparent; border-radius: var(--glass-radius);
+  color: inherit; text-decoration: none;
+  transition: background-color var(--dur-hover) var(--ease-hover), box-shadow var(--dur-hover) var(--ease-hover), border-color var(--dur-hover) var(--ease-hover);
+}
+a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba(255,255,255,0.6); }
+.pop-row__title { font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+.pop-row__meta { font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; color: rgba(20,28,38,0.72); }
+.pop-row__body { grid-column: 1 / -1; font-size: 12px; line-height: 1.5; max-width: 70ch; text-wrap: pretty; }
+.pop-row__go { display: inline-block; margin-left: 6px; transition: transform var(--dur-hover) var(--ease-out); }
+.pop-facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 22px; margin: 0; font-size: 12px; line-height: 1.5; }
+.pop-facts dt { font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+.pop-facts dd { margin: 0; }
+.pop-about { display: grid; grid-template-columns: minmax(180px, 280px) minmax(0, 1fr); gap: clamp(20px, 3vw, 40px); align-items: start; }
+.pop-portrait { aspect-ratio: 4/5; --tint: rgba(158,182,160,0.42); }
+.pop-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.pop-button {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 0 16px;
+  font: inherit; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none; cursor: pointer;
+  transition: box-shadow var(--dur-hover) var(--ease-hover), background-color var(--dur-hover) var(--ease-hover), transform var(--dur-press) var(--ease-out);
+}
+.pop-button:active { transform: scale(0.97); }
+@media (max-width: 640px) {
+  .pop-about { grid-template-columns: 1fr; }
+  .pop-portrait { max-width: 220px; }
+  .pop-facts { grid-template-columns: 1fr; gap: 2px; }
+  .pop-facts dd + dt { margin-top: 10px; }
+}
+
+/* Staggered entry: items carry data-reveal and --i (set in JS). Hidden only while closed, so closing never snaps. */
+.popup[data-state="closed"] [data-reveal] { opacity: 0; transform: translateY(6px); }
+.popup[data-state="open"] [data-reveal] {
+  transition: opacity var(--dur-reveal) var(--ease-out), transform var(--dur-reveal) var(--ease-out);
+  transition-delay: calc(60ms + min(var(--i, 0), 8) * var(--stagger));
+}
+
+/* Hover micro-interactions — pointer devices only, so touch never gets stuck hover states */
+@media (hover: hover) and (pointer: fine) {
+  .popup__close:hover, .pop-button:hover { background: var(--glass-bg-hover); box-shadow: var(--glass-shadow-glow); }
+  .pop-card:hover .pop-card__surface { transform: translateY(-3px); box-shadow: var(--glass-shadow-lift); }
+  .pop-row:hover { background: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.5); }
+  a.pop-row:hover { background: var(--glass-bg-strong); border-color: rgba(255,255,255,0.6); box-shadow: var(--glass-shadow-glow); }
+  a.pop-row:hover .pop-row__go { transform: translateX(3px); }
+}
+
+/* Reduced motion: no scaling, sliding or stagger; keep a short opacity cross-fade so open/close still reads */
+@media (prefers-reduced-motion: reduce) {
+  .popup, .popup[data-state="open"] { transition-duration: 150ms; }
+  .popup__panel, .popup[data-state="open"] .popup__panel { transform: none; transition: none; }
+  .popup[data-state="closed"] [data-reveal] { transform: none; }
+  .popup[data-state="open"] [data-reveal] { transition: opacity 150ms ease; transition-delay: 0ms; }
+  .pop-card__surface, .pop-row__go, .popup__close, .pop-button { transition-property: box-shadow, background-color; }
+  .pop-card:hover .pop-card__surface, .pop-row:hover .pop-row__go { transform: none; }
+  .popup__close:active, .pop-button:active { transform: none; }
+}
 </style>
 </head>
 <body>
@@ -122,69 +286,90 @@
       </div>
     </div>
   
-  <!-- Hover label: follows cursor (moveTip), text/visibility set in updateHover. Its glass tokens are reused by the Playground pop-up. -->
+  <!-- Hover label: follows cursor (moveTip), text/visibility set in updateHover. Glass from the shared .glass tokens. -->
   <div data-tip="" style="position:absolute;left:0;top:0;pointer-events:none;opacity:0;transform:translate3d(-999px,-999px,0);transition:opacity .25s ease;will-change:transform,opacity;z-index:10">
-    <div data-tip-inner="" style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:9px;background:rgba(255,255,255,0.62);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;font-family:'IBM Plex Mono', ui-monospace, monospace;font-size:10px;line-height:1;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;transform:scale(0.94);transform-origin:50% 0;transition:transform .25s cubic-bezier(.2,.8,.2,1)">
+    <div data-tip-inner="" class="glass" style="display:flex;align-items:center;gap:6px;padding:5px 10px;font-family:var(--font-mono);font-size:10px;line-height:1;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;transform:scale(0.94);transform-origin:50% 0;transition:transform .25s cubic-bezier(.2,.8,.2,1)">
       <span data-tip-label="">Resume</span>
       <span style="display:block;line-height:1;letter-spacing:0;transform:translateY(-0.5px)">→</span>
     </div>
   </div>
 
-  <!-- ==== Playground pop-up: opened by clicking the garden. Glass = exact [data-tip-inner] tokens (bg 0.62 white, blur 10 + saturate 1.4, 1px white/0.6 border, 9px radius, same shadow, #141c24 ink, IBM Plex Mono).
-       Overlay swallows wheel/pointer/click so the season scroll never sees them; opened/closed by openPg()/closePg(). ==== -->
-  <div data-pg="" role="dialog" aria-modal="true" aria-label="Playground" style="position:absolute;inset:0;z-index:20;display:grid;place-items:center;opacity:0;visibility:hidden;pointer-events:none;background:rgba(20,28,38,0.16);backdrop-filter:blur(6px) brightness(0.9);-webkit-backdrop-filter:blur(6px) brightness(0.9);transition:opacity .3s cubic-bezier(.2,.8,.2,1), visibility 0s linear .3s;font-family:'IBM Plex Mono', ui-monospace, monospace">
-    <div data-pg-panel="" style="position:relative;box-sizing:border-box;display:flex;flex-direction:column;width:max(76vw, min(calc(100vw - 24px), 560px));max-width:1240px;height:min(calc(100vh - 24px), max(70vh, calc(100vh - 30vw)));padding:clamp(18px, 3vw, 36px);background:rgba(255,255,255,0.62);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transform:scale(0.96);transition:transform .3s cubic-bezier(.2,.8,.2,1);user-select:text;cursor:default">
-      <button data-pg-close="" aria-label="Close" style="position:absolute;top:12px;right:12px;width:44px;height:44px;display:grid;place-items:center;padding:0;background:rgba(255,255,255,0.62);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;font-family:inherit;font-size:18px;line-height:1;cursor:pointer;transition:box-shadow .25s ease, background-color .25s ease" class="hv0">×</button>
-      <div style="display:flex;flex-direction:column;gap:8px;padding-right:52px">
-        <h2 style="margin:0;font-size:22px;line-height:1.1;font-weight:500;letter-spacing:0.08em;text-transform:uppercase">Playground</h2>
-        <p style="margin:0;font-size:13px;line-height:1.5;max-width:56ch;text-wrap:pretty">Experiments, sketches and side projects — things built for the fun of it.</p>
-      </div>
-      <div data-pg-scroll="" style="flex:1;min-height:0;margin-top:22px;padding:4px;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;display:grid;grid-template-columns:repeat(auto-fill, minmax(min(100%, 200px), 1fr));gap:14px;align-content:start">
-        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
-          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(158,182,160,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
-          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
-            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 01</div>
-            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
-          </div>
-        </div>
-        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
-          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(236,196,128,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
-          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
-            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 02</div>
-            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
-          </div>
-        </div>
-        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
-          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(208,128,96,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
-          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
-            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 03</div>
-            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
-          </div>
-        </div>
-        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
-          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(168,88,52,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
-          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
-            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 04</div>
-            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
-          </div>
-        </div>
-        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
-          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(124,146,150,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
-          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
-            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 05</div>
-            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
-          </div>
-        </div>
-        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
-          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(64,78,112,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
-          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
-            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 06</div>
-            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
-          </div>
-        </div>
-      </div>
+  <!-- ==== POP-UP SHELL — one reusable glass dialog (styles: .popup in <head>). Clicking a scene object calls openPopup(key):
+       the matching <template data-popup-page> below is cloned into [data-popup-content]. To edit a page, edit only its template.
+       The shell swallows wheel/pointer/click so the season scroll never sees them. ==== -->
+  <div class="popup" data-popup="" data-state="closed" role="dialog" aria-modal="true" aria-labelledby="popup-title">
+    <div class="popup__panel glass" data-popup-panel="">
+      <button class="popup__close glass" type="button" data-popup-close="" aria-label="Close">×</button>
+      <div class="popup__content" data-popup-content="" style="display:contents"></div>
     </div>
   </div>
+
+  <!-- ==== POP-UP PAGES — content only. Every page: a .pop-head (h2 + intro) then a .pop-scroll body.
+       Elements marked data-reveal enter with the shared stagger. Placeholder copy: replace with real text. ==== -->
+
+  <!-- Playground — opened from the garden (look unchanged from the original pop-up) -->
+  <template data-popup-page="playground">
+    <header class="pop-head" data-reveal>
+      <h2 id="popup-title">Playground</h2>
+      <p>Experiments, sketches and side projects — things built for the fun of it.</p>
+    </header>
+    <div class="pop-scroll pop-grid">
+        <a class="pop-card" href="#" data-reveal>
+          <div class="pop-card__surface glass glass--strong">
+            <div class="pop-thumb" style="--tint:rgba(158,182,160,0.42)">Thumbnail</div>
+            <div class="pop-card__text">
+              <div class="pop-card__title">Project 01</div>
+              <div class="pop-card__caption">One-line caption about this experiment.</div>
+            </div>
+          </div>
+        </a>
+        <a class="pop-card" href="#" data-reveal>
+          <div class="pop-card__surface glass glass--strong">
+            <div class="pop-thumb" style="--tint:rgba(236,196,128,0.42)">Thumbnail</div>
+            <div class="pop-card__text">
+              <div class="pop-card__title">Project 02</div>
+              <div class="pop-card__caption">One-line caption about this experiment.</div>
+            </div>
+          </div>
+        </a>
+        <a class="pop-card" href="#" data-reveal>
+          <div class="pop-card__surface glass glass--strong">
+            <div class="pop-thumb" style="--tint:rgba(208,128,96,0.42)">Thumbnail</div>
+            <div class="pop-card__text">
+              <div class="pop-card__title">Project 03</div>
+              <div class="pop-card__caption">One-line caption about this experiment.</div>
+            </div>
+          </div>
+        </a>
+        <a class="pop-card" href="#" data-reveal>
+          <div class="pop-card__surface glass glass--strong">
+            <div class="pop-thumb" style="--tint:rgba(168,88,52,0.42)">Thumbnail</div>
+            <div class="pop-card__text">
+              <div class="pop-card__title">Project 04</div>
+              <div class="pop-card__caption">One-line caption about this experiment.</div>
+            </div>
+          </div>
+        </a>
+        <a class="pop-card" href="#" data-reveal>
+          <div class="pop-card__surface glass glass--strong">
+            <div class="pop-thumb" style="--tint:rgba(124,146,150,0.42)">Thumbnail</div>
+            <div class="pop-card__text">
+              <div class="pop-card__title">Project 05</div>
+              <div class="pop-card__caption">One-line caption about this experiment.</div>
+            </div>
+          </div>
+        </a>
+        <a class="pop-card" href="#" data-reveal>
+          <div class="pop-card__surface glass glass--strong">
+            <div class="pop-thumb" style="--tint:rgba(64,78,112,0.42)">Thumbnail</div>
+            <div class="pop-card__text">
+              <div class="pop-card__title">Project 06</div>
+              <div class="pop-card__caption">One-line caption about this experiment.</div>
+            </div>
+          </div>
+        </a>
+    </div>
+  </template>
 </div>
 <script>
 class SeasonsScene {
@@ -434,25 +619,52 @@ class SeasonsScene {
     x.fillRect(0, 0, cv.width, cv.height); x.globalCompositeOperation = 'source-over';
   }
   // ======================================================================
-  // PLAYGROUND POP-UP — opened by clicking the garden; closes on ×, backdrop click or Escape.
-  // Fade + scale 0.96→1 over 300ms ease-out (reverse on close). While open, the overlay stops wheel /
-  // pointer / click propagation and onKey ignores arrows, so the season scroll behind never moves.
+  // POP-UP SHELL — one glass dialog shared by every page. openPopup(page, origin) clones
+  // <template data-popup-page="page"> into the shell, numbers its [data-reveal] items for the stagger,
+  // points the panel's transform-origin at the clicked object (the panel grows out of it) and sets
+  // data-state="open". Closes on ×, scrim click or Escape. Timings/easing live in CSS (--dur-open,
+  // --dur-close, --ease-out). While open, the shell stops wheel / pointer / click propagation and
+  // onKey ignores arrows, so the season scroll behind never moves.
   // ======================================================================
+  popupPages = { house: 'about', tree: 'resume', boat: 'experience', snowman: 'experience', garden: 'playground' };
   pgOpen = false;
-  openPg() {
-    const el = this.rootRef.current, pg = el?.querySelector('[data-pg]'); if (!pg || this.pgOpen) return;
+  openPopup(page, origin) {
+    const el = this.rootRef.current, pop = el?.querySelector('[data-popup]');
+    const tpl = el?.querySelector(`template[data-popup-page="${page}"]`);
+    if (!pop || !tpl || this.pgOpen) return;
     this.pgOpen = true; this.mouse = null; this.tipP = null;
-    pg.style.transition = 'opacity .3s cubic-bezier(.2,.8,.2,1), visibility 0s linear 0s';
-    pg.style.visibility = 'visible'; pg.style.pointerEvents = 'auto'; pg.style.opacity = 1;
-    pg.querySelector('[data-pg-panel]').style.transform = 'scale(1)';
-    setTimeout(() => pg.querySelector('[data-pg-close]')?.focus({ preventScroll: true }), 300);
+    clearTimeout(this.popupTimer);
+    this.popupReturn = document.activeElement;
+    const content = pop.querySelector('[data-popup-content]'), panel = pop.querySelector('[data-popup-panel]');
+    content.replaceChildren(tpl.content.cloneNode(true));
+    content.querySelectorAll('[data-reveal]').forEach((n, i) => n.style.setProperty('--i', i));
+    pop.dataset.page = page;
+    pop.dataset.state = 'closed';
+    // transform-origin = the clicked point, clamped into the panel (panel is centred; offset* ignore its scale)
+    const pr = pop.getBoundingClientRect(), w = panel.offsetWidth, h = panel.offsetHeight;
+    const ox = origin ? Math.max(0, Math.min(w, origin.x - pr.left - (pr.width - w) / 2)) : w / 2;
+    const oy = origin ? Math.max(0, Math.min(h, origin.y - pr.top - (pr.height - h) / 2)) : h / 2;
+    panel.style.transformOrigin = `${ox}px ${oy}px`;
+    void pop.offsetWidth; // commit the closed state so the open transition runs
+    pop.dataset.state = 'open';
+    pop.querySelector('[data-popup-close]')?.focus({ preventScroll: true });
   }
-  closePg() {
-    const el = this.rootRef.current, pg = el?.querySelector('[data-pg]'); if (!pg || !this.pgOpen) return;
+  closePopup() {
+    const el = this.rootRef.current, pop = el?.querySelector('[data-popup]'); if (!pop || !this.pgOpen) return;
     this.pgOpen = false;
-    pg.style.transition = 'opacity .3s cubic-bezier(.4,0,1,1), visibility 0s linear .3s';
-    pg.style.opacity = 0; pg.style.pointerEvents = 'none'; pg.style.visibility = 'hidden';
-    pg.querySelector('[data-pg-panel]').style.transform = 'scale(0.96)';
+    pop.dataset.state = 'closing';
+    this.popupTimer = setTimeout(() => { pop.dataset.state = 'closed'; pop.querySelector('[data-popup-content]').replaceChildren(); }, 320);
+    if (this.popupReturn?.isConnected) this.popupReturn.focus({ preventScroll: true });
+  }
+  // keep Tab inside the open dialog
+  trapFocus(e) {
+    const pop = this.rootRef.current?.querySelector('[data-popup]'); if (!pop) return;
+    const f = [...pop.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(n => n.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    else if (!pop.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
   }
   // ======================================================================
   // HOVER LABEL POSITION — centred 22px below the cursor, flips above near the bottom edge,
@@ -915,7 +1127,7 @@ class SeasonsScene {
     const speed = () => (this.props.scrollSpeed ?? 1) / 900;
     this.onWheel = e => { e.preventDefault(); const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; this.target += d * (e.deltaMode === 1 ? 30 : 1) * speed(); this.lastInput = performance.now(); };
     this.onKey = e => {
-      if (this.pgOpen) { if (e.key === 'Escape') { e.preventDefault(); this.closePg(); } return; }
+      if (this.pgOpen) { if (e.key === 'Escape') { e.preventDefault(); this.closePopup(); } else if (e.key === 'Tab') this.trapFocus(e); return; }
       if (['ArrowDown','ArrowRight','PageDown',' '].includes(e.key)) { this.target = Math.round(this.target) + 1; }
       else if (['ArrowUp','ArrowLeft','PageUp'].includes(e.key)) { this.target = Math.round(this.target) - 1; } else return;
       e.preventDefault(); this.lastInput = 0;
@@ -927,11 +1139,23 @@ class SeasonsScene {
       if (ty == null) return; const dy = ty - e.clientY, dx = this.tx - e.clientX; const d = Math.abs(dx) > Math.abs(dy) ? dx : dy; this.target += d * speed() * 2.2; ty = e.clientY; this.tx = e.clientX; this.lastInput = performance.now();
     };
     this.onUp = () => { ty = null; };
-    this.onClick = () => { if (this.hlKey.endsWith(':garden')) this.openPg(); };
-    // Playground pop-up: stop every input at the overlay so the scene (season scroll, hover, swipe) never receives it.
-    const pg = el.querySelector('[data-pg]');
-    ['wheel', 'pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(ev => pg.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
-    pg.addEventListener('click', e => { e.stopPropagation(); if (e.target === pg || e.target.closest('[data-pg-close]')) this.closePg(); });
+    // Click / tap on a scene object opens its page. The hit is resolved at the click point, so touch taps
+    // (which never set this.mouse) work too; a missed tap clears the temporary point again.
+    this.onClick = e => {
+      const hadMouse = !!this.mouse;
+      this.mouse = { x: e.clientX, y: e.clientY }; this.updateHover(el, this.pos);
+      const page = this.popupPages[this.hlKey.split(':')[1]];
+      if (page) this.openPopup(page, { x: e.clientX, y: e.clientY });
+      else if (!hadMouse) this.mouse = null;
+    };
+    // Pop-up shell: stop every input at the overlay so the scene (season scroll, hover, swipe) never receives it.
+    const pop = el.querySelector('[data-popup]');
+    ['wheel', 'pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(ev => pop.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+    pop.addEventListener('click', e => {
+      e.stopPropagation();
+      if (e.target.closest('a[href="#"]')) e.preventDefault(); // placeholder links: no navigation until real URLs are added
+      if (e.target === pop || e.target.closest('[data-popup-close]')) this.closePopup();
+    });
     el.addEventListener('click', this.onClick);
     this.onLeave = () => { this.mouse = null; this.tipP = null; };
     el.addEventListener('pointerleave', this.onLeave);
