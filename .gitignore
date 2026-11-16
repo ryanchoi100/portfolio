@@ -1,0 +1,4 @@
+# Per-developer Impeccable / Claude Code state
+.impeccable/config.local.json
+.impeccable/hook.cache.json
+.claude/settings.local.json
