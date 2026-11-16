@@ -65,8 +65,8 @@
    Pages are <template data-popup-page> blocks; only their content differs.
    States: data-state="closed" | "open" | "closing" (set by openPopup / closePopup).
    ====================================================================== */
-/* The scrim is the scroller: the whole sheet (header included) scrolls inside it, from its resting
-   top offset up to the top edge of the page, and its bottom always meets the bottom of the page. */
+/* The scrim is the scroller: the whole sheet (header included) scrolls inside it. It opens with a gap
+   above it; scrolled to the end, the same gap sits below its rounded bottom edge. */
 .popup {
   --panel-pad: clamp(18px, 3vw, 36px);
   --panel-top: calc((100vh - min(calc(100vh - 24px), max(70vh, calc(100vh - 30vw)))) / 2); /* where the original fixed-height panel's top sat */
@@ -86,10 +86,9 @@
 .popup__panel {
   position: relative; box-sizing: border-box; display: flex; flex-direction: column;
   width: max(76vw, min(calc(100vw - 24px), 560px)); max-width: 1240px;
-  margin: var(--panel-top) auto 0;
-  min-height: 100vh;   /* at least a full page: every sheet can scroll until it fills the page edge to edge, and its bottom always meets the page bottom */
+  margin: var(--panel-top) auto;                 /* same gap above (as opened) and below (scrolled to the end) */
+  min-height: calc(100vh - var(--panel-top));    /* every sheet scrolls at least until its top meets the top of the page */
   padding: var(--panel-pad);
-  border-bottom-width: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; /* the sheet runs off the bottom edge */
   user-select: text; cursor: default;
   transform: scale(0.96);
   transition: transform var(--dur-close) var(--ease-exit);
