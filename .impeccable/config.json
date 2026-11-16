@@ -5,5 +5,53 @@
       "maxFindings": 5,
       "maxChars": 8000
     }
+  },
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "rgba(158, 182, 160, 0.42)",
+        "createdAt": "2026-11-16T19:40:08.744Z",
+        "reason": "Agent: DESIGN.md Colors - placeholder thumbnail tints, not system colours; removed when real imagery lands"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(236, 196, 128, 0.42)",
+        "createdAt": "2026-11-16T19:40:08.752Z",
+        "reason": "Agent: DESIGN.md Colors - placeholder thumbnail tints, not system colours; removed when real imagery lands"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(208, 128, 96, 0.42)",
+        "createdAt": "2026-11-16T19:40:08.761Z",
+        "reason": "Agent: DESIGN.md Colors - placeholder thumbnail tints, not system colours; removed when real imagery lands"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(168, 88, 52, 0.42)",
+        "createdAt": "2026-11-16T19:40:08.769Z",
+        "reason": "Agent: DESIGN.md Colors - placeholder thumbnail tints, not system colours; removed when real imagery lands"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(124, 146, 150, 0.42)",
+        "createdAt": "2026-11-16T19:40:08.778Z",
+        "reason": "Agent: DESIGN.md Colors - placeholder thumbnail tints, not system colours; removed when real imagery lands"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "rgba(64, 78, 112, 0.42)",
+        "createdAt": "2026-11-16T19:40:08.786Z",
+        "reason": "Agent: DESIGN.md Colors - placeholder thumbnail tints, not system colours; removed when real imagery lands"
+      },
+      {
+        "rule": "design-system-font-size",
+        "value": "18px",
+        "createdAt": "2026-11-16T19:40:08.794Z",
+        "reason": "Agent: close-button x glyph size from the original Playground design; an icon, not text on the type ramp"
+      }
+    ]
   }
 }
