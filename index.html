@@ -307,6 +307,34 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
   <!-- ==== POP-UP PAGES — content only. Every page: a .pop-head (h2 + intro) then a .pop-scroll body.
        Elements marked data-reveal enter with the shared stagger. Placeholder copy: replace with real text. ==== -->
 
+  <!-- About Me — opened from the house -->
+  <template data-popup-page="about">
+    <header class="pop-head" data-reveal>
+      <h2 id="popup-title">About Me</h2>
+      <p>A short line introducing who you are and what you make.</p>
+    </header>
+    <div class="pop-scroll">
+      <div class="pop-about">
+        <div class="pop-thumb pop-portrait" data-reveal>Portrait</div>
+        <div>
+          <section class="pop-section pop-prose" data-reveal>
+            <p>Placeholder paragraph. Two or three sentences about your background: where you started, what pulled you into this work and what you care about now.</p>
+            <p>Placeholder paragraph. How you like to work, the kind of problems you enjoy and what you are looking for next.</p>
+          </section>
+          <section class="pop-section" data-reveal>
+            <h3>Quick facts</h3>
+            <dl class="pop-facts">
+              <dt>Based in</dt><dd>City, Country</dd>
+              <dt>Focus</dt><dd>Your main discipline or craft</dd>
+              <dt>Currently</dt><dd>Role at Company, or what you are working on</dd>
+              <dt>Outside work</dt><dd>A hobby or two</dd>
+            </dl>
+          </section>
+        </div>
+      </div>
+    </div>
+  </template>
+
   <!-- Playground — opened from the garden (look unchanged from the original pop-up) -->
   <template data-popup-page="playground">
     <header class="pop-head" data-reveal>
