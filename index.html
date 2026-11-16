@@ -118,10 +118,12 @@
 .pop-prose p + p { margin-top: 12px; }
 .pop-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 
-.pop-list > li + li { box-shadow: 0 -1px 0 rgba(20,28,38,0.10); }   /* hairline between rows (no layout cost) */
+.pop-list > li + li { border-top: 1px solid rgba(20,28,38,0.10); }   /* hairline between rows */
+/* text pages: let row hover surfaces bleed 10px past the text column without being clipped by the scroller */
+.pop-scroll:not(.pop-grid) { margin-inline: -10px; padding-inline: 14px; }
 .pop-row {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 20px; align-items: baseline;
-  padding: 12px 14px; border: 1px solid transparent; border-radius: var(--glass-radius);
+  padding: 12px 10px; margin-inline: -10px; border: 1px solid transparent; border-radius: var(--glass-radius);
   color: inherit; text-decoration: none;
   transition: background-color var(--dur-hover) var(--ease-hover), box-shadow var(--dur-hover) var(--ease-hover), border-color var(--dur-hover) var(--ease-hover);
 }
@@ -332,6 +334,41 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
           </section>
         </div>
       </div>
+    </div>
+  </template>
+
+  <!-- Resume — opened from the tree -->
+  <template data-popup-page="resume">
+    <header class="pop-head" data-reveal>
+      <h2 id="popup-title">Resume</h2>
+      <p>A one-line summary of your experience and strengths.</p>
+      <div class="pop-actions">
+        <a class="pop-button glass" href="#">Download PDF <span aria-hidden="true">↓</span></a>
+      </div>
+    </header>
+    <div class="pop-scroll">
+      <section class="pop-section" data-reveal>
+        <h3>Work</h3>
+        <ul class="pop-list">
+          <li class="pop-row"><span class="pop-row__title">Job title · Company</span><span class="pop-row__meta">2023 – Now</span><span class="pop-row__body">One line on what you owned and the result.</span></li>
+          <li class="pop-row"><span class="pop-row__title">Job title · Company</span><span class="pop-row__meta">2020 – 2023</span><span class="pop-row__body">One line on what you owned and the result.</span></li>
+          <li class="pop-row"><span class="pop-row__title">Job title · Company</span><span class="pop-row__meta">2018 – 2020</span><span class="pop-row__body">One line on what you owned and the result.</span></li>
+        </ul>
+      </section>
+      <section class="pop-section" data-reveal>
+        <h3>Education</h3>
+        <ul class="pop-list">
+          <li class="pop-row"><span class="pop-row__title">Degree · School</span><span class="pop-row__meta">2014 – 2018</span></li>
+        </ul>
+      </section>
+      <section class="pop-section" data-reveal>
+        <h3>Skills</h3>
+        <dl class="pop-facts">
+          <dt>Design</dt><dd>Skill, skill, skill</dd>
+          <dt>Code</dt><dd>Skill, skill, skill</dd>
+          <dt>Tools</dt><dd>Tool, tool, tool</dd>
+        </dl>
+      </section>
     </div>
   </template>
 
