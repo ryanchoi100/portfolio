@@ -32,6 +32,7 @@
   --thumb-radius: 6px;
   /* motion (chosen with the animate skill): exponential ease-out for arrivals, exits ~25% faster, same curve */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.455, 0.03, 0.515, 0.955); /* in-out quad: the close stays visible long enough to read as a close, not a blink */
   --ease-hover: ease;
   --dur-open: 300ms;
   --dur-close: 220ms;
@@ -59,7 +60,7 @@
   -webkit-backdrop-filter: var(--scrim-filter); backdrop-filter: var(--scrim-filter);
   font-family: var(--font-mono); color: var(--ink);
   opacity: 0; visibility: hidden; pointer-events: none;
-  transition: opacity var(--dur-close) var(--ease-out), visibility 0s linear var(--dur-close);
+  transition: opacity var(--dur-close) var(--ease-exit), visibility 0s linear var(--dur-close);
 }
 .popup[data-state="open"] {
   opacity: 1; visibility: visible; pointer-events: auto;
@@ -72,7 +73,7 @@
   padding: clamp(18px, 3vw, 36px);
   user-select: text; cursor: default;
   transform: scale(0.96);
-  transition: transform var(--dur-close) var(--ease-out);
+  transition: transform var(--dur-close) var(--ease-exit);
 }
 .popup[data-state="open"] .popup__panel { transform: scale(1); transition: transform var(--dur-open) var(--ease-out); }
 .popup__close {
@@ -154,7 +155,7 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
 
 /* Keyboard access to the scene objects: invisible until a key-user tabs into it, then shown as glass chips */
 .scene-nav { position: absolute; top: 12px; left: 12px; z-index: 15; display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--font-mono); }
-.scene-nav:not(:focus-within) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
+.scene-nav:not(:focus-within):not([data-held]) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
 .scene-nav__item {
   min-height: 32px; padding: 0 12px; font: inherit; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
   transition: box-shadow var(--dur-hover) var(--ease-hover), background-color var(--dur-hover) var(--ease-hover);
@@ -179,7 +180,8 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
 
 /* Reduced motion: no scaling, sliding or stagger; keep a short opacity cross-fade so open/close still reads */
 @media (prefers-reduced-motion: reduce) {
-  .popup, .popup[data-state="open"] { transition-duration: 150ms; }
+  .popup { transition: opacity 150ms ease, visibility 0s linear 150ms; }
+  .popup[data-state="open"] { transition: opacity 150ms ease, visibility 0s linear 0s; }
   .popup__panel, .popup[data-state="open"] .popup__panel { transform: none; transition: none; }
   .popup[data-state="closed"] [data-reveal] { transform: none; }
   .popup[data-state="open"] [data-reveal] { transition: opacity 150ms ease; transition-delay: 0ms; }
@@ -760,7 +762,10 @@ class SeasonsScene {
     const el = this.rootRef.current, pop = el?.querySelector('[data-popup]'); if (!pop || !this.pgOpen) return;
     this.pgOpen = false;
     pop.dataset.state = 'closing';
-    this.popupTimer = setTimeout(() => { pop.dataset.state = 'closed'; pop.querySelector('[data-popup-content]').replaceChildren(); }, 320);
+    this.popupTimer = setTimeout(() => {
+      pop.dataset.state = 'closed'; pop.querySelector('[data-popup-content]').replaceChildren();
+      delete el.querySelector('[data-scene-nav]')?.dataset.held; // focus is back on the nav, so :focus-within keeps it shown
+    }, 320);
     if (this.popupReturn?.isConnected) this.popupReturn.focus({ preventScroll: true });
   }
   // keep Tab inside the open dialog
@@ -1263,6 +1268,7 @@ class SeasonsScene {
       const b = e.target.closest('[data-open]'); if (!b) return;
       const r = el.querySelector('[data-slide] > div').getBoundingClientRect(), [X, Y] = centres[b.dataset.open];
       this.openPopup(b.dataset.open, { x: r.left + X / 1456 * r.width, y: r.top + Y / 813 * r.height });
+      b.parentElement.dataset.held = ''; // stay visible under the scrim so the keyboard round-trip doesn't flash
     });
     // Pop-up shell: stop every input at the overlay so the scene (season scroll, hover, swipe) never receives it.
     const pop = el.querySelector('[data-popup]');
