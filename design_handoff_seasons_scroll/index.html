@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<!-- Seasons endless-scroll scene — standalone, dependency-free. Serve over HTTP (canvas reads image pixels; file:// will fail). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seasons</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#1d2630;overscroll-behavior:none}a{color:#1f2a33}a:hover{color:#000}</style>
+<style>
+/* hover states (inline styles in the markup hold the resting state) */
+.hv0:hover{background:rgba(255,255,255,0.8) !important;box-shadow:0 4px 14px rgba(20,28,38,0.10), 0 0 14px rgba(255,222,156,0.6), inset 0 1px 0 rgba(255,255,255,0.35) !important}
+.hv1:hover{transform:translateY(-3px) !important;box-shadow:0 10px 24px rgba(20,28,38,0.14), 0 0 18px rgba(255,222,156,0.55), inset 0 1px 0 rgba(255,255,255,0.35) !important}
+</style>
+</head>
+<body>
+<!-- ======================================================================
+     SEASONS — endless Spring→Summer→Autumn→Winter scroll scene.
+     All artwork is authored on a 1456×813 reference canvas. Each slide's inner "stage" box covers the
+     viewport (object-fit: cover); every overlay below is positioned in % of that stage, and all JS
+     drawing / hit-testing works in 1456×813 scene units.
+     Layer order per slide (bottom→top): plate · smoke · tree · tree reflection · reader · window lights ·
+     falling leaves/snow · boat · snowman kneeler · garden · gardener. Then: hover label, Playground pop-up.
+     ====================================================================== -->
+<div id="root" style="position:fixed;inset:0;overflow:hidden;background:#1d2630;touch-action:none;user-select:none;cursor:default">
+    <!-- spring -->
+    <div data-slide="" style="position:absolute;inset:0;will-change:transform;overflow:hidden">
+      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(-50%,-50%);pointer-events:none">
+        <!-- Background plate (tree + boat are painted out of it; overlays animate on top) -->
+        <img src="seasons/spring-plate.jpg" alt="spring" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;display:block">
+        <!-- Chimney smoke (winter only) — drawSmoke() -->
+                <!-- Tree + its water reflection, rotated each frame by the shared wind value (pivot = roots) -->
+        <img data-tree="" src="seasons/spring-tree.png" alt="" draggable="false" style="position:absolute;left:52.885%;top:34.440%;width:17.170%;height:27.060%;transform-origin:50.4% 98.4%;will-change:transform">
+        <img data-refl="" src="seasons/spring-refl.png" alt="" draggable="false" style="position:absolute;left:52.885%;top:70.357%;width:17.170%;height:28.044%;transform-origin:50% -10%;will-change:transform">
+        <!-- Reader under the tree — fades in on tree hover (drawReader) -->
+                <canvas data-reader="" width="400" height="600" style="position:absolute;left:57.692%;top:56.581%;width:6.868%;height:18.450%;pointer-events:none"></canvas>
+              <!-- Lit windows — fades in on house hover (opacity set in updateHover) -->
+        <img data-glow="1" src="seasons/spring-lights.png" alt="" draggable="false" style="position:absolute;left:47.940%;top:51.415%;width:9.066%;height:30.996%;opacity:0;transition:opacity .7s ease">
+        <!-- Falling leaves / snow from the canopy while tree is hovered (stepFalls) -->
+        <canvas data-fall="" width="760" height="1040" style="position:absolute;left:52.885%;top:34.440%;width:26.099%;height:63.961%;pointer-events:none"></canvas>
+        <!-- Boat, rope, ripples, fisher (not in winter) — stepBoats -->
+                <canvas data-boat="" width="820" height="420" style="position:absolute;left:22.321%;top:57.811%;width:14.080%;height:12.915%;pointer-events:none"></canvas>
+              <!-- Snowman's kneeling figure (winter only) — stepSnow -->
+                <!-- Garden patch (all seasons): painted once per season by paintGarden(); scene box x575-655, y462-512 -->
+        <canvas data-garden="" width="640" height="400" style="position:absolute;left:39.492%;top:56.827%;width:5.495%;height:6.150%;pointer-events:none;transition:filter .25s ease"></canvas>
+        <!-- Gardener (all seasons): fades in while the garden is hovered; drawn per frame by stepGardener(). Same box as garden canvas -->
+        <canvas data-gardener="" width="640" height="400" style="position:absolute;left:39.492%;top:56.827%;width:5.495%;height:6.150%;pointer-events:none"></canvas>
+      </div>
+    </div>
+    <!-- summer -->
+    <div data-slide="" style="position:absolute;inset:0;will-change:transform;overflow:hidden">
+      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(-50%,-50%);pointer-events:none">
+        <!-- Background plate (tree + boat are painted out of it; overlays animate on top) -->
+        <img src="seasons/summer-plate.jpg" alt="summer" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;display:block">
+        <!-- Chimney smoke (winter only) — drawSmoke() -->
+                <!-- Tree + its water reflection, rotated each frame by the shared wind value (pivot = roots) -->
+        <img data-tree="" src="seasons/summer-tree.png" alt="" draggable="false" style="position:absolute;left:52.885%;top:34.440%;width:17.170%;height:27.060%;transform-origin:50.4% 98.4%;will-change:transform">
+        <img data-refl="" src="seasons/summer-refl.png" alt="" draggable="false" style="position:absolute;left:52.885%;top:70.357%;width:17.170%;height:28.044%;transform-origin:50% -10%;will-change:transform">
+        <!-- Reader under the tree — fades in on tree hover (drawReader) -->
+                <canvas data-reader="" width="400" height="600" style="position:absolute;left:57.692%;top:56.581%;width:6.868%;height:18.450%;pointer-events:none"></canvas>
+              <!-- Lit windows — fades in on house hover (opacity set in updateHover) -->
+        <img data-glow="1" src="seasons/summer-lights.png" alt="" draggable="false" style="position:absolute;left:47.940%;top:51.415%;width:9.066%;height:30.996%;opacity:0;transition:opacity .7s ease">
+        <!-- Falling leaves / snow from the canopy while tree is hovered (stepFalls) -->
+        <canvas data-fall="" width="760" height="1040" style="position:absolute;left:52.885%;top:34.440%;width:26.099%;height:63.961%;pointer-events:none"></canvas>
+        <!-- Boat, rope, ripples, fisher (not in winter) — stepBoats -->
+                <canvas data-boat="" width="820" height="420" style="position:absolute;left:22.321%;top:57.811%;width:14.080%;height:12.915%;pointer-events:none"></canvas>
+              <!-- Snowman's kneeling figure (winter only) — stepSnow -->
+                <!-- Garden patch (all seasons): painted once per season by paintGarden(); scene box x575-655, y462-512 -->
+        <canvas data-garden="" width="640" height="400" style="position:absolute;left:39.492%;top:56.827%;width:5.495%;height:6.150%;pointer-events:none;transition:filter .25s ease"></canvas>
+        <!-- Gardener (all seasons): fades in while the garden is hovered; drawn per frame by stepGardener(). Same box as garden canvas -->
+        <canvas data-gardener="" width="640" height="400" style="position:absolute;left:39.492%;top:56.827%;width:5.495%;height:6.150%;pointer-events:none"></canvas>
+      </div>
+    </div>
+    <!-- autumn -->
+    <div data-slide="" style="position:absolute;inset:0;will-change:transform;overflow:hidden">
+      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(-50%,-50%);pointer-events:none">
+        <!-- Background plate (tree + boat are painted out of it; overlays animate on top) -->
+        <img src="seasons/autumn-plate.jpg" alt="autumn" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;display:block">
+        <!-- Chimney smoke (winter only) — drawSmoke() -->
+                <!-- Tree + its water reflection, rotated each frame by the shared wind value (pivot = roots) -->
+        <img data-tree="" src="seasons/autumn-tree.png" alt="" draggable="false" style="position:absolute;left:52.885%;top:34.440%;width:17.170%;height:27.060%;transform-origin:50.4% 98.4%;will-change:transform">
+        <img data-refl="" src="seasons/autumn-refl.png" alt="" draggable="false" style="position:absolute;left:52.885%;top:70.357%;width:17.170%;height:28.044%;transform-origin:50% -10%;will-change:transform">
+        <!-- Reader under the tree — fades in on tree hover (drawReader) -->
+                <canvas data-reader="" width="400" height="600" style="position:absolute;left:57.692%;top:56.581%;width:6.868%;height:18.450%;pointer-events:none"></canvas>
+              <!-- Lit windows — fades in on house hover (opacity set in updateHover) -->
+        <img data-glow="1" src="seasons/autumn-lights.png" alt="" draggable="false" style="position:absolute;left:47.940%;top:51.415%;width:9.066%;height:30.996%;opacity:0;transition:opacity .7s ease">
+        <!-- Falling leaves / snow from the canopy while tree is hovered (stepFalls) -->
+        <canvas data-fall="" width="760" height="1040" style="position:absolute;left:52.885%;top:34.440%;width:26.099%;height:63.961%;pointer-events:none"></canvas>
+        <!-- Boat, rope, ripples, fisher (not in winter) — stepBoats -->
+                <canvas data-boat="" width="820" height="420" style="position:absolute;left:22.321%;top:57.811%;width:14.080%;height:12.915%;pointer-events:none"></canvas>
+              <!-- Snowman's kneeling figure (winter only) — stepSnow -->
+                <!-- Garden patch (all seasons): painted once per season by paintGarden(); scene box x575-655, y462-512 -->
+        <canvas data-garden="" width="640" height="400" style="position:absolute;left:39.492%;top:56.827%;width:5.495%;height:6.150%;pointer-events:none;transition:filter .25s ease"></canvas>
+        <!-- Gardener (all seasons): fades in while the garden is hovered; drawn per frame by stepGardener(). Same box as garden canvas -->
+        <canvas data-gardener="" width="640" height="400" style="position:absolute;left:39.492%;top:56.827%;width:5.495%;height:6.150%;pointer-events:none"></canvas>
+      </div>
+    </div>
+    <!-- winter -->
+    <div data-slide="" style="position:absolute;inset:0;will-change:transform;overflow:hidden">
+      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(-50%,-50%);pointer-events:none">
+        <!-- Background plate (tree + boat are painted out of it; overlays animate on top) -->
+        <img src="seasons/winter-plate.jpg" alt="winter" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;display:block">
+        <!-- Chimney smoke (winter only) — drawSmoke() -->
+                <canvas data-smoke="" width="600" height="1386" style="position:absolute;left:48.077%;top:14.760%;width:20.604%;height:85.240%"></canvas>
+              <!-- Tree + its water reflection, rotated each frame by the shared wind value (pivot = roots) -->
+        <img data-tree="" src="seasons/winter-tree.png" alt="" draggable="false" style="position:absolute;left:52.885%;top:34.440%;width:17.170%;height:27.060%;transform-origin:50.4% 98.4%;will-change:transform">
+        <img data-refl="" src="seasons/winter-refl.png" alt="" draggable="false" style="position:absolute;left:52.885%;top:70.357%;width:17.170%;height:28.044%;transform-origin:50% -10%;will-change:transform">
+        <!-- Reader under the tree — fades in on tree hover (drawReader) -->
+                <canvas data-reader="" width="400" height="600" style="position:absolute;left:57.692%;top:56.581%;width:6.868%;height:18.450%;pointer-events:none"></canvas>
+              <!-- Lit windows — fades in on house hover (opacity set in updateHover) -->
+        <img data-glow="1" src="seasons/winter-lights.png" alt="" draggable="false" style="position:absolute;left:47.940%;top:51.415%;width:9.066%;height:30.996%;opacity:0;transition:opacity .7s ease">
+        <!-- Falling leaves / snow from the canopy while tree is hovered (stepFalls) -->
+        <canvas data-fall="" width="760" height="1040" style="position:absolute;left:52.885%;top:34.440%;width:26.099%;height:63.961%;pointer-events:none"></canvas>
+        <!-- Boat, rope, ripples, fisher (not in winter) — stepBoats -->
+                <!-- Snowman's kneeling figure (winter only) — stepSnow -->
+                <canvas data-snow="" width="480" height="960" style="position:absolute;left:26.099%;top:57.196%;width:5.495%;height:19.680%;pointer-events:none"></canvas>
+              <!-- Garden patch (all seasons): painted once per season by paintGarden(); scene box x575-655, y462-512 -->
+        <canvas data-garden="" width="640" height="400" style="position:absolute;left:39.492%;top:56.827%;width:5.495%;height:6.150%;pointer-events:none;transition:filter .25s ease"></canvas>
+        <!-- Gardener (all seasons): fades in while the garden is hovered; drawn per frame by stepGardener(). Same box as garden canvas -->
+        <canvas data-gardener="" width="640" height="400" style="position:absolute;left:39.492%;top:56.827%;width:5.495%;height:6.150%;pointer-events:none"></canvas>
+      </div>
+    </div>
+  
+  <!-- Hover label: follows cursor (moveTip), text/visibility set in updateHover. Its glass tokens are reused by the Playground pop-up. -->
+  <div data-tip="" style="position:absolute;left:0;top:0;pointer-events:none;opacity:0;transform:translate3d(-999px,-999px,0);transition:opacity .25s ease;will-change:transform,opacity;z-index:10">
+    <div data-tip-inner="" style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:9px;background:rgba(255,255,255,0.62);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;font-family:'IBM Plex Mono', ui-monospace, monospace;font-size:10px;line-height:1;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;transform:scale(0.94);transform-origin:50% 0;transition:transform .25s cubic-bezier(.2,.8,.2,1)">
+      <span data-tip-label="">Resume</span>
+      <span style="display:block;line-height:1;letter-spacing:0;transform:translateY(-0.5px)">→</span>
+    </div>
+  </div>
+
+  <!-- ==== Playground pop-up: opened by clicking the garden. Glass = exact [data-tip-inner] tokens (bg 0.62 white, blur 10 + saturate 1.4, 1px white/0.6 border, 9px radius, same shadow, #141c24 ink, IBM Plex Mono).
+       Overlay swallows wheel/pointer/click so the season scroll never sees them; opened/closed by openPg()/closePg(). ==== -->
+  <div data-pg="" role="dialog" aria-modal="true" aria-label="Playground" style="position:absolute;inset:0;z-index:20;display:grid;place-items:center;opacity:0;visibility:hidden;pointer-events:none;background:rgba(20,28,38,0.16);backdrop-filter:blur(6px) brightness(0.9);-webkit-backdrop-filter:blur(6px) brightness(0.9);transition:opacity .3s cubic-bezier(.2,.8,.2,1), visibility 0s linear .3s;font-family:'IBM Plex Mono', ui-monospace, monospace">
+    <div data-pg-panel="" style="position:relative;box-sizing:border-box;display:flex;flex-direction:column;width:max(76vw, min(calc(100vw - 24px), 560px));max-width:1240px;height:min(calc(100vh - 24px), max(70vh, calc(100vh - 30vw)));padding:clamp(18px, 3vw, 36px);background:rgba(255,255,255,0.62);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transform:scale(0.96);transition:transform .3s cubic-bezier(.2,.8,.2,1);user-select:text;cursor:default">
+      <button data-pg-close="" aria-label="Close" style="position:absolute;top:12px;right:12px;width:44px;height:44px;display:grid;place-items:center;padding:0;background:rgba(255,255,255,0.62);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;font-family:inherit;font-size:18px;line-height:1;cursor:pointer;transition:box-shadow .25s ease, background-color .25s ease" class="hv0">×</button>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-right:52px">
+        <h2 style="margin:0;font-size:22px;line-height:1.1;font-weight:500;letter-spacing:0.08em;text-transform:uppercase">Playground</h2>
+        <p style="margin:0;font-size:13px;line-height:1.5;max-width:56ch;text-wrap:pretty">Experiments, sketches and side projects — things built for the fun of it.</p>
+      </div>
+      <div data-pg-scroll="" style="flex:1;min-height:0;margin-top:22px;padding:4px;overflow:auto;overscroll-behavior:contain;touch-action:pan-y;display:grid;grid-template-columns:repeat(auto-fill, minmax(min(100%, 200px), 1fr));gap:14px;align-content:start">
+        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
+          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(158,182,160,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
+            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 01</div>
+            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
+          </div>
+        </div>
+        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
+          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(236,196,128,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
+            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 02</div>
+            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
+          </div>
+        </div>
+        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
+          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(208,128,96,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
+            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 03</div>
+            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
+          </div>
+        </div>
+        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
+          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(168,88,52,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
+            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 04</div>
+            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
+          </div>
+        </div>
+        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
+          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(124,146,150,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
+            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 05</div>
+            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
+          </div>
+        </div>
+        <div data-pg-card="" style="display:flex;flex-direction:column;gap:10px;padding:10px;background:rgba(255,255,255,0.74);backdrop-filter:blur(10px) saturate(1.4);-webkit-backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);border-radius:9px;box-shadow:0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;transition:transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s ease;cursor:pointer" class="hv1">
+          <div style="aspect-ratio:16/10;border-radius:6px;background:radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), rgba(64,78,112,0.42);display:grid;place-items:center;font-size:10px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:#141c24">Thumbnail</div>
+          <div style="display:flex;flex-direction:column;gap:4px;padding:0 2px 2px">
+            <div style="font-size:12px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase">Project 06</div>
+            <div style="font-size:12px;line-height:1.45;text-wrap:pretty">One-line caption about this experiment.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+class SeasonsScene {
+  rootRef = { current: null };
+  // ======================================================================
+  // SEASON DATA — one slide per season. isWinter swaps boat → snowman and enables chimney smoke.
+  // Assets per season: -plate.jpg (background), -tree.png, -refl.png, -lights.png (lit windows).
+  // ======================================================================
+  seasons = ['spring', 'summer', 'autumn', 'winter'].map(k => ({
+    name: k, src: `seasons/${k}-plate.jpg`, tree: `seasons/${k}-tree.png`, refl: `seasons/${k}-refl.png`, lights: `seasons/${k}-lights.png`, isWinter: k === 'winter', hasBoat: k !== 'winter',
+  }));
+  // ======================================================================
+  // HITBOX SYSTEM — rectangles in scene units [key, x0, y0, x1, y1]. Listed in priority order (first match
+  // wins) and arranged so none overlap: house and tree meet at x=785 / the 785–828 notch, garden sits
+  // between boat and house. 'boat' is only active outside winter, 'snowman' only in winter (same spot).
+  // Hover key format: "<slideIndex>:<key>", stored in this.hlKey and read by every overlay.
+  // Labels: boat/snowman → Experience · house → About Me · tree → Resume · garden → Playground (click opens pop-up).
+  // ======================================================================
+  hits = [['house', 662, 362, 785, 502], ['house', 785, 380, 828, 502], ['tree', 785, 285, 1010, 505], ['boat', 360, 508, 495, 550], ['snowman', 398, 468, 460, 548], ['garden', 590, 474, 634, 506]];
+  labels = { boat: 'Experience', snowman: 'Experience', house: 'About Me', tree: 'Resume', garden: 'Playground' };
+  mouse = null; hlKey = '';
+  // ======================================================================
+  // TREE — falling leaves (sprites sampled from the tree PNG) or snow while the tree is hovered.
+  // Particles drift right (not with the sway), land on the ground curve, fade, and are mirrored in the water.
+  // ======================================================================
+  falls = [[], [], [], []]; fallAcc = [0, 0, 0, 0];
+  treeSrc = [];
+  loadTreeSrc(i) {
+    if (this.treeSrc[i] !== undefined) return this.treeSrc[i];
+    this.treeSrc[i] = null;
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+      const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+      const d = x.getImageData(0, 0, c.width, c.height).data, pts = [];
+      const kt = c.width / 250;
+      for (let y = 4; y < c.height - 70 * kt; y += 2) for (let xx = 4; xx < c.width - 4; xx += 2) {
+        const k = (y * c.width + xx) * 4; if (d[k + 3] < 250) continue;
+        const r = d[k], g = d[k + 1], b = d[k + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+        if (mx < 70 || (mx - mn < 25 && mx < 150)) continue;
+        pts.push([xx, y]);
+      }
+      this.treeSrc[i] = { c, pts, k: kt };
+    };
+    img.src = this.seasons[i].tree;
+    return null;
+  }
+  makeSprite(src, sz) {
+    const [px, py] = src.pts[(Math.random() * src.pts.length) | 0];
+    const w = Math.ceil(sz * 2), hh = Math.ceil(sz * 1.3), S = 2;
+    const c = document.createElement('canvas'); c.width = w * S; c.height = hh * S;
+    const x = c.getContext('2d');
+    const kt = src.k || 1; x.drawImage(src.c, px - w * kt / 2, py - hh * kt / 2, w * kt, hh * kt, 0, 0, w * S, hh * S);
+    x.globalCompositeOperation = 'destination-in';
+    const g = x.createRadialGradient(w * S / 2, hh * S / 2, 0, w * S / 2, hh * S / 2, w * S / 2);
+    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.6, 'rgba(0,0,0,0.9)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    x.save(); x.scale(1, hh / w); x.fillStyle = g; x.fillRect(0, 0, w * S, w * S); x.restore();
+    return c;
+  }
+  groundPts = [[780, 494], [890, 494], [910, 498], [940, 502], [960, 508], [980, 515], [1000, 521], [1040, 530], [1200, 532]];
+  groundAt(x) {
+    const G = this.groundPts; if (x <= G[0][0]) return G[0][1];
+    for (let k = 1; k < G.length; k++) if (x <= G[k][0]) { const a = G[k - 1], b = G[k]; return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0]); }
+    return G[G.length - 1][1];
+  }
+  stepFalls(el, dt, t) {
+    el.querySelectorAll('[data-fall]').forEach((cv, i) => {
+      const name = this.seasons[i].name, snow = name === 'winter', P = this.falls[i];
+      const on = this.hlKey === i + ':tree';
+      const A = this.props.swayAmount ?? 1, wind = A * (0.7 * Math.sin(t * 1.15 + i) + 0.3 * Math.sin(t * 2.9 + i * 2.1));
+      const src = snow ? null : this.loadTreeSrc(i);
+      if (on && (snow || src)) {
+        this.fallAcc[i] += dt * (snow ? 24 : 10);
+        while (this.fallAcc[i] >= 1) {
+          this.fallAcc[i] -= 1;
+          const u = Math.random(), v = Math.random();
+          const x = 815 + u * 175, y = 300 + v * (snow ? 150 : 120) + Math.abs(u - 0.45) * 40;
+          const sz = snow ? 1 + Math.random() * 1.4 : 3 + Math.random() * 2;
+          P.push({ x, y, vy: snow ? 14 + Math.random() * 6 : 24 + Math.random() * 10, wk: 0.7 + Math.random() * 0.6, rot: Math.random() * 6.28, spin: (Math.random() - 0.5) * 5, ph: Math.random() * 6.28, sw: 4 + Math.random() * 6, dr: (snow ? 7 : 11) + Math.random() * 8, sz, spr: snow ? null : this.makeSprite(src, sz), gd: Math.random() * 5, land: 0, fade: 1 });
+        }
+      }
+      for (const p of P) {
+        if (!on) p.fade -= dt / 0.9;
+        if (!p.land) {
+          p.vy = Math.min(snow ? 30 : 55, p.vy + (snow ? 12 : 35) * dt);
+          p.y += p.vy * dt; p.ph += dt * (snow ? 1.6 : 3);
+          p.x += (p.dr + Math.cos(p.ph) * p.sw * 0.7) * dt; p.rot += p.spin * dt;
+          const G = this.groundAt(p.x) + p.gd; if (p.y >= G) { p.y = G; p.land = 1; }
+        } else p.fade -= dt / (snow ? 0.9 : 1.2);
+      }
+      this.falls[i] = P.filter(p => p.fade > 0 && p.x < 1145);
+      const ctx = cv.getContext('2d');
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      if (!this.falls[i].length) return;
+      ctx.setTransform(2, 0, 0, 2, -770 * 2, -280 * 2);
+      for (const mir of [true, false]) {
+      ctx.save();
+      if (mir) { ctx.beginPath(); ctx.rect(770, 540, 380, 270); ctx.clip(); }
+      for (const p of this.falls[i]) {
+        ctx.globalAlpha = Math.max(0, p.fade) * (mir ? 0.38 : 1);
+        ctx.save(); ctx.translate(p.x, mir ? 1080 - p.y : p.y); if (mir) ctx.scale(1, -1);
+        if (snow) {
+          const g = ctx.createRadialGradient(0, 0, 0, 0, 0, p.sz * 1.6);
+          g.addColorStop(0, 'rgba(250,252,255,0.95)'); g.addColorStop(0.5, 'rgba(240,245,250,0.6)'); g.addColorStop(1, 'rgba(235,242,248,0)');
+          ctx.fillStyle = g; ctx.fillRect(-p.sz * 1.6, -p.sz * 1.6, p.sz * 3.2, p.sz * 3.2);
+        } else {
+          ctx.rotate(p.rot); ctx.scale(1, 0.6 + 0.4 * Math.abs(Math.cos(p.ph)));
+          const w = p.spr.width / 2, hh = p.spr.height / 2;
+          ctx.drawImage(p.spr, -w / 2, -hh / 2, w, hh);
+        }
+        ctx.restore();
+      }
+      ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    });
+  }
+  // ======================================================================
+  // HOVER RESOLUTION — maps the mouse to scene units, picks the season under the cursor (respects the
+  // wipe position), finds the hitbox, then updates label, cursor, window glow and garden glow.
+  // ======================================================================
+  updateHover(el, pos) {
+    let key = '';
+    const st = el.querySelector('[data-slide] > div');
+    if (this.mouse && st) {
+      const r = st.getBoundingClientRect();
+      const X = (this.mouse.x - r.left) / r.width * 1456, Y = (this.mouse.y - r.top) / r.height * 813;
+      const n = 4, base = ((Math.floor(pos) % n) + n) % n, frac = pos - Math.floor(pos);
+      const vw = el.clientWidth, cut = (1 - frac) * vw;
+      const si = frac > 0 && this.mouse.x >= cut ? (base + 1) % n : base;
+      const winter = this.seasons[si].isWinter;
+      const h = this.hits.find(([k, x0, y0, x1, y1]) => X >= x0 && X <= x1 && Y >= y0 && Y <= y1 && (k === 'boat' ? !winter : k === 'snowman' ? winter : true));
+      if (h) key = si + ':' + h[0];
+    }
+    this.moveTip(el, key);
+    if (key === this.hlKey) return;
+    this.hlKey = key;
+    const tip = el.querySelector('[data-tip]');
+    if (tip) { const k = key.split(':')[1], lbl = this.labels[k];
+      if (lbl) tip.querySelector('[data-tip-label]').textContent = lbl;
+      tip.style.opacity = lbl ? 1 : 0; tip.querySelector('[data-tip-inner]').style.transform = lbl ? 'scale(1)' : 'scale(0.94)';
+      el.style.cursor = lbl ? 'pointer' : 'default'; }
+    el.querySelectorAll('[data-slide]').forEach((s, i) => {
+      s.querySelectorAll('[data-glow]').forEach(d => { d.style.opacity = key === i + ':house' ? d.dataset.glow : 0; });
+      s.querySelectorAll('[data-garden]').forEach(d => { d.style.filter = key === i + ':garden' ? 'drop-shadow(0 0 3px rgba(255,238,196,0.95)) drop-shadow(0 0 9px rgba(255,222,156,0.6)) brightness(1.06)' : 'none'; });
+    });
+  }
+  // ======================================================================
+  // GARDEN PATCH — hand-painted brush dabs, one static canvas per season (painted once on first frame).
+  // Local units = scene units; origin = patch base centre (618,499.5). Ground rises to the right: g(u) = -0.2u.
+  // Shared footprint ≈ u -12..12 in every season; content grows upward (up to ~13 units tall).
+  // ======================================================================
+  paintGarden(cv, k) {
+    const x = cv.getContext('2d'); let sd = k.length * 977 + 31;
+    const R = () => { sd = (sd * 16807) % 2147483647; return sd / 2147483647; };
+    x.clearRect(0, 0, cv.width, cv.height); x.save(); x.translate(43 * 8, 37.5 * 8); x.scale(8, 8); x.lineCap = 'round'; x.lineJoin = 'round';
+    const g = u => -0.2 * u;
+    const jit = (c, j = 0.1) => c.map(v => Math.max(0, Math.min(255, Math.round(v * (1 + (R() - 0.5) * j))))).join(',');
+    const st = (x0, y0, x1, y1, w, c, al = 1) => { x.strokeStyle = `rgba(${c},${al})`; x.lineWidth = w; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); };
+    const qc = (p, w, c, al = 1) => { x.strokeStyle = `rgba(${c},${al})`; x.lineWidth = w; x.beginPath(); x.moveTo(p[0], p[1]); x.quadraticCurveTo(p[2], p[3], p[4], p[5]); x.stroke(); };
+    const ell = (u, v, rx, ry, c, al = 1, rot = 0, blur = 0) => { x.filter = blur ? `blur(${blur}px)` : 'none'; x.fillStyle = `rgba(${c},${al})`; x.beginPath(); x.ellipse(u, v, rx, ry, rot, 0, 6.29); x.fill(); };
+    const shadow = (c, w = 13, h = 1.9) => { ell(1, 1.0, w, h, c, 0.55, -0.2, 8); x.filter = 'none'; };
+    // soft soil mound under the plants
+    const soil = (w, h, base, hi, lo, n) => {
+      x.filter = 'blur(2.5px)'; x.fillStyle = `rgb(${base})`; x.beginPath(); x.moveTo(-w, g(-w) + 0.6);
+      x.bezierCurveTo(-w * 0.6, g(-w * 0.6) - h, w * 0.6, g(w * 0.6) - h, w, g(w) + 0.6); x.quadraticCurveTo(0, 2.2, -w, g(-w) + 0.6); x.fill(); x.filter = 'blur(0.5px)';
+      for (let i = 0; i < n; i++) { const u = (R() * 2 - 1) * (w - 1), f = 1 - (u / w) ** 2, v = g(u) + 1 - R() * (h * 0.75 * f + 0.8), L = 0.7 + R() * 1.4;
+        st(u - L / 2, v + 0.15, u + L / 2, v - 0.15, 0.4 + R() * 0.4, jit(v < g(u) - h * 0.4 && u < 3 ? hi : R() < 0.5 ? lo : base, 0.12), 0.6); }
+      x.filter = 'none';
+    };
+    const leafStroke = (u, v, len, ang, w, c, al = 0.95) => { const ex = u + Math.cos(ang) * len, ey = v + Math.sin(ang) * len, mx = (u + ex) / 2 - Math.sin(ang) * len * 0.12, my = (v + ey) / 2 + Math.cos(ang) * len * 0.12;
+      x.fillStyle = `rgba(${c},${al})`; x.beginPath(); x.moveTo(u, v); x.quadraticCurveTo(mx + Math.sin(ang) * w, my - Math.cos(ang) * w, ex, ey); x.quadraticCurveTo(mx - Math.sin(ang) * w, my + Math.cos(ang) * w, u, v); x.fill(); };
+    if (k === 'spring') {
+      // tight cluster of tulips: chunky saturated cups on tall stems, broad leaves at the base
+      shadow('70,60,30,0.32'); soil(11, 2.6, [104, 78, 56], [140, 108, 78], [74, 54, 40], 160);
+      const T = [[-8, 6.2], [-5.6, 8.4], [-3.2, 7.0], [-0.8, 9.6], [1.4, 7.8], [3.8, 9.0], [6.0, 7.2], [8.2, 6.0], [-2.0, 10.6], [2.6, 10.8], [5.0, 5.6], [-6.6, 5.0]];
+      const C = [[208, 52, 46], [226, 96, 122], [238, 178, 50], [208, 52, 46], [196, 70, 120], [226, 96, 122], [238, 178, 50], [208, 52, 46], [226, 96, 122], [208, 52, 46], [238, 178, 50], [196, 70, 120]];
+      x.filter = 'blur(0.45px)';
+      for (let i = 0; i < 16; i++) { const u = -9 + R() * 18, v = g(u) - 0.3; leafStroke(u, v, 3.2 + R() * 2.6, -Math.PI / 2 + (R() - 0.5) * 1.3, 0.9, jit(R() < 0.5 ? [86, 124, 60] : [108, 146, 70], 0.1)); }
+      T.forEach(([u, h], j) => { const v0 = g(u) - 0.4, bend = (R() - 0.5) * 0.9, hx = u + bend, hy = v0 - h;
+        qc([u, v0, u + bend * 0.2, v0 - h * 0.5, hx, hy + 0.9], 0.42, jit([92, 130, 62]), 1); });
+      T.forEach(([u, h], j) => { const v0 = g(u) - 0.4, hx = u + (R() - 0.5) * 0.9, hy = v0 - h, c = C[j], dk = c.map(v => v * 0.72 | 0), lt = c.map(v => Math.min(255, v * 1.18 + 20 | 0));
+        x.filter = 'blur(0.35px)'; x.fillStyle = `rgb(${c})`; x.beginPath(); x.moveTo(hx - 1.05, hy - 0.9); x.quadraticCurveTo(hx - 1.15, hy + 0.9, hx, hy + 1.0); x.quadraticCurveTo(hx + 1.15, hy + 0.9, hx + 1.05, hy - 0.9);
+        x.lineTo(hx + 0.5, hy - 0.4); x.lineTo(hx, hy - 1.1); x.lineTo(hx - 0.5, hy - 0.4); x.closePath(); x.fill();
+        qc([hx + 0.7, hy - 0.6, hx + 0.8, hy + 0.5, hx + 0.1, hy + 0.85], 0.45, dk.join(','), 0.6);
+        qc([hx - 0.7, hy - 0.6, hx - 0.65, hy + 0.2, hx - 0.3, hy + 0.6], 0.35, lt.join(','), 0.75); st(hx, hy - 0.9, hx, hy + 0.5, 0.22, dk.join(','), 0.5); });
+    } else if (k === 'summer') {
+      // bushy fern clump with tall bright blooms rising through it
+      shadow('92,50,20,0.34'); soil(11, 2.4, [104, 78, 56], [140, 108, 78], [74, 54, 40], 100);
+      const G = [[58, 92, 44], [78, 116, 52], [98, 138, 60], [124, 158, 72]];
+      x.filter = 'blur(0.4px)';
+      for (let layer = 0; layer < 4; layer++) for (let i = 0; i < 18; i++) {
+        const u0 = -8 + R() * 16, v0 = g(u0) - 0.2, ang = -Math.PI / 2 + (u0 / 9) * 0.9 + (R() - 0.5) * 0.8, len = (6 + R() * 5) * (1 - Math.abs(u0) / 22), c = jit(G[layer], 0.1);
+        const ex = u0 + Math.cos(ang) * len, ey = v0 + Math.sin(ang) * len, cx = u0 + Math.cos(ang) * len * 0.5 + (ang > -Math.PI / 2 ? 1 : -1) * 0.8, cy = v0 + Math.sin(ang) * len * 0.55;
+        qc([u0, v0, cx, cy, ex, ey], 0.35, c, 1);
+        for (let t = 0.18; t < 0.98; t += 0.09) { const px = (1 - t) ** 2 * u0 + 2 * (1 - t) * t * cx + t * t * ex, py = (1 - t) ** 2 * v0 + 2 * (1 - t) * t * cy + t * t * ey, l = 1.7 * (1 - t) + 0.4;
+          st(px, py, px + Math.cos(ang - 1.0) * l, py + Math.sin(ang - 1.0) * l, 0.42, c, 0.9); st(px, py, px + Math.cos(ang + 1.0) * l, py + Math.sin(ang + 1.0) * l, 0.42, c, 0.9); } }
+      const B = [[-6, 9.8, '246,238,220', 'd'], [-2.5, 12.4, '214,60,104', 'c'], [1, 11, '244,190,52', 'd'], [4.4, 12.8, '214,60,104', 'c'], [7, 9.2, '246,238,220', 'd'], [-0.6, 13.4, '236,120,60', 'c'], [2.8, 8.6, '244,190,52', 'd']];
+      for (const [u, h, c, ty] of B) { const v0 = g(u) - 0.3, hx = u + (R() - 0.5), hy = v0 - h; x.filter = 'blur(0.35px)';
+        qc([u, v0, u + 0.2, v0 - h * 0.5, hx, hy], 0.3, '72,108,50', 1);
+        for (let p = 0; p < 9; p++) { const an = p / 9 * 6.283 + R() * 0.3; st(hx, hy, hx + Math.cos(an) * 1.2, hy + Math.sin(an) * 0.75, 0.55, c, 0.95); }
+        ell(hx, hy, 0.5, 0.42, ty === 'd' ? '196,138,40' : '110,56,40', 1); }
+    } else if (k === 'autumn') {
+      // pumpkin pile: 3 on the ground, 2 stacked, 1 small in front; vines + leaves tie it together
+      shadow('80,40,16,0.38', 13, 2.2);
+      const pump = (u, v, rx, ry, base) => { const lit = base.map(q => Math.min(255, q * 1.14 + 12 | 0)).join(','), dk = base.map(q => q * 0.72 | 0).join(',');
+        ell(u + 0.4, v + ry * 0.75, rx * 1.02, ry * 0.45, '70,34,14', 0.4, 0, 2.5);
+        ell(u, v, rx, ry, base.join(','), 1, 0, 1.2); x.filter = 'blur(0.5px)';
+        for (let i = 0; i < 70; i++) { const an = R() * 6.29, q = Math.sqrt(R()) * 0.92, px = u + Math.cos(an) * rx * q, py = v + Math.sin(an) * ry * q, l = (px - u) / rx + (py - v) / ry;
+          st(px, py - 0.35, px, py + 0.35, 0.45 + R() * 0.35, jit(l < -0.5 ? base.map(q => Math.min(255, q * 1.14 + 12)) : l > 0.6 ? base.map(q => q * 0.76) : base, 0.07), 0.6); }
+        for (const f of [-0.62, -0.22, 0.22, 0.62]) qc([u + f * rx * 0.45, v - ry * 0.92, u + f * rx * 1.25, v, u + f * rx * 0.45, v + ry * 0.92], 0.3, dk, 0.6);
+        qc([u - rx * 0.7, v - ry * 0.35, u - rx * 0.55, v - ry * 0.8, u - rx * 0.1, v - ry * 0.88], 0.5, lit, 0.7);
+        qc([u + rx * 0.85, v + ry * 0.2, u + rx * 0.7, v + ry * 0.8, u + rx * 0.2, v + ry * 0.95], 0.5, dk, 0.5);
+        qc([u, v - ry * 0.85, u + 0.1, v - ry - 0.8, u + 0.7, v - ry - 1.0], 0.6, '98,84,48', 1); x.filter = 'none'; };
+      x.filter = 'blur(0.4px)';
+      for (let i = 0; i < 6; i++) { const u = -11 + R() * 22; leafStroke(u, g(u) + 0.2, 2.2 + R() * 1.4, -0.4 - R() * 2.3, 0.75, jit(R() < 0.5 ? [112, 116, 58] : [140, 122, 62], 0.12), 0.9); }
+      for (let i = 0; i < 4; i++) { const u = -9 + i * 6 + R() * 2, v = g(u), h = 5 + R() * 3; qc([u, v, u + (R() - 0.5) * 1.5, v - h * 0.6, u + (R() - 0.5) * 2.4, v - h], 0.45, jit([172, 142, 92]), 0.95); }
+      pump(-6.6, g(-6.6) - 2.3, 3.6, 2.5, [202, 106, 44]); pump(6.6, g(6.6) - 2.0, 3.2, 2.2, [214, 124, 50]);
+      pump(0, g(0) - 2.7, 4.3, 2.9, [208, 112, 46]); pump(-3.1, g(-3.1) - 6.6, 3.1, 2.2, [218, 128, 54]); pump(3.2, g(3.2) - 6.2, 2.7, 1.95, [196, 98, 40]);
+      pump(-0.2, g(-0.2) - 9.4, 2.2, 1.6, [224, 140, 62]); pump(9.6, g(9.6) - 1.2, 1.7, 1.25, [226, 150, 70]);
+      x.filter = 'blur(0.35px)';
+      qc([-9.5, g(-9.5) - 0.5, -11.5, -4, -9.8, -6.5], 0.35, '96,104,52', 0.9); qc([9, g(9) - 2.4, 12.2, -4.2, 11, -1], 0.35, '96,104,52', 0.9);
+      for (const [u, v, an] of [[-10.6, -4.6, -2.4], [11.6, -3.4, -0.6], [-4.8, g(-4.8) - 4.4, -2.8], [5.2, g(5.2) - 4.0, -0.3]]) leafStroke(u, v, 1.9, an, 0.8, jit([104, 112, 56], 0.1));
+      const L = ['196,98,46', '172,66,44', '214,160,64'];
+      for (let i = 0; i < 12; i++) { const u = (R() * 2 - 1) * 13, v = g(u) + 0.6 + R() * 1.2, an = R() * 3.14; st(u - Math.cos(an) * 0.55, v - Math.sin(an) * 0.3, u + Math.cos(an) * 0.55, v + Math.sin(an) * 0.3, 0.6, L[(R() * 3) | 0], 0.9); }
+    } else {
+      // rounded snow dome: cool shadow lower-right, warm-white highlight upper-left, soft ground shadow
+      shadow('96,120,156,0.36', 13, 2.3);
+      const W = 11, H = 9.5, dome = () => { x.beginPath(); x.moveTo(-W, g(-W) + 0.8); x.bezierCurveTo(-W * 0.95, -H * 1.02, W * 0.95, -H * 1.02 + g(W) * 0.5, W, g(W) + 0.8); x.quadraticCurveTo(0, 2.4, -W, g(-W) + 0.8); };
+      x.filter = 'blur(2px)'; x.fillStyle = 'rgb(214,224,236)'; dome(); x.fill();
+      x.save(); dome(); x.clip(); x.filter = 'blur(0.6px)';
+      for (let i = 0; i < 520; i++) { const u = (R() * 2 - 1) * W, v = 1.5 - R() * (H + 2), d = Math.hypot((u + 4) / W, (v + H * 0.7) / H), e = Math.hypot((u - 6) / W, (v - 0.5) / H);
+        const c = d < 0.42 ? [250, 251, 252] : e < 0.55 ? [176, 192, 212] : d < 0.8 ? [236, 241, 246] : [206, 218, 232], L = 0.9 + R() * 1.6, an = Math.atan2(v + H * 0.3, u) + 1.57;
+        st(u - Math.cos(an) * L / 2, v - Math.sin(an) * L / 2, u + Math.cos(an) * L / 2, v + Math.sin(an) * L / 2, 0.6 + R() * 0.5, jit(c, 0.04), 0.55); }
+      x.restore(); x.filter = 'blur(1.6px)';
+      qc([-W + 0.6, g(-W) + 0.6, -W * 0.3, 2.6, W - 0.6, g(W) + 0.6], 0.9, '150,168,192', 0.55);
+      qc([-W * 0.6, -H * 0.62, -W * 0.25, -H * 0.92, W * 0.12, -H * 0.9], 1.0, '255,253,248', 0.7);
+      x.filter = 'blur(0.4px)';
+      for (const [u, h, b] of [[-6.5, 3.2, -0.6], [-4.2, 4.4, 0.5], [1.8, 3.6, 0.8], [3.6, 2.4, -0.4], [7.4, 2.8, 0.7]]) {
+        const v = -H * Math.pow(1 - (u / W) ** 2, 0.8) * 0.95 + 0.6, c = jit([92, 74, 60], 0.12);
+        qc([u, v, u + b * 0.3, v - h * 0.6, u + b, v - h], 0.42, c, 1); if (R() < 0.6) qc([u + b * 0.35, v - h * 0.55, u + b * 0.35 + 0.8, v - h * 0.7, u + b * 0.35 + 1.2, v - h * 0.5], 0.3, c, 0.9);
+        ell(u, v + 0.15, 0.7, 0.3, '250,251,252', 0.9); }
+    }
+    x.filter = 'none'; x.restore();
+    x.globalCompositeOperation = 'source-atop';
+    x.fillStyle = { spring: 'rgba(252,236,206,0.06)', summer: 'rgba(250,176,104,0.08)', autumn: 'rgba(242,170,92,0.08)', winter: 'rgba(196,218,236,0.06)' }[k];
+    x.fillRect(0, 0, cv.width, cv.height); x.globalCompositeOperation = 'source-over';
+  }
+  // ======================================================================
+  // PLAYGROUND POP-UP — opened by clicking the garden; closes on ×, backdrop click or Escape.
+  // Fade + scale 0.96→1 over 300ms ease-out (reverse on close). While open, the overlay stops wheel /
+  // pointer / click propagation and onKey ignores arrows, so the season scroll behind never moves.
+  // ======================================================================
+  pgOpen = false;
+  openPg() {
+    const el = this.rootRef.current, pg = el?.querySelector('[data-pg]'); if (!pg || this.pgOpen) return;
+    this.pgOpen = true; this.mouse = null; this.tipP = null;
+    pg.style.transition = 'opacity .3s cubic-bezier(.2,.8,.2,1), visibility 0s linear 0s';
+    pg.style.visibility = 'visible'; pg.style.pointerEvents = 'auto'; pg.style.opacity = 1;
+    pg.querySelector('[data-pg-panel]').style.transform = 'scale(1)';
+    setTimeout(() => pg.querySelector('[data-pg-close]')?.focus({ preventScroll: true }), 300);
+  }
+  closePg() {
+    const el = this.rootRef.current, pg = el?.querySelector('[data-pg]'); if (!pg || !this.pgOpen) return;
+    this.pgOpen = false;
+    pg.style.transition = 'opacity .3s cubic-bezier(.4,0,1,1), visibility 0s linear .3s';
+    pg.style.opacity = 0; pg.style.pointerEvents = 'none'; pg.style.visibility = 'hidden';
+    pg.querySelector('[data-pg-panel]').style.transform = 'scale(0.96)';
+  }
+  // ======================================================================
+  // HOVER LABEL POSITION — centred 22px below the cursor, flips above near the bottom edge,
+  // clamped 6px from the sides, eased 0.35/frame.
+  // ======================================================================
+  tipP = null;
+  moveTip(el, key) {
+    const tip = el.querySelector('[data-tip]'); if (!tip || !this.mouse) return;
+    const r = el.getBoundingClientRect(), w = tip.offsetWidth || 100, hgt = tip.offsetHeight || 24;
+    let tx = Math.max(6, Math.min(r.width - w - 6, this.mouse.x - r.left - w / 2)), ty = this.mouse.y - r.top + 22;
+    if (ty + hgt > r.height - 6) ty = this.mouse.y - r.top - hgt - 12;
+    if (!this.tipP || !key) this.tipP = { x: tx, y: ty };
+    else { this.tipP.x += (tx - this.tipP.x) * 0.35; this.tipP.y += (ty - this.tipP.y) * 0.35; }
+    if (key || tip.style.opacity !== '0') tip.style.transform = `translate3d(${this.tipP.x}px,${this.tipP.y}px,0)`;
+
+  }
+  // ======================================================================
+  // BOAT — cut from the plate at load (boat, reflection, rope, inpainted background). Rocks with the
+  // wind (±1.5× tree sway) about its waterline pivot. Hover: fisher fades in, ripples spawn on each sway reversal.
+  // ======================================================================
+  boatSrc = []; boatRip = [[], [], [], []]; boatPrev = [0, 0, 0, 0];
+  BO = { x: 325, y: 505, w: 205, h: 70, px: 427, py: 540.5 };
+  loadBoat(i) {
+    if (this.boatSrc[i] !== undefined) return this.boatSrc[i];
+    this.boatSrc[i] = null;
+    const img = new Image();
+    img.onload = () => {
+      const O = this.BO, mk = () => { const c = document.createElement('canvas'); c.width = O.w; c.height = O.h; return c; };
+      const src = mk(), sx = src.getContext('2d'), kk = img.width / 1456; sx.imageSmoothingQuality = 'high'; sx.drawImage(img, O.x * kk, O.y * kk, O.w * kk, O.h * kk, 0, 0, O.w, O.h);
+      const D = sx.getImageData(0, 0, O.w, O.h), d = D.data;
+      const bg = mk(), bx = bg.getContext('2d'), B = bx.createImageData(O.w, O.h), b = B.data; b.set(d);
+      for (let y = 8; y < 60; y++) {
+        const s = [0, 0, 0]; for (let x = 31; x <= 36; x++) for (let c = 0; c < 3; c++) s[c] += d[(y * O.w + x) * 4 + c] / 6;
+        for (let x = 37; x <= 168; x++) { const k = (y * O.w + x) * 4; b[k] = s[0]; b[k + 1] = s[1]; b[k + 2] = s[2]; }
+      }
+      bx.putImageData(B, 0, 0);
+      const hull = [[366, 523.5], [380, 523.5], [420, 523], [455, 522], [472, 520.5], [487, 518.3], [484, 526], [479, 534], [476, 540.8], [374, 540.8], [369, 532]];
+      const mask = (erode) => {
+        const m = mk(), x = m.getContext('2d'); x.translate(-O.x, -O.y); x.lineJoin = x.lineCap = 'round';
+        x.beginPath(); hull.forEach(([a, c], k) => k ? x.lineTo(a, c) : x.moveTo(a, c)); x.closePath();
+        x.fillStyle = '#000'; x.fill();
+        if (erode) { x.globalCompositeOperation = 'destination-out'; x.lineWidth = 3; x.stroke(); }
+        else { x.lineWidth = 4; x.stroke(); x.beginPath(); x.moveTo(391, 541); x.lineTo(434.5, 518); x.lineWidth = 3.5; x.stroke(); }
+        return m.getContext('2d').getImageData(0, 0, O.w, O.h).data;
+      };
+      const reg = mask(false), core = mask(true);
+      const ss = (v, a, c) => { const u = Math.min(1, Math.max(0, (v - a) / (c - a))); return u * u * (3 - 2 * u); };
+      const lay = (fn) => { const c = mk(), x = c.getContext('2d'), I = x.createImageData(O.w, O.h), o = I.data;
+        for (let y = 0; y < O.h; y++) for (let xx = 0; xx < O.w; xx++) { const k = (y * O.w + xx) * 4;
+          const df = Math.hypot(d[k] - b[k], d[k + 1] - b[k + 1], d[k + 2] - b[k + 2]); const a = fn(xx + O.x, y + O.y, k, df);
+          if (a > 0) { o[k] = d[k]; o[k + 1] = d[k + 1]; o[k + 2] = d[k + 2]; o[k + 3] = a * 255; } }
+        x.putImageData(I, 0, 0); return c; };
+      const boat = lay((X, Y, k, df) => Y > 540 ? 0 : Math.max(core[k + 3] / 255, (reg[k + 3] / 255) * ss(df, 8, 30)));
+      const refl = lay((X, Y, k, df) => {
+        if (Y < 539 || Y > 562 || X < 364 || X > 494) return 0;
+        return Math.max(Y < 545 ? Math.max(0, Math.min(1, (X - 371) / 5, (480 - X) / 5)) : 0, ss(df, 6, 22));
+      });
+      const W = O.w, H = O.h, N = W * H, PY = Math.round(O.py - O.y);
+      const ext = (cv, up) => { const x = cv.getContext('2d'), I = x.getImageData(0, 0, W, H), o = I.data;
+        for (let xx = 0; xx < W; xx++) { let r = -1;
+          if (!up) { for (let y = PY; y >= PY - 6; y--) if (o[(y * W + xx) * 4 + 3] > 200) { r = y; break; } if (r < PY - 3) continue; for (let y = r + 1; y <= PY + 6; y++) { const a = (r * W + xx) * 4, b2 = (y * W + xx) * 4; for (let c = 0; c < 4; c++) o[b2 + c] = o[a + c]; } }
+          else { for (let y = PY + 1; y <= PY + 6; y++) if (o[(y * W + xx) * 4 + 3] > 200) { r = y; break; } if (r < 0 || r > PY + 4) continue; for (let y = PY - 6; y < r; y++) { const a = (r * W + xx) * 4, b2 = (y * W + xx) * 4; for (let c = 0; c < 4; c++) o[b2 + c] = o[a + c]; } } }
+        x.putImageData(I, 0, 0); };
+      const RR = img.width / 1456, HW = Math.round(O.w * RR), HH = Math.round(O.h * RR);
+      const up = (low) => { const c = document.createElement('canvas'); c.width = HW; c.height = HH; const x = c.getContext('2d'); x.imageSmoothingQuality = 'high';
+        x.drawImage(img, O.x * RR, O.y * RR, O.w * RR, O.h * RR, 0, 0, HW, HH); x.globalCompositeOperation = 'destination-in'; x.drawImage(low, 0, 0, HW, HH); return c; };
+      const hb = up(boat), hr = up(refl);
+      const extH = (cv, upw) => { const x = cv.getContext('2d'), I = x.getImageData(0, 0, HW, HH), o = I.data, PH = Math.round((O.py - O.y) * RR), s6 = Math.round(6 * RR), s3 = Math.round(3 * RR), s4 = Math.round(4 * RR);
+        for (let xx = 0; xx < HW; xx++) { let r = -1;
+          if (!upw) { for (let y = PH; y >= PH - s6; y--) if (o[(y * HW + xx) * 4 + 3] > 200) { r = y; break; } if (r < PH - s3) continue; for (let y = r + 1; y <= PH + s6; y++) { const a = (r * HW + xx) * 4, b2 = (y * HW + xx) * 4; for (let c = 0; c < 4; c++) o[b2 + c] = o[a + c]; } }
+          else { for (let y = PH + 1; y <= PH + s6; y++) if (o[(y * HW + xx) * 4 + 3] > 200) { r = y; break; } if (r < 0 || r > PH + s4) continue; for (let y = PH - s6; y < r; y++) { const a = (r * HW + xx) * 4, b2 = (y * HW + xx) * 4; for (let c = 0; c < 4; c++) o[b2 + c] = o[a + c]; } } }
+        x.putImageData(I, 0, 0); };
+      extH(hb, false); extH(hr, true);
+      const rope = document.createElement('canvas'); rope.width = HW; rope.height = HH;
+      { const sx2 = document.createElement('canvas'); sx2.width = HW; sx2.height = HH; const q = sx2.getContext('2d'); q.drawImage(img, O.x * RR, O.y * RR, O.w * RR, O.h * RR, 0, 0, HW, HH);
+        const S2 = q.getImageData(0, 0, HW, HH).data, BA = hb.getContext('2d').getImageData(0, 0, HW, HH).data, rx = rope.getContext('2d'), RI = rx.createImageData(HW, HH), ro = RI.data;
+        const lum = (a, k) => 0.3 * a[k] + 0.59 * a[k + 1] + 0.11 * a[k + 2];
+        for (let yy = Math.floor((512 - O.y) * RR); yy < Math.ceil((526 - O.y) * RR); yy++) { const ly = Math.min(O.h - 1, Math.round(yy / RR)), Lb = lum(b, (ly * O.w + 40) * 4);
+          for (let xx = Math.floor((484 - O.x) * RR); xx < Math.ceil((497.6 - O.x) * RR); xx++) { const k = (yy * HW + xx) * 4; if (BA[k + 3] > 120) continue;
+            const X = O.x + xx / RR, f = Math.min(1, (497.6 - X) * RR / 2);
+            const al = ss(Lb - lum(S2, k), 14, 50) * f; if (al <= 0) continue; ro[k] = S2[k]; ro[k + 1] = S2[k + 1]; ro[k + 2] = S2[k + 2]; ro[k + 3] = al * 255; } }
+        rx.putImageData(RI, 0, 0); }
+      ext(boat, false); ext(refl, true);
+      const ba = boat.getContext('2d').getImageData(0, 0, W, H).data, ra = refl.getContext('2d').getImageData(0, 0, W, H).data;
+      let M = new Float32Array(N); for (let j = 0; j < N; j++) M[j] = Math.max(ba[j * 4 + 3], ra[j * 4 + 3]) > 10 ? 1 : 0;
+      for (let pass = 0; pass < 3; pass++) { const n = new Float32Array(N); for (let y = 1; y < H - 1; y++) for (let xx = 1; xx < W - 1; xx++) { const j = y * W + xx; n[j] = Math.max(M[j], M[j - 1], M[j + 1], M[j - W], M[j + W]); } M = n; }
+      for (let y = 512 - O.y; y <= 526 - O.y; y++) for (let xx = 483 - O.x; xx <= 496 - O.x; xx++) M[y * W + xx] = 1;
+      const F = new Float32Array(N * 3); for (let j = 0; j < N; j++) for (let c = 0; c < 3; c++) F[j * 3 + c] = M[j] ? b[j * 4 + c] : d[j * 4 + c];
+      for (let it = 0; it < 500; it++) for (let y = 1; y < H - 1; y++) for (let xx = 1; xx < W - 1; xx++) { const j = y * W + xx; if (!M[j]) continue;
+        const HZ = 18, sameSide = k => (y <= HZ) === (((k / W) | 0) <= HZ);
+        for (let c = 0; c < 3; c++) { let s = 0, n = 0; for (const k of [j - 1, j + 1, j - W, j + W]) { if (!sameSide(k)) continue; const w = (k === j - 1 || k === j + 1) ? 1 : 0.5; s += F[k * 3 + c] * w; n += w; } F[j * 3 + c] = s / n; } }
+      for (let y = 511 - O.y; y <= 527 - O.y; y++) for (let xx = 486 - O.x; xx <= 496 - O.x; xx++) { const j = y * W + xx, X = xx + O.x, wv = Math.min(1, (X - 485) / 3); for (let c = 0; c < 3; c++) F[j * 3 + c] = F[j * 3 + c] * (1 - wv) + b[(y * W + 40) * 4 + c] * wv; }
+      let FM = new Float32Array(N); for (let j = 0; j < N; j++) FM[j] = M[j];
+      for (let pass = 0; pass < 2; pass++) { const n = new Float32Array(N); for (let y = 1; y < H - 1; y++) for (let xx = 1; xx < W - 1; xx++) { const j = y * W + xx; n[j] = (FM[j] * 4 + FM[j - 1] + FM[j + 1] + FM[j - W] + FM[j + W]) / 8; } FM = n; }
+      const B2 = bx.createImageData(W, H), b2 = B2.data;
+      for (let j = 0; j < N; j++) { const nz = (Math.random() - 0.5) * 2; for (let c = 0; c < 3; c++) b2[j * 4 + c] = F[j * 3 + c] + nz; b2[j * 4 + 3] = Math.min(1, FM[j] * 1.6) * 255; }
+      bx.putImageData(B2, 0, 0);
+      const avg = (x0, x1, y0, y1) => { const s = [0, 0, 0]; let n = 0; for (let y = y0; y < y1; y++) for (let xx = x0; xx < x1; xx++) { const k = (y * W + xx) * 4; for (let c = 0; c < 3; c++) s[c] += d[k + c]; n++; } return s.map(v => v / n); };
+      const wc = avg(8, 30, 40, 60), sc = avg(8, 30, 6, 14);
+      const hi = wc.map((v, c) => Math.round(v * 0.25 + sc[c] * 0.4 + 255 * 0.35)), lo = wc.map(v => Math.round(v * 0.7));
+      this.boatSrc[i] = { bg, boat: hb, refl: hr, rope, RR, hi, lo };
+    };
+    img.src = this.seasons[i].src;
+    return null;
+  }
+  // ======================================================================
+  // FIGURE PAINTER — shared soft-brush renderer for every person. fn(P) builds shapes with
+  // P.shape(path, colour, bbox) and P.line(quadPts, width, colour); strokes are seeded so they don't shimmer.
+  // amb tints the figure toward the season's ambient light.
+  // ======================================================================
+  paintFig(ctx, a, amb, seed, fn) {
+    const cv = ctx.canvas, key = cv.width + 'x' + cv.height; this._lay = this._lay || {};
+    let L = this._lay[key]; if (!L) { L = this._lay[key] = document.createElement('canvas'); L.width = cv.width; L.height = cv.height; }
+    const x = L.getContext('2d'), m = ctx.getTransform(), sc = Math.hypot(m.a, m.b);
+    x.setTransform(1, 0, 0, 1, 0, 0); x.globalAlpha = 1; x.filter = 'none'; x.clearRect(0, 0, L.width, L.height);
+    x.setTransform(m); x.lineCap = x.lineJoin = 'round';
+    let s = seed >>> 0; const r = () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const tone = (c, k, j) => c.map((v, i) => Math.max(0, Math.min(255, Math.round((v * 0.8 + amb[i] * 0.2) * k + j + (r() - 0.5) * 8)))).join(',');
+    const P = {
+      shape(build, c, bb, off = [0, 0], dens = 2.4) {
+        const path = new Path2D(); build(path);
+        x.save(); x.filter = `blur(${0.9 * sc}px)`; x.globalAlpha = 0.28; x.fillStyle = `rgb(${tone(c, 1, 0)})`; x.fill(path); x.restore();
+        const [x0, y0, x1, y1] = bb, n = Math.round((x1 - x0) * (y1 - y0) * dens);
+        for (let k = 0; k < n; k++) {
+          const u = r(), v = r(), jx = r() - 0.5, jy = r() - 0.5, j = (r() - 0.5) * 26, al = r(), lw = r(), an = r(), ln = r();
+          const px = x0 + u * (x1 - x0) + off[0], py = y0 + v * (y1 - y0) + off[1];
+          const q = new DOMPoint(px + jx * 1.8, py + jy * 1.8).matrixTransform(m);
+          if (!x.isPointInPath(path, q.x, q.y)) continue;
+          x.strokeStyle = `rgba(${tone(c, 1.12 - 0.26 * v - 0.08 * u, j)},${0.4 + al * 0.45})`;
+          x.lineWidth = 0.55 + lw * 0.8; const A = -0.55 + (an - 0.5) * 0.9, L2 = (0.7 + ln * 1.7) / 2;
+          x.beginPath(); x.moveTo(px - Math.cos(A) * L2, py - Math.sin(A) * L2); x.lineTo(px + Math.cos(A) * L2, py + Math.sin(A) * L2); x.stroke();
+        }
+      },
+      line(q, w, c, step = 0.32) {
+        const [ax, ay, cx, cy, bx, by] = q, len = Math.hypot(cx - ax, cy - ay) + Math.hypot(bx - cx, by - cy), N = Math.ceil(len / step);
+        for (let k = 0; k <= N; k++) {
+          const t = k / N, mt = 1 - t, px = mt * mt * ax + 2 * mt * t * cx + t * t * bx, py = mt * mt * ay + 2 * mt * t * cy + t * t * by;
+          const jx = (r() - 0.5) * w * 0.35, jy = (r() - 0.5) * w * 0.35, rr = w / 2 * (0.7 + r() * 0.5), j = (r() - 0.5) * 24, al = r(), an = r();
+          x.fillStyle = `rgba(${tone(c, 1.06 - 0.12 * t, j)},${0.35 + al * 0.4})`;
+          x.beginPath(); x.ellipse(px + jx, py + jy, rr, rr * 0.7, an * 3.14, 0, 6.29); x.fill();
+        }
+      },
+    };
+    fn(P);
+    ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = a * 0.75; ctx.filter = `blur(${Math.max(0.4, sc * 0.16)}px)`; ctx.drawImage(L, 0, 0);
+    ctx.filter = 'none'; ctx.globalAlpha = a * 0.55; ctx.drawImage(L, 0, 0); ctx.restore();
+  }
+  // Shared figure palette: skin/hair + per-season outfits (roll = rolled sleeves showing forearms).
+  skin = [178, 124, 88]; hair = [46, 38, 38];
+  outfit = {
+    spring: { shirt: [158, 182, 160], shirt2: [142, 166, 146], pants: [206, 188, 148], roll: true, book: [176, 126, 150] },
+    summer: { shirt: [208, 128, 96], shirt2: [192, 114, 86], pants: [234, 222, 198], roll: true, book: [96, 140, 150] },
+    autumn: { shirt: [168, 88, 52], shirt2: [150, 78, 48], pants: [86, 68, 60], roll: false, book: [104, 112, 86] },
+    winter: { shirt: [64, 78, 112], shirt2: [56, 68, 100], pants: [60, 62, 74], roll: false, book: [128, 52, 62], scarf: [132, 54, 64], hat: [66, 98, 80] },
+  };
+  // Fisher seated in the boat, rod + line + bobbing float (line drawn in stepBoats via this.rodTip).
+  drawFisher(ctx, t, amb, a, sk) {
+    const o = this.outfit[sk] || this.outfit.summer, SK = this.skin, HR = this.hair;
+    const ln = 0.6 * Math.sin(t * 0.7), tb = 0.8 * Math.sin(t * 1.3), tx = 351, ty = 488 + tb;
+    this.paintFig(ctx, a, amb, 71, (P) => {
+      P.line([398.5, 516.5, 372, 497, tx, ty], 0.75, [120, 92, 70], 0.4);
+      P.shape(p => { p.moveTo(414, 524.5); p.lineTo(413.2, 513); p.quadraticCurveTo(411.6 + ln * 0.3, 507.2, 406.6 + ln, 507.2); p.lineTo(402.6 + ln, 509.4); p.quadraticCurveTo(401.2, 515, 402.3, 524.5); p.closePath(); }, o.shirt, [400, 506, 415, 525], [ln * 0.5, 0]);
+      P.line([405 + ln * 0.8, 508.2, 403.2, 516, 402.6, 524], 0.6, o.shirt2, 0.5);
+      if (o.roll) { P.line([404 + ln, 510, 402.4, 512.2, 400.9, 513.4], 2.1, o.shirt2); P.line([400.9, 513.4, 399.2, 514.4, 397.6, 514.8], 1.35, SK); }
+      else P.line([404 + ln, 510, 400, 514.5, 397.6, 514.8], 2, o.shirt2);
+      P.shape(p => { p.arc(396.8, 515.2, 1.15, 0, 6.29); }, SK, [395, 513.6, 398.6, 516.8], [0, 0], 4);
+      P.shape(p => { p.moveTo(404.4 + ln, 507.4); p.lineTo(406.4 + ln, 507.4); p.lineTo(406.2 + ln, 505.6); p.lineTo(404.6 + ln, 505.6); p.closePath(); }, SK, [404, 505.2, 407, 508], [ln, 0], 5);
+      P.shape(p => { p.ellipse(405.1 + ln, 503.2, 2.5, 2.85, 0.1, 0, 6.29); p.moveTo(402.7 + ln, 503.4); p.lineTo(402.0 + ln, 504.2); p.lineTo(402.7 + ln, 504.6); p.closePath(); }, SK, [401.8, 500, 408, 506.4], [ln, 0], 5);
+      P.shape(p => { p.moveTo(402.6 + ln, 502.4); p.quadraticCurveTo(402.4 + ln, 499.2, 405.2 + ln, 499.0); p.quadraticCurveTo(408.2 + ln, 499.0, 407.9 + ln, 502.6); p.quadraticCurveTo(408.0 + ln, 504.6, 407.0 + ln, 505.4); p.lineTo(406.4 + ln, 503.0); p.quadraticCurveTo(405.4 + ln, 501.6, 403.4 + ln, 501.9); p.closePath(); }, HR, [402, 498.6, 408.4, 505.6], [ln, 0], 6);
+      P.line([403 + ln, 500.6, 404.2 + ln, 499.4, 406.2 + ln, 499.6], 0.5, [92, 80, 76], 0.25);
+    });
+    const p = new DOMPoint(tx, ty).matrixTransform(ctx.getTransform()), inv = this._baseInv; this.rodTip = inv ? [inv.a * p.x + inv.c * p.y + inv.e, inv.b * p.x + inv.d * p.y + inv.f] : [tx, ty];
+  }
+  // Reader sitting against the tree trunk turning pages; hat/scarf/breath in winter. Mirrored into the water.
+  drawReader(cv, t, a, amb, sk) {
+    const o = this.outfit[sk] || this.outfit.summer, win = sk === 'winter', SK = this.skin, HR = this.hair;
+    const ctx = cv.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    if (a <= 0.01) return;
+    const S = cv.width / 100;
+    const nd = 0.35 * Math.sin(t * 0.5), pg = Math.max(0, Math.sin(t * 0.45)) ** 8;
+    const fig = (k) => this.paintFig(ctx, a * k, amb, 133, (P) => {
+      P.shape(p => { p.moveTo(884, 497.4); p.quadraticCurveTo(882.8, 489, 884.4, 483.2); p.lineTo(889.6, 482.4); p.quadraticCurveTo(891.2, 489, 890.6, 497.4); p.closePath(); }, o.shirt, [882, 482, 892, 498]);
+      P.line([886, 495, 881, 490, 876.5, 485.5], 3.2, o.pants);
+      P.line([876.5, 485.5, 874.2, 490.8, 872, 496], 2.5, o.pants);
+      if (o.roll && sk === 'summer') P.line([873.4, 492.8, 872.6, 494.6, 872, 496], 1.5, SK);
+      P.line([871.4, 496.6, 870, 496.7, 868.6, 496.6], 1.6, win ? [70, 56, 52] : [120, 92, 74]);
+      P.shape(p => { p.moveTo(885.4 + nd * 0.5, 482.8); p.lineTo(887.4 + nd * 0.5, 482.6); p.lineTo(887.2 + nd, 481.0); p.lineTo(885.6 + nd, 481.0); p.closePath(); }, SK, [885, 480.6, 888, 483.2], [nd, 0], 6);
+      P.shape(p => { p.ellipse(886.1 + nd, 479.1, 2.4, 2.75, 0.1, 0, 6.29); p.moveTo(883.8 + nd, 479.4); p.lineTo(883.1 + nd, 480.2); p.lineTo(883.8 + nd, 480.6); p.closePath(); }, SK, [882.9, 476, 889, 482.2], [nd, 0], 5);
+      if (win) {
+        P.shape(p => { p.arc(886.3 + nd, 478.4, 2.85, 3.0, 6.5); p.closePath(); }, o.hat, [883, 475, 890, 479.4], [nd, 0], 7);
+        P.line([883.6 + nd, 478.1, 886.3 + nd, 478.5, 889.1 + nd, 478.1], 0.9, [52, 82, 66], 0.25);
+        P.shape(p => { p.arc(886.6 + nd, 475.3, 0.85, 0, 6.29); }, o.hat, [885.4, 474.2, 887.8, 476.4], [nd, 0], 8);
+        P.line([884.2, 482.4, 886.8, 483.4, 889.6, 482.2], 1.6, o.scarf); P.line([888.8, 482.8, 889.4, 485.2, 889.6, 487.2], 1.1, o.scarf);
+      } else {
+        P.shape(p => { p.moveTo(883.7 + nd, 478.4); p.quadraticCurveTo(883.5 + nd, 475.2, 886.3 + nd, 475.0); p.quadraticCurveTo(889.2 + nd, 475.0, 888.9 + nd, 478.6); p.quadraticCurveTo(889.0 + nd, 480.6, 888.0 + nd, 481.4); p.lineTo(887.4 + nd, 479.0); p.quadraticCurveTo(886.4 + nd, 477.6, 884.5 + nd, 477.9); p.closePath(); }, HR, [883, 474.6, 889.4, 481.6], [nd, 0], 6);
+        P.line([884.1 + nd, 476.6, 885.3 + nd, 475.4, 887.3 + nd, 475.6], 0.5, [92, 80, 76], 0.25);
+      }
+      P.shape(p => { p.moveTo(873.2, 484.4); p.lineTo(877.2, 486.8); p.lineTo(881.2, 483.6); p.lineTo(881.2, 484.6); p.lineTo(877.2, 487.8); p.lineTo(873.2, 485.4); p.closePath(); }, o.book, [873, 483.4, 881.4, 488], [0, 0], 5);
+      P.shape(p => { p.moveTo(873.6, 481.8); p.lineTo(877.2, 483.9); p.lineTo(880.6 - pg * 3, 480.9 - pg * 0.6); p.lineTo(880.6 - pg * 3, 483.5 - pg * 0.6); p.lineTo(877.2, 486.5); p.lineTo(873.6, 484.4); p.closePath(); }, [248, 240, 222], [873.4, 480.2, 880.8, 486.6], [0, 0], 5);
+      if (o.roll) { P.line([885.5, 485.5, 883.3, 487.2, 881.4, 487.9], 1.8, o.shirt2); P.line([881.4, 487.9, 879.9, 486.8, 879, 485], 1.25, SK); }
+      else P.line([885.5, 485.5, 881, 488, 879, 485], 1.7, o.shirt2);
+      P.shape(p => { p.arc(878.7, 484.7, 0.9, 0, 6.29); }, SK, [877.6, 483.6, 879.8, 485.8], [0, 0], 6);
+    });
+    const breath = (k) => { if (!win) return; for (let q = 0; q < 2; q++) { const ph = ((t * 0.3 + q * 0.5) % 1), env = Math.sin(ph * Math.PI) ** 2;
+      const bx = 882.2 + nd - ph * 6, by = 480.2 - ph * 2.2, br = 0.7 + ph * 2.6, g = ctx.createRadialGradient(bx, by, 0, bx, by, br);
+      g.addColorStop(0, `rgba(240,244,248,${0.38 * env * a * k})`); g.addColorStop(1, 'rgba(240,244,248,0)'); ctx.fillStyle = g; ctx.fillRect(bx - br, by - br, br * 2, br * 2); } };
+    ctx.setTransform(S, 0, 0, S, -840 * S, -460 * S); fig(1); breath(1);
+    ctx.save(); ctx.beginPath(); ctx.rect(840, 573, 100, 40); ctx.clip(); ctx.translate(0, 1072); ctx.scale(1, -1); fig(0.32); breath(0.32); ctx.restore();
+  }
+  // ======================================================================
+  // SNOWMAN (winter) — kneeling figure fixing the snowman's scarf, fades in on snowman hover.
+  // The snowman itself is part of the winter plate.
+  // ======================================================================
+  snowA = [0, 0, 0, 0];
+  drawKneeler(ctx, t, a, amb) {
+    const o = this.outfit.winter, SK = this.skin, HR = this.hair, tug = 0.45 * Math.sin(t * 2.6) * (0.5 + 0.5 * Math.sin(t * 0.7));
+    const hx = 415.6 + tug, hy = 521.4 - tug * 0.4;
+    this.paintFig(ctx, a, amb, 211, (P) => {
+      P.line([418.4, 506.2, 429.5, 509.8, 440.6, 506.8], 3.4, [150, 58, 66]); P.line([419.4, 507.6, 429.5, 510.6, 439.6, 508.2], 1.2, [118, 44, 54]);
+      P.line([421, 507.6, 417.4 + tug * 0.4, 513.6, hx, hy], 2.8, [140, 54, 62]);
+      P.line([hx - 0.6, hy + 0.4, hx - 0.9, hy + 1.4, hx - 1, hy + 2], 1.4, [168, 78, 84]);
+      P.line([405, 538.6, 402.2, 539.2, 399.6, 539.4], 2.3, o.pants);
+      P.line([406, 532.2, 405.6, 535.4, 405, 538.6], 3, o.pants);
+      P.line([407.2, 532, 409.6, 532.2, 411.6, 533], 2.8, o.pants);
+      P.line([411.6, 533, 411.9, 536.2, 412, 539], 2.3, o.pants);
+      P.line([411.4, 539.4, 412.6, 539.5, 413.6, 539.4], 1.5, [58, 46, 44]);
+      P.line([399.8, 539.6, 398.8, 539.4, 398.2, 538.8], 1.4, [58, 46, 44]);
+      P.shape(p => { p.moveTo(403.8, 533.8); p.quadraticCurveTo(403.4, 529, 404.6, 525.4); p.lineTo(409.4, 524.8); p.quadraticCurveTo(410.6, 529.4, 409.8, 533.8); p.closePath(); }, o.shirt, [403, 524.4, 411, 534.2]);
+      P.line([405.6, 527, 408, 529.6, 410.2, 531.4], 1.7, o.shirt2);
+      P.line([409, 526.4, 411.4, 524.4 + tug * 0.2, hx - 1.2, hy + 0.6], 1.7, o.shirt2);
+      P.shape(p => { p.arc(hx - 0.6, hy + 0.3, 0.95, 0, 6.29); }, o.hat, [hx - 1.8, hy - 0.9, hx + 0.6, hy + 1.5], [0, 0], 7);
+      P.line([404.8, 525.4, 407, 525.8, 409.4, 525.2], 1.5, o.scarf);
+      P.shape(p => { p.moveTo(406.6, 525.6); p.lineTo(408.6, 525.4); p.lineTo(408.4, 523.6); p.lineTo(406.8, 523.6); p.closePath(); }, SK, [406.4, 523.2, 409, 526], [0, 0], 6);
+      P.shape(p => { p.ellipse(407.8, 521.6, 2.45, 2.75, 0.1, 0, 6.29); p.moveTo(410.1, 521.9); p.lineTo(410.8, 522.7); p.lineTo(410.1, 523.1); p.closePath(); }, SK, [405, 518.6, 411, 524.6], [0, 0], 5);
+      P.line([405.6, 522.6, 405.6, 523.6, 406.2, 524.2], 0.9, HR, 0.25);
+      P.shape(p => { p.arc(407.6, 520.9, 2.8, 3.0, 6.5); p.closePath(); }, o.hat, [404.6, 517.6, 410.6, 521.4], [0, 0], 7);
+      P.line([405, 520.6, 407.6, 521, 410.3, 520.6], 0.9, [52, 82, 66], 0.25);
+      P.shape(p => { p.arc(407.4, 517.9, 0.85, 0, 6.29); }, [236, 232, 226], [406.2, 516.8, 408.6, 519], [0, 0], 8);
+    });
+  }
+  // ======================================================================
+  // GARDENER — one figure per season beside the garden patch (feet at scene 598,503.7, facing right).
+  // spring = standing, watering tulips · summer = kneeling, picking flowers into a basket
+  // autumn = standing, carrying a pumpkin to the pile · winter = kneeling, patting the snow mound
+  // ======================================================================
+  gardenA = [0, 0, 0, 0];
+  gardenAmb = { spring: [236, 232, 214], summer: [244, 220, 180], autumn: [238, 196, 150], winter: [226, 234, 242] };
+  drawGardener(ctx, t, a, amb, sk) {
+    const o = this.outfit[sk] || this.outfit.summer, SK = this.skin, HR = this.hair, win = sk === 'winter', kneel = sk === 'summer' || win;
+    const shoe = win ? [58, 46, 44] : [96, 74, 58], tilt = 0.36 + 0.07 * Math.sin(t * 1.4), b = 0.35 * Math.sin(t * 1.6);
+    const reach = 0.5 + 0.5 * Math.sin(t * 0.9), pat = Math.abs(Math.sin(t * 2.2));
+    const hd = kneel ? [2.8, -17.9] : [0.8, -24.6];
+    ctx.save(); ctx.translate(598, 503.7);
+    this.paintFig(ctx, a, amb, 307, (P) => {
+      const arm = (sx, sy, ex, ey, hx, hy) => {
+        P.line([sx, sy, (sx + ex) / 2, (sy + ey) / 2, ex, ey], 1.8, o.shirt2);
+        P.line([ex, ey, (ex + hx) / 2, (ey + hy) / 2, hx, hy], 1.35, o.roll ? SK : o.shirt2);
+        P.shape(p => { p.arc(hx, hy, 0.95, 0, 6.29); }, win ? o.hat : SK, [hx - 1.1, hy - 1.1, hx + 1.1, hy + 1.1], [0, 0], 7);
+      };
+      if (sk === 'summer') { // basket of picked flowers behind the figure
+        P.shape(p => { p.moveTo(-11, -3); p.lineTo(-6.6, -3); p.lineTo(-7.2, 0); p.lineTo(-10.4, 0); p.closePath(); }, [168, 128, 82], [-11.2, -3.2, -6.4, 0.2], [0, 0], 6);
+        P.line([-10.6, -3, -8.8, -6.4, -7, -3], 0.45, [140, 104, 66], 0.25);
+        for (const [u, v, c] of [[-10, -3.4, [214, 60, 104]], [-8.8, -3.9, [244, 190, 52]], [-7.6, -3.4, [246, 238, 220]]]) P.shape(p => { p.arc(u, v, 0.75, 0, 6.29); }, c, [u - 0.9, v - 0.9, u + 0.9, v + 0.9], [0, 0], 8);
+      }
+      if (kneel) {
+        P.line([0, -0.9, -2.8, -0.3, -5.4, -0.1], 2.3, o.pants); P.line([1, -7.3, 0.6, -4.1, 0, -0.9], 3, o.pants);
+        P.line([2.2, -7.5, 4.6, -7.3, 6.6, -6.5], 2.8, o.pants); P.line([6.6, -6.5, 6.9, -3.3, 7, -0.5], 2.3, o.pants);
+        P.line([6.4, -0.1, 7.6, 0, 8.6, -0.1], 1.5, shoe); P.line([-5.2, 0.1, -6.2, -0.1, -6.8, -0.7], 1.4, shoe);
+        P.shape(p => { p.moveTo(-1.2, -5.7); p.quadraticCurveTo(-1.6, -10.5, -0.4, -14.1); p.lineTo(4.4, -14.7); p.quadraticCurveTo(5.6, -10.1, 4.8, -5.7); p.closePath(); }, o.shirt, [-2, -15.1, 6, -5.3]);
+        P.line([0.6, -12.5, 3, -9.9, 5.2, -8.1], 1.7, o.shirt2);
+        if (win) { const hx = 11 + 0.2 * pat, hy = -4.6 - 1.7 * pat; arm(4, -13.2, 7.4, -10.6, hx, hy); }
+        else { const hx = 10.2 + 1.8 * reach, hy = -8.2 + 1.4 * reach; arm(4, -13.2, 7, -11.4, hx, hy);
+          P.line([hx, hy, hx + 0.4, hy - 1.2, hx + 0.6, hy - 2.4], 0.35, [72, 108, 50], 0.2);
+          P.shape(p => { p.arc(hx + 0.6, hy - 2.7, 0.7, 0, 6.29); }, [214, 60, 104], [hx - 0.3, hy - 3.6, hx + 1.5, hy - 1.8], [0, 0], 8); }
+      } else {
+        if (sk === 'autumn') arm(-0.6, -19.6, 1.4, -15, 3.4, -12.4 + b); else arm(-1.4, -19.8, -2.2, -16, -1.8, -12.4);
+        P.line([-0.8, -11.6, -1.2, -6, -1.4, -0.8], 2.6, o.pants); P.line([0.9, -11.6, 1.3, -6, 1.9, -0.8], 2.5, o.pants);
+        P.line([-2.6, -0.3, -1.6, -0.2, -0.4, -0.4], 1.4, shoe); P.line([1.2, -0.3, 2.2, -0.2, 3.4, -0.4], 1.4, shoe);
+        P.shape(p => { p.moveTo(-2.4, -11.2); p.quadraticCurveTo(-3, -16.4, -2.0, -20.4); p.lineTo(2.4, -20.8); p.quadraticCurveTo(3.4, -16, 2.8, -11.2); p.closePath(); }, o.shirt, [-3.2, -21, 3.6, -11]);
+        if (sk === 'autumn') {
+          const px = 5.6, py = -13.2 + b;
+          P.shape(p => { p.ellipse(px, py, 2.9, 2.05, 0, 0, 6.29); }, [206, 112, 46], [px - 3.1, py - 2.3, px + 3.1, py + 2.3], [0, 0], 6);
+          for (const f of [-0.5, 0, 0.5]) P.line([px + f * 1.2, py - 1.9, px + f * 3.1, py, px + f * 1.2, py + 1.9], 0.35, [160, 78, 34], 0.25);
+          P.line([px, py - 1.9, px + 0.2, py - 2.7, px + 0.8, py - 2.9], 0.6, [98, 84, 48], 0.2);
+          arm(1.8, -19.8, 3.2, -15.2, 6.4, -12.2 + b);
+        } else { // spring: watering can tilted toward the tulips
+          const hx = 6.6, hy = -15.6, c = Math.cos(tilt), sn = Math.sin(tilt), R = (u, v) => [hx + u * c - v * sn, hy + u * sn + v * c];
+          const can = [92, 118, 120];
+          P.shape(p => { const q = [R(0.2, 1), R(3.9, 1), R(3.7, 4.5), R(0.4, 4.5)]; p.moveTo(...q[0]); q.slice(1).forEach(z => p.lineTo(...z)); p.closePath(); }, can, [hx - 2, hy - 1, hx + 5, hy + 6], [0, 0], 5);
+          const s0 = R(3.6, 3.4), s1 = R(5.6, 2.2), s2 = R(7.4, 0.6); P.line([...s0, ...s1, ...s2], 0.7, can, 0.25);
+          P.shape(p => { p.arc(s2[0], s2[1], 0.55, 0, 6.29); }, [78, 100, 104], [s2[0] - 0.7, s2[1] - 0.7, s2[0] + 0.7, s2[1] + 0.7], [0, 0], 8);
+          const h0 = R(0.6, 1), h1 = R(1.6, -0.9), h2 = R(3.2, 1); P.line([...h0, ...h1, ...h2], 0.45, [108, 124, 128], 0.2);
+          arm(1.8, -19.8, 4.0, -16.6, ...R(1.6, -0.6));
+        }
+      }
+      const [hx, hy] = hd;
+      if (win) P.line([hx - 3, hy + 3.5, hx - 0.8, hy + 3.9, hx + 1.6, hy + 3.3], 1.5, o.scarf);
+      P.shape(p => { p.moveTo(hx - 1.2, hy + 4); p.lineTo(hx + 0.8, hy + 3.8); p.lineTo(hx + 0.6, hy + 2); p.lineTo(hx - 1, hy + 2); p.closePath(); }, SK, [hx - 1.4, hy + 1.6, hx + 1.2, hy + 4.4], [0, 0], 6);
+      P.shape(p => { p.ellipse(hx, hy, 2.45, 2.75, 0.1, 0, 6.29); p.moveTo(hx + 2.3, hy + 0.3); p.lineTo(hx + 3, hy + 1.1); p.lineTo(hx + 2.3, hy + 1.5); p.closePath(); }, SK, [hx - 2.8, hy - 3, hx + 3.2, hy + 3], [0, 0], 5);
+      if (win) {
+        P.line([hx - 2.2, hy + 1, hx - 2.2, hy + 2, hx - 1.6, hy + 2.6], 0.9, HR, 0.25);
+        P.shape(p => { p.arc(hx - 0.2, hy - 0.7, 2.8, 3.0, 6.5); p.closePath(); }, o.hat, [hx - 3.2, hy - 4, hx + 2.8, hy - 0.2], [0, 0], 7);
+        P.line([hx - 2.8, hy - 1, hx - 0.2, hy - 0.6, hx + 2.5, hy - 1], 0.9, [52, 82, 66], 0.25);
+        P.shape(p => { p.arc(hx - 0.4, hy - 3.7, 0.85, 0, 6.29); }, [236, 232, 226], [hx - 1.6, hy - 4.8, hx + 0.8, hy - 2.6], [0, 0], 8);
+      } else {
+        P.shape(p => { p.moveTo(hx + 2.4, hy - 0.7); p.quadraticCurveTo(hx + 2.6, hy - 3.9, hx - 0.2, hy - 4.1); p.quadraticCurveTo(hx - 3.1, hy - 4.1, hx - 2.8, hy - 0.5); p.quadraticCurveTo(hx - 2.9, hy + 1.5, hx - 1.9, hy + 2.3); p.lineTo(hx - 1.3, hy - 0.1); p.quadraticCurveTo(hx - 0.3, hy - 1.5, hx + 1.6, hy - 1.2); p.closePath(); }, HR, [hx - 3.4, hy - 4.6, hx + 3, hy + 2.6], [0, 0], 6);
+        P.line([hx + 1.9, hy - 2.4, hx + 0.7, hy - 3.6, hx - 1.3, hy - 3.4], 0.5, [92, 80, 76], 0.25);
+      }
+    });
+    if (sk === 'spring') { // water drops arcing from the spout onto the tulips
+      const c = Math.cos(tilt), sn = Math.sin(tilt), tx = 6.6 + 7.4 * c - 0.6 * sn, ty = -15.6 + 7.4 * sn + 0.6 * c;
+      for (let k = 0; k < 12; k++) { const ph = (t * 1.3 + k / 12) % 1, px = tx + 0.5 + 2.8 * ph + 0.5 * Math.sin(k * 2.7), py = ty + 0.6 * ph + 6 * ph * ph;
+        ctx.fillStyle = `rgba(206,228,238,${(0.75 * a * (1 - 0.5 * ph)).toFixed(3)})`; ctx.beginPath(); ctx.ellipse(px, py, 0.28, 0.42, 0, 0, 6.29); ctx.fill(); }
+    }
+    if (win) for (let q = 0; q < 2; q++) { const ph = (t * 0.3 + q * 0.5) % 1, env = Math.sin(ph * Math.PI) ** 2, bx = hd[0] + 3.4 + ph * 5, by = hd[1] + 1 - ph * 2.4, br = 0.7 + ph * 2.6;
+      const g = ctx.createRadialGradient(bx, by, 0, bx, by, br); g.addColorStop(0, `rgba(240,244,248,${0.4 * env * a})`); g.addColorStop(1, 'rgba(240,244,248,0)'); ctx.fillStyle = g; ctx.fillRect(bx - br, by - br, br * 2, br * 2); }
+    ctx.restore();
+  }
+  stepGardener(el, dt, t) {
+    el.querySelectorAll('[data-slide]').forEach((s, i) => {
+      const cv = s.querySelector('[data-gardener]'); if (!cv) return;
+      const on = this.hlKey === i + ':garden', prev = this.gardenA[i];
+      this.gardenA[i] = Math.max(0, Math.min(1, prev + (on ? dt / 0.7 : -dt / 1.2)));
+      const ga = this.gardenA[i], fa = ga * ga * (3 - 2 * ga), ctx = cv.getContext('2d');
+      if (fa <= 0.01 && prev <= 0.01) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      if (fa <= 0.01) return;
+      const S = cv.width / 80, sk = this.seasons[i].name; ctx.setTransform(S, 0, 0, S, -575 * S, -462 * S);
+      this.drawGardener(ctx, t, fa, this.gardenAmb[sk] || [236, 232, 214], sk);
+    });
+  }
+  stepSnow(el, dt, t) {
+    el.querySelectorAll('[data-slide]').forEach((s, i) => {
+      const cv = s.querySelector('[data-snow]'); if (!cv) return;
+      const on = this.hlKey === i + ':snowman';
+      this.snowA[i] = Math.max(0, Math.min(1, this.snowA[i] + (on ? dt / 0.7 : -dt / 1.2)));
+      const sa = this.snowA[i], fa = sa * sa * (3 - 2 * sa);
+
+      const ctx = cv.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      const S = cv.width / 80; ctx.setTransform(S, 0, 0, S, -380 * S, -465 * S);
+      if (fa > 0.01) {
+        const amb = [226, 234, 242];
+        ctx.save(); ctx.beginPath(); ctx.rect(380, 558, 80, 70); ctx.clip(); ctx.translate(0, 1092); ctx.scale(1, -1); this.drawKneeler(ctx, t, fa * 0.3, amb); ctx.restore();
+        this.drawKneeler(ctx, t, fa, amb);
+        for (let q = 0; q < 2; q++) { const ph = (t * 0.3 + q * 0.5) % 1, env = Math.sin(ph * Math.PI) ** 2, bx = 411.2 + ph * 5, by = 522.6 - ph * 2.4, br = 0.7 + ph * 2.6;
+          const g = ctx.createRadialGradient(bx, by, 0, bx, by, br); g.addColorStop(0, `rgba(240,244,248,${0.4 * env * fa})`); g.addColorStop(1, 'rgba(240,244,248,0)'); ctx.fillStyle = g; ctx.fillRect(bx - br, by - br, br * 2, br * 2); }
+      }
+    });
+  }
+  stepBoats(el, dt, t) {
+    const A = this.props.swayAmount ?? 1, O = this.BO;
+    el.querySelectorAll('[data-slide]').forEach((s, i) => {
+      const cv = s.querySelector('[data-boat]'); if (!cv) return;
+      const src = this.loadBoat(i), on = this.hlKey === i + ':boat';
+      const lin = this.boatLin = this.boatLin || [0, 0, 0, 0];
+      lin[i] = Math.max(0, Math.min(1, lin[i] + (on ? dt / 0.7 : -dt / 1.2)));
+      const fa = lin[i] * lin[i] * (3 - 2 * lin[i]);
+      const wind = A * (0.7 * Math.sin(t * 1.15 + i) + 0.3 * Math.sin(t * 2.9 + i * 2.1));
+      const th = wind * 1.5 * Math.PI / 180, bob = 0.7 * (0.5 + 0.5 * Math.sin(t * 1.6 + i * 1.7));
+      const R = this.boatRip[i], dw = wind - this.boatPrev[i]; this.boatPrev[i] = wind;
+      if (on && Math.sign(dw) !== Math.sign(this.boatDw?.[i] ?? 0)) R.push({ age: 0, life: 3.4 + Math.random() * 0.8, dx: wind * 3, seg: Array.from({ length: 4 + (Math.random() * 3 | 0) }, () => { const a = Math.random() * Math.PI; return [a, a + 0.25 + Math.random() * 0.6, 0.6 + Math.random() * 0.8]; }) });
+      (this.boatDw ||= [0, 0, 0, 0])[i] = dw;
+      for (const r of R) r.age += dt;
+      this.boatRip[i] = R.filter(r => r.age < r.life);
+      const ctx = cv.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      if (!src) return;
+      const S = cv.width / O.w; ctx.setTransform(S, 0, 0, S, -O.x * S, -470 * S);
+      const fcol = src.lo.map(v => Math.round(v * 0.75)).join(','); this._baseInv = ctx.getTransform().inverse();
+      ctx.drawImage(src.bg, O.x, O.y, O.w, O.h);
+      ctx.save(); ctx.beginPath(); ctx.rect(O.x, O.py + 0.2, O.w, O.h); ctx.ellipse(O.px - 2, O.py, 57, 6, 0, 0, Math.PI * 2); ctx.clip('evenodd');
+      ctx.filter = 'blur(0.45px)'; ctx.lineCap = 'round';
+      for (const r of this.boatRip[i]) {
+        const u = r.age / r.life, a = 0.9 * Math.min(1, u * 5) * Math.pow(1 - u, 1.4);
+        const rx = 58 + 40 * Math.pow(u, 0.7), ry = 2.4 + 7 * Math.pow(u, 0.8), cx = O.px + r.dx * u;
+        for (const [a0, a1, wm] of r.seg) {
+          ctx.lineWidth = (2.3 - 1 * u) * wm; ctx.strokeStyle = `rgba(${src.hi},${a})`;
+          ctx.beginPath(); ctx.ellipse(cx, O.py + 0.6, rx, ry, 0, a0, a1); ctx.stroke();
+          ctx.lineWidth = (1.1 - 0.5 * u) * wm; ctx.strokeStyle = `rgba(${src.lo},${a * 0.7})`;
+          ctx.beginPath(); ctx.ellipse(cx, O.py + 1.8, rx - 1.5, ry, 0, a0 + 0.05, a1 - 0.05); ctx.stroke();
+        }
+      }
+      ctx.filter = 'none';
+      ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(O.x, O.py, O.w, O.h); ctx.clip();
+      ctx.translate(O.px, O.py); ctx.rotate(-th); ctx.translate(0, -bob);
+      ctx.drawImage(src.refl, O.x - O.px, O.y - O.py, O.w, O.h);
+      if (fa > 0.01) { ctx.beginPath(); ctx.rect(O.x - O.px, 557.4 - O.py, O.w, 40); ctx.clip(); ctx.scale(1, -1); ctx.translate(-O.px, -O.py); this.drawFisher(ctx, t, src.hi, fa * 0.4, this.seasons[i].name); }
+      ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.rect(O.x, 470, O.w, O.py - 470); ctx.clip();
+      ctx.translate(O.px, O.py); ctx.rotate(th); ctx.translate(0, bob);
+      ctx.drawImage(src.boat, O.x - O.px, O.y - O.py, O.w, O.h);
+      if (fa > 0.01) { ctx.beginPath(); ctx.rect(O.x - O.px, 470 - O.py, O.w, 523.6 - 470); ctx.clip(); ctx.translate(-O.px, -O.py); this.drawFisher(ctx, t, src.hi, fa, this.seasons[i].name); }
+      ctx.restore();
+      { const bx = 487 - O.px, by = 519 - O.py + bob, c = Math.cos(th), sn = Math.sin(th), Dx = O.px + c * bx - sn * by - 487, Dy = O.py + sn * bx + c * by - 519, RR = src.RR;
+        const c0 = Math.floor((484 - O.x) * RR), c1 = Math.ceil((497.6 - O.x) * RR), r0 = Math.floor((512 - O.y) * RR), rh = Math.ceil(14 * RR);
+        for (let cc = c0; cc < c1; cc++) { const X = O.x + cc / RR, w = Math.max(0, Math.min(1, (497.6 - X) / 10.6)), e = w * w * (3 - 2 * w);
+          ctx.drawImage(src.rope, cc, r0, 1, rh, X + Dx * e, O.y + r0 / RR + Dy * e, 1 / RR + 0.02, rh / RR); } }
+      if (fa > 0.01) { const tip = this.rodTip; ctx.globalAlpha = fa * 0.4; ctx.filter = 'blur(0.4px)'; ctx.strokeStyle = `rgb(${fcol})`; ctx.lineWidth = 0.4;
+        ctx.beginPath(); ctx.moveTo(tip[0], tip[1]); ctx.quadraticCurveTo(tip[0] - 2.5, tip[1] + 30, tip[0] - 3.5, O.py + 0.3); ctx.stroke();
+        ctx.fillStyle = `rgba(${src.hi},0.9)`; ctx.beginPath(); ctx.ellipse(tip[0] - 3.5, O.py + 0.2 + 0.25 * Math.sin(t * 2.2), 0.9, 0.5, 0, 0, 6.29); ctx.fill(); ctx.globalAlpha = 1; ctx.filter = 'none'; }
+    });
+  }
+  // ======================================================================
+  // CHIMNEY SMOKE (winter) — puffs spawn every 70ms at (771,364), rise and billow into S-curves,
+  // fade over 13–16s, reflected in the water at 40%. Pre-warmed 18s so it's already flowing on load.
+  // ======================================================================
+  puffs = []; lastT = 0; spawnAcc = 0;
+  stepSmoke(dt, t) {
+    this.spawnAcc += dt;
+    while (this.spawnAcc > 0.07) { this.spawnAcc -= 0.07; this.puffs.push({ x: 771, y: 364, age: 0, life: 13 + Math.random() * 3, seed: Math.random() * 6.28, j: (Math.random() - 0.5) * 2, k: 0.7 + Math.random() * 0.6, g: 0.8 + Math.random() * 0.4 }); }
+    for (const p of this.puffs) {
+      const u = p.age / p.life;
+      p.y -= (16 - 7 * u) * dt;
+      p.age += dt;
+      const h = 366 - p.y;
+      const f = Math.min(1, Math.max(0, (h - 15) / 70)), ff = f * f * (3 - 2 * f);
+      const wave = (h * 0.14) * Math.sin(h * 0.032 - t * 0.38)
+                 + (h * 0.07) * Math.sin(h * 0.075 - t * 0.62 + 1.3)
+                 + (h * 0.035) * Math.sin(h * 0.14 - t * 0.9 + 2.7);
+      p.x = 771 + h * 0.28 * ff + wave * ff + p.j * (0.6 + h * 0.06 * ff);
+    }
+    this.puffs = this.puffs.filter(p => p.age < p.life);
+  }
+  drawSmoke(cv, t) {
+    const dt = Math.min(0.05, this.lastT ? t - this.lastT : 0.016); this.lastT = t;
+    if (!this.warm) { this.warm = true; for (let i = 0; i < 300; i++) this.stepSmoke(0.06, t - 18 + i * 0.06); }
+    this.stepSmoke(dt, t);
+    const ctx = cv.getContext('2d'), S = 2, OX = 700, OY = 120;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.setTransform(S, 0, 0, S, -OX * S, -OY * S);
+    const draw = (mirror, k) => {
+      ctx.save(); ctx.beginPath();
+      if (mirror) ctx.rect(OX, 706, 300, 120); else ctx.rect(OX, OY, 300, 367 - OY);
+      ctx.clip();
+      for (const p of this.puffs) {
+        const u = p.age / p.life, r = (2.5 + 24 * Math.pow(u, 0.9)) * p.g;
+        const a = k * p.k * 0.15 * Math.min(1, u / 0.04) * Math.pow(1 - u, 2.2);
+        if (a < 0.002) continue;
+        const y = mirror ? 1072 - p.y : p.y;
+        const g = ctx.createRadialGradient(p.x, y, 0, p.x, y, r);
+        g.addColorStop(0, `rgba(240,244,248,${a})`); g.addColorStop(0.45, `rgba(240,244,248,${a * 0.7})`); g.addColorStop(1, 'rgba(240,244,248,0)');
+        ctx.fillStyle = g; ctx.fillRect(p.x - r, y - r, r * 2, r * 2);
+      }
+      ctx.restore();
+    };
+    draw(false, 1); draw(true, 0.4);
+  }
+  // ======================================================================
+  // SEASON SCROLL + MAIN LOOP
+  // pos/target are unbounded floats (integer = a season). Wheel and touch swipe add to target; arrow /
+  // Page / Space keys step one season. After 180ms without input target eases to the nearest integer
+  // (snap). pos eases toward target. Slide i is shown with a straight vertical wipe:
+  // d = (i - pos) wrapped to (-2,2]; 0<d<1 → incoming slide clipped from the left by d·100%;
+  // -1<d≤0 → outgoing slide underneath. Mouse drag is intentionally NOT supported.
+  // ======================================================================
+  pos = 0; target = 0; lastInput = 0;
+  componentDidMount() {
+    const el = this.rootRef.current;
+    const speed = () => (this.props.scrollSpeed ?? 1) / 900;
+    this.onWheel = e => { e.preventDefault(); const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; this.target += d * (e.deltaMode === 1 ? 30 : 1) * speed(); this.lastInput = performance.now(); };
+    this.onKey = e => {
+      if (this.pgOpen) { if (e.key === 'Escape') { e.preventDefault(); this.closePg(); } return; }
+      if (['ArrowDown','ArrowRight','PageDown',' '].includes(e.key)) { this.target = Math.round(this.target) + 1; }
+      else if (['ArrowUp','ArrowLeft','PageUp'].includes(e.key)) { this.target = Math.round(this.target) - 1; } else return;
+      e.preventDefault(); this.lastInput = 0;
+    };
+    let ty = null;
+    this.onDown = e => { if (e.pointerType !== 'touch') return; ty = e.clientY ?? 0; this.tx = e.clientX; el.setPointerCapture?.(e.pointerId); };
+    this.onMove = e => {
+      if (e.pointerType === 'mouse' || e.pointerType === 'pen') { this.mouse = { x: e.clientX, y: e.clientY }; return; }
+      if (ty == null) return; const dy = ty - e.clientY, dx = this.tx - e.clientX; const d = Math.abs(dx) > Math.abs(dy) ? dx : dy; this.target += d * speed() * 2.2; ty = e.clientY; this.tx = e.clientX; this.lastInput = performance.now();
+    };
+    this.onUp = () => { ty = null; };
+    this.onClick = () => { if (this.hlKey.endsWith(':garden')) this.openPg(); };
+    // Playground pop-up: stop every input at the overlay so the scene (season scroll, hover, swipe) never receives it.
+    const pg = el.querySelector('[data-pg]');
+    ['wheel', 'pointerdown', 'pointermove', 'pointerup', 'pointercancel'].forEach(ev => pg.addEventListener(ev, e => e.stopPropagation(), { passive: true }));
+    pg.addEventListener('click', e => { e.stopPropagation(); if (e.target === pg || e.target.closest('[data-pg-close]')) this.closePg(); });
+    el.addEventListener('click', this.onClick);
+    this.onLeave = () => { this.mouse = null; this.tipP = null; };
+    el.addEventListener('pointerleave', this.onLeave);
+    el.addEventListener('wheel', this.onWheel, { passive: false });
+    el.addEventListener('pointerdown', this.onDown); el.addEventListener('pointermove', this.onMove);
+    el.addEventListener('pointerup', this.onUp); el.addEventListener('pointercancel', this.onUp);
+    window.addEventListener('keydown', this.onKey);
+    const tick = () => {
+      if ((this.props.snap ?? true) && performance.now() - this.lastInput > 180) this.target += (Math.round(this.target) - this.target) * 0.12;
+      this.pos += (this.target - this.pos) * 0.09;
+      const n = 4, p = this.pos;
+      const t = performance.now() / 1000, A = this.props.swayAmount ?? 1;
+      const cv = el.querySelector('[data-smoke]'); if (cv) this.drawSmoke(cv, t);
+      this.updateHover(el, p);
+      const fdt = Math.min(0.05, this.lastFT ? t - this.lastFT : 0.016); this.lastFT = t;
+      this.stepFalls(el, fdt, t);
+      this.stepBoats(el, fdt, t);
+      this.stepSnow(el, fdt, t);
+      this.stepGardener(el, fdt, t);
+      if (!this.gardenDone) { this.gardenDone = true; el.querySelectorAll('[data-slide]').forEach((sl, i) => { const c = sl.querySelector('[data-garden]'); if (c) this.paintGarden(c, this.seasons[i].name); else this.gardenDone = false; }); }
+      // reader fade (0.7s in / 1.2s out, smoothstep) — tinted with the boat's sampled sky colour
+      const ra = this.readA = this.readA || [0, 0, 0, 0];
+      el.querySelectorAll('[data-slide]').forEach((s, i) => { const cv = s.querySelector('[data-reader]'); if (!cv) return;
+        ra[i] = Math.max(0, Math.min(1, ra[i] + (this.hlKey === i + ':tree' ? fdt / 0.7 : -fdt / 1.2)));
+        const bs = this.boatSrc[i], col = bs ? bs.hi : [226, 234, 242];
+        this.drawReader(cv, t, ra[i] * ra[i] * (3 - 2 * ra[i]), col, this.seasons[i].name); });
+      // shared wind: tree rotates by it, reflection counter-rotates (boat uses the same formula)
+      el.querySelectorAll('[data-slide]').forEach((s, i) => {
+        const a = A * (0.7 * Math.sin(t * 1.15 + i) + 0.3 * Math.sin(t * 2.9 + i * 2.1));
+        const tr = s.querySelector('[data-tree]'), rf = s.querySelector('[data-refl]');
+        if (tr) tr.style.transform = `rotate(${a}deg)`;
+        if (rf) rf.style.transform = `rotate(${-a}deg)`;
+      });
+      // season wipe
+      el.querySelectorAll('[data-slide]').forEach((s, i) => {
+        let d = (((i - p) % n) + n) % n; if (d > n / 2) d -= n;
+        s.style.transform = 'none';
+        if (d > 0 && d < 1) {
+          s.style.visibility = 'visible'; s.style.zIndex = 2;
+          s.style.clipPath = `inset(0 0 0 ${d * 100}%)`;
+        } else if (d <= 0 && d > -1) {
+          s.style.visibility = 'visible'; s.style.zIndex = 1;
+          s.style.clipPath = 'none';
+        } else { s.style.visibility = 'hidden'; s.style.zIndex = 0; }
+      });
+      this.raf = requestAnimationFrame(tick);
+    };
+    this.raf = requestAnimationFrame(tick);
+  }
+  componentWillUnmount() {
+    cancelAnimationFrame(this.raf);
+    const el = this.rootRef.current;
+    if (el) { el.removeEventListener('wheel', this.onWheel); el.removeEventListener('pointerdown', this.onDown); el.removeEventListener('pointermove', this.onMove); el.removeEventListener('pointerup', this.onUp); el.removeEventListener('pointercancel', this.onUp); el.removeEventListener('pointerleave', this.onLeave); el.removeEventListener('click', this.onClick); }
+    window.removeEventListener('keydown', this.onKey);
+  }
+}
+
+// ---- bootstrap: props = the tunables exposed as Tweaks in the prototype ----
+const scene = new SeasonsScene();
+scene.props = { snap: true, scrollSpeed: 3, swayAmount: 1.5 };
+scene.rootRef.current = document.getElementById('root');
+scene.componentDidMount();
+</script>
+</body>
+</html>
