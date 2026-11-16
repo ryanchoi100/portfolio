@@ -60,6 +60,15 @@
         ],
         "createdAt": "2026-11-16T19:49:18.555Z",
         "reason": "User confirmed: 'Floating, glow on touch' elevation in /impeccable document; DESIGN.md Lamplight Rule (warm glow only on hover/press/focus)"
+      },
+      {
+        "rule": "buried-raster",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-16T19:49:39.715Z",
+        "reason": "Agent: the opacity-0 rasters are the house window-light PNGs from the original handoff, faded in on house hover (README: 'window lights fade in'); scene artwork the owner asked not to change"
       }
     ]
   }
