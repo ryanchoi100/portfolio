@@ -173,7 +173,7 @@ Placeholder thumbnail tints (sage, sand, terracotta, rust, slate, dusk at 0.42 a
 
 ## Layout
 
-The scene is authored on a 1456 × 813 canvas and scaled to cover the viewport (`width: max(100vw, 179.09vh)`, `height: max(55.84vw, 100vh)`, centred). Everything placed in the scene is positioned in percentages of that stage. Narrow screens therefore crop the sides of the painting rather than letting it shrink.
+The scene is authored on a 1456 × 813 canvas and scaled to cover the viewport (`width: max(100vw, 179.09vh)`, `height: max(55.84vw, 100vh)`, centred). Everything placed in the scene is positioned in percentages of that stage. Narrow screens never shrink the painting: on touch screens where it is wider than the viewport, a sideways swipe pans across it at full size (clamped to its edges), and up/down swipes change the season.
 
 Pop-ups are sheets. The panel is horizontally centred, about 76vw wide (capped at 1240px; the full width less 12px gutters on phones), with fluid padding (`spacing.panel`). It opens with its top where a 70vh panel's top would sit, and the same gap is kept below it. The whole sheet, header included, scrolls inside the scrim. Scrolled to the end, its rounded bottom edge sits exactly that gap above the bottom of the page, mirroring the gap it opened with. Every sheet is tall enough to scroll at least until its top meets the top of the page. Rhythm inside is 8px within the header, 22px between header and body, 14px gutters in grids and 30px between sections. The Playground is an auto-fill grid of cards at least 200px wide. Text pages use a single column, and About pairs a 180–280px portrait with prose. At 640px and below, two-column blocks stack and fact lists drop to one column.
 
@@ -235,7 +235,7 @@ One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, p
 - **Do** reserve Lamplight for hover, press and focus responses.
 - **Do** animate only transform and opacity: 300ms expo ease-out in, 220ms in-out out, 150ms fade under reduced motion.
 - **Do** keep hover effects behind `(hover: hover) and (pointer: fine)`, and keep touch targets at least 44px.
-- **Do** let narrow screens crop the painting rather than shrinking it.
+- **Do** keep the painting at full size on narrow screens and let touch users pan sideways across it, rather than shrinking it.
 
 ### Don't:
 - **Don't** put an opaque surface over the scene, or push a glass fill above 0.8 white.

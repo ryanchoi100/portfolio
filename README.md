@@ -30,7 +30,8 @@ Hitboxes don't overlap (boat and snowman share a spot but are never active in th
 - Overlays are positioned in % of the stage; JS works in scene units: `X = (mx − stage.left) / stage.width × 1456`.
 
 ## Season scroll
-- `pos` / `target` are unbounded floats (integer = season). Wheel: `target += delta × scrollSpeed / 900`. Touch swipe: ×2.2. Arrows / Page / Space: ±1 season. **No mouse drag.**
+- `pos` / `target` are unbounded floats (integer = season). Wheel: `target += delta × scrollSpeed / 900`. Touch swipe: ×2.2 (up/down; any direction when the whole painting fits the screen). Arrows / Page / Space: ±1 season. **No mouse drag.**
+- Touch pan: where the painting is wider than the screen (phones), a sideways swipe pans it at full size via `--pan-x` on the stages, clamped to ±(stage width − screen width)/2, with a short glide. Each gesture locks to one axis after 6px; a swipe never counts as a tap.
 - Snap after 180 ms idle: `target += (round − target) × 0.12`/frame. Smoothing: `pos += (target − pos) × 0.09`.
 - Wipe: `d = (i − pos)` wrapped to (−2, 2]. 0<d<1 → incoming slide, `clip-path: inset(0 0 0 d·100%)`, z 2. −1<d≤0 → outgoing, z 1.
 - Defaults: `snap = true`, `scrollSpeed = 3`, `swayAmount = 1.5`.

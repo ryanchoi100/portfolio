@@ -27,7 +27,7 @@ Open: the owner's professional positioning (specialism, industries, the kind of 
 - Navigation by scene object: house → About Me, tree → Resume, boat (snowman in winter) → Experience & Projects, garden → Playground. Each opens a frosted-glass pop-up over the scene.
 - Seasons change by wheel, touch swipe and arrow / Page / Space keys. While a pop-up is open the season never changes.
 - A sections menu, invisible until tabbed into, opens every pop-up from the keyboard.
-- Visitors arrive on desktop and on phones. The scene crops to the viewport, so on narrow phones the boat and snowman are off-screen. Experience is currently unreachable by touch there (open issue, needs a decision).
+- Visitors arrive on desktop and on phones. The painting keeps its proportions on every screen; on phones it is wider than the screen, so a sideways swipe pans across it (up/down still changes the season) and every object, the boat included, can be reached and tapped.
 
 ## Capabilities and Constraints
 

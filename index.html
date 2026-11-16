@@ -223,7 +223,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 <div id="root" style="position:fixed;inset:0;overflow:hidden;background:#1d2630;touch-action:none;user-select:none;cursor:default">
     <!-- spring -->
     <div data-slide="" style="position:absolute;inset:0;will-change:transform;overflow:hidden">
-      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(-50%,-50%);pointer-events:none">
+      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(calc(-50% + var(--pan-x, 0px)),-50%);pointer-events:none">
         <!-- Background plate (tree + boat are painted out of it; overlays animate on top) -->
         <img src="seasons/spring-plate.jpg" alt="spring" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;display:block">
         <!-- Chimney smoke (winter only) — drawSmoke() -->
@@ -247,7 +247,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
     </div>
     <!-- summer -->
     <div data-slide="" style="position:absolute;inset:0;will-change:transform;overflow:hidden">
-      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(-50%,-50%);pointer-events:none">
+      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(calc(-50% + var(--pan-x, 0px)),-50%);pointer-events:none">
         <!-- Background plate (tree + boat are painted out of it; overlays animate on top) -->
         <img src="seasons/summer-plate.jpg" alt="summer" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;display:block">
         <!-- Chimney smoke (winter only) — drawSmoke() -->
@@ -271,7 +271,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
     </div>
     <!-- autumn -->
     <div data-slide="" style="position:absolute;inset:0;will-change:transform;overflow:hidden">
-      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(-50%,-50%);pointer-events:none">
+      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(calc(-50% + var(--pan-x, 0px)),-50%);pointer-events:none">
         <!-- Background plate (tree + boat are painted out of it; overlays animate on top) -->
         <img src="seasons/autumn-plate.jpg" alt="autumn" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;display:block">
         <!-- Chimney smoke (winter only) — drawSmoke() -->
@@ -295,7 +295,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
     </div>
     <!-- winter -->
     <div data-slide="" style="position:absolute;inset:0;will-change:transform;overflow:hidden">
-      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(-50%,-50%);pointer-events:none">
+      <div style="position:absolute;left:50%;top:50%;width:max(100vw, 179.09vh);height:max(55.84vw, 100vh);transform:translate(calc(-50% + var(--pan-x, 0px)),-50%);pointer-events:none">
         <!-- Background plate (tree + boat are painted out of it; overlays animate on top) -->
         <img src="seasons/winter-plate.jpg" alt="winter" draggable="false" style="position:absolute;inset:0;width:100%;height:100%;display:block">
         <!-- Chimney smoke (winter only) — drawSmoke() -->
@@ -1262,6 +1262,11 @@ class SeasonsScene {
   // -1<d≤0 → outgoing slide underneath. Mouse drag is intentionally NOT supported.
   // ======================================================================
   pos = 0; target = 0; lastInput = 0;
+  // HORIZONTAL PAN (touch) — the stage keeps its cover size; --pan-x shifts it sideways within
+  // ±(stage width − screen width)/2 so the whole painting can be reached at the same proportions.
+  panX = 0; panTarget = 0; panVel = 0; dragDist = 0; axis = null;
+  maxPan(el) { const st = el.querySelector('[data-slide] > div'); return st ? Math.max(0, (st.offsetWidth - el.clientWidth) / 2) : 0; }
+  clampPan(el, v) { const m = this.maxPan(el); return Math.max(-m, Math.min(m, v)); }
   componentDidMount() {
     const el = this.rootRef.current;
     const speed = () => (this.props.scrollSpeed ?? 1) / 900;
@@ -1273,16 +1278,29 @@ class SeasonsScene {
       else if (['ArrowUp','ArrowLeft','PageUp'].includes(e.key)) { this.target = Math.round(this.target) - 1; } else return;
       e.preventDefault(); this.lastInput = 0;
     };
-    let ty = null;
-    this.onDown = e => { if (e.pointerType !== 'touch') return; ty = e.clientY ?? 0; this.tx = e.clientX; el.setPointerCapture?.(e.pointerId); };
+    // Touch: each gesture locks to one axis after 6px. Where the painting is wider than the screen (phones),
+    // a sideways swipe pans across it at full size and an up/down swipe steps the season. Where the whole
+    // painting already fits, any swipe steps the season exactly as before (dominant axis).
+    let ty = null, sx = 0, sy = 0;
+    this.onDown = e => { if (e.pointerType !== 'touch') return; ty = sy = e.clientY ?? 0; this.tx = sx = e.clientX; this.axis = null; this.dragDist = 0; this.panVel = 0; el.setPointerCapture?.(e.pointerId); };
     this.onMove = e => {
       if (e.pointerType === 'mouse' || e.pointerType === 'pen') { this.mouse = { x: e.clientX, y: e.clientY }; return; }
-      if (ty == null) return; const dy = ty - e.clientY, dx = this.tx - e.clientX; const d = Math.abs(dx) > Math.abs(dy) ? dx : dy; this.target += d * speed() * 2.2; ty = e.clientY; this.tx = e.clientX; this.lastInput = performance.now();
+      if (ty == null) return;
+      const dy = ty - e.clientY, dx = this.tx - e.clientX; ty = e.clientY; this.tx = e.clientX;
+      this.dragDist += Math.abs(dx) + Math.abs(dy);
+      if (!this.axis) {
+        if (Math.hypot(e.clientX - sx, e.clientY - sy) < 6) return;
+        this.axis = Math.abs(e.clientX - sx) > Math.abs(e.clientY - sy) && this.maxPan(el) > 1 ? 'pan' : 'season';
+      }
+      if (this.axis === 'pan') { this.panTarget = this.clampPan(el, this.panTarget - dx); this.panVel = -dx; return; }
+      const d = this.maxPan(el) > 1 ? dy : (Math.abs(dx) > Math.abs(dy) ? dx : dy);
+      this.target += d * speed() * 2.2; this.lastInput = performance.now();
     };
-    this.onUp = () => { ty = null; };
+    this.onUp = () => { ty = null; if (this.axis !== 'pan') this.panVel = 0; };
     // Click / tap on a scene object opens its page. The hit is resolved at the click point, so touch taps
     // (which never set this.mouse) work too; a missed tap clears the temporary point again.
     this.onClick = e => {
+      if (this.dragDist > 10) { this.dragDist = 0; return; } // the end of a swipe is not a tap
       const hadMouse = !!this.mouse;
       this.mouse = { x: e.clientX, y: e.clientY }; this.updateHover(el, this.pos);
       const page = this.popupPages[this.hlKey.split(':')[1]];
@@ -1314,6 +1332,10 @@ class SeasonsScene {
     el.addEventListener('pointerup', this.onUp); el.addEventListener('pointercancel', this.onUp);
     window.addEventListener('keydown', this.onKey);
     const tick = () => {
+      if (ty == null && Math.abs(this.panVel) > 0.1) { this.panTarget = this.clampPan(el, this.panTarget + this.panVel); this.panVel *= 0.85; }
+      this.panTarget = this.clampPan(el, this.panTarget); // also re-clamps after a resize / rotation
+      const np = Math.abs(this.panTarget - this.panX) < 0.05 ? this.panTarget : this.panX + (this.panTarget - this.panX) * 0.35;
+      if (np !== this.panX) { this.panX = np; el.style.setProperty('--pan-x', np.toFixed(2) + 'px'); }
       if ((this.props.snap ?? true) && performance.now() - this.lastInput > 180) this.target += (Math.round(this.target) - this.target) * 0.12;
       this.pos += (this.target - this.pos) * 0.09;
       const n = 4, p = this.pos;
