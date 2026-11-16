@@ -11,28 +11,39 @@
 <style>
 /* ======================================================================
    GLASS TOKENS — extracted verbatim from the original hover label + Playground pop-up.
-   Every glass surface (hover label, pop-up panel, close button, cards, rows) reads these.
+   Names follow DESIGN.md ("The Painted Season"); every glass surface reads these, never restated values.
    ====================================================================== */
 :root {
-  --ink: #141c24;
+  /* colour — names and values as in DESIGN.md frontmatter */
+  --lake-ink: #141c24;                        /* all text, icons, focus outlines */
+  --lake-ink-muted: rgba(20, 28, 38, 0.72);   /* secondary metadata (dates) */
+  --hairline: rgba(20, 28, 38, 0.10);         /* 1px row dividers */
+  --frost: rgba(255, 255, 255, 0.62);         /* standard glass: label, panel, close, buttons, chips */
+  --frost-dense: rgba(255, 255, 255, 0.74);   /* glass on glass: cards, hovered rows */
+  --frost-lit: rgba(255, 255, 255, 0.8);      /* hovered glass buttons (the 0.8 ceiling) */
+  --frost-edge: rgba(255, 255, 255, 0.6);     /* 1px border on every glass surface */
+  --dusk-scrim: rgba(20, 28, 38, 0.16);       /* wash over the scene behind a pop-up */
+  --lamplight: rgba(255, 222, 156, 0.6);      /* the only accent; state responses only */
+  --lamplight-selection: rgba(255, 222, 156, 0.75);
+  --night-water: #1d2630;
+  /* type */
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
-  --glass-bg: rgba(255,255,255,0.62);          /* label, panel, close button */
-  --glass-bg-strong: rgba(255,255,255,0.74);   /* cards sitting on the panel */
-  --glass-bg-hover: rgba(255,255,255,0.8);
-  --glass-filter: blur(10px) saturate(1.4);
-  --glass-border: 1px solid rgba(255,255,255,0.6);
-  --glass-radius: 9px;
-  --glass-highlight: inset 0 1px 0 rgba(255,255,255,0.35);
-  --glass-shadow: 0 4px 14px rgba(20,28,38,0.10), var(--glass-highlight);
-  --glass-glow: 0 0 14px rgba(255,222,156,0.6);
-  --glass-shadow-glow: 0 4px 14px rgba(20,28,38,0.10), var(--glass-glow), var(--glass-highlight);
-  --glass-shadow-lift: 0 10px 24px rgba(20,28,38,0.14), 0 0 18px rgba(255,222,156,0.55), var(--glass-highlight);
-  --scrim-bg: rgba(20,28,38,0.16);
+  /* shape */
+  --radius-glass: 9px;
+  --radius-thumb: 6px;
+  /* material: the one frost filter (never animated) and the scrim filter */
+  --frost-filter: blur(10px) saturate(1.4);
+  --frost-border: 1px solid var(--frost-edge);
   --scrim-filter: blur(6px) brightness(0.9);
-  --thumb-radius: 6px;
-  /* motion (chosen with the animate skill): exponential ease-out for arrivals, exits ~25% faster, same curve */
+  /* elevation — DESIGN.md shadow vocabulary */
+  --frost-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  --lamplight-ring: 0 0 14px var(--lamplight);
+  --shadow-resting: 0 4px 14px rgba(20, 28, 38, 0.10), var(--frost-highlight);
+  --shadow-lamplit: 0 4px 14px rgba(20, 28, 38, 0.10), var(--lamplight-ring), var(--frost-highlight);
+  --shadow-lifted: 0 10px 24px rgba(20, 28, 38, 0.14), 0 0 18px rgba(255, 222, 156, 0.55), var(--frost-highlight);
+  /* motion: expo ease-out arrivals; in-out exits (close stays visible); exits faster than entrances */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-exit: cubic-bezier(0.455, 0.03, 0.515, 0.955); /* in-out quad: the close stays visible long enough to read as a close, not a blink */
+  --ease-exit: cubic-bezier(0.455, 0.03, 0.515, 0.955);
   --ease-hover: ease;
   --dur-open: 300ms;
   --dur-close: 220ms;
@@ -42,12 +53,12 @@
   --dur-press: 120ms;
 }
 .glass {
-  background: var(--glass-bg);
-  -webkit-backdrop-filter: var(--glass-filter); backdrop-filter: var(--glass-filter);
-  border: var(--glass-border); border-radius: var(--glass-radius);
-  box-shadow: var(--glass-shadow); color: var(--ink);
+  background: var(--frost);
+  -webkit-backdrop-filter: var(--frost-filter); backdrop-filter: var(--frost-filter);
+  border: var(--frost-border); border-radius: var(--radius-glass);
+  box-shadow: var(--shadow-resting); color: var(--lake-ink);
 }
-.glass--strong { background: var(--glass-bg-strong); }
+.glass--dense { background: var(--frost-dense); }
 
 /* ======================================================================
    POP-UP SHELL — one scrim + panel + close button, reused by every page.
@@ -56,9 +67,9 @@
    ====================================================================== */
 .popup {
   position: absolute; inset: 0; z-index: 20; display: grid; place-items: center;
-  background: var(--scrim-bg);
+  background: var(--dusk-scrim);
   -webkit-backdrop-filter: var(--scrim-filter); backdrop-filter: var(--scrim-filter);
-  font-family: var(--font-mono); color: var(--ink);
+  font-family: var(--font-mono); color: var(--lake-ink);
   opacity: 0; visibility: hidden; pointer-events: none;
   transition: opacity var(--dur-close) var(--ease-exit), visibility 0s linear var(--dur-close);
 }
@@ -83,8 +94,8 @@
   transition: box-shadow var(--dur-hover) var(--ease-hover), background-color var(--dur-hover) var(--ease-hover), transform var(--dur-press) var(--ease-out);
 }
 .popup__close:active { transform: scale(0.94); }
-.popup :focus-visible { outline: 2px solid var(--ink); outline-offset: 0; }
-.popup ::selection { background: rgba(255,222,156,0.75); color: var(--ink); }
+.popup :focus-visible { outline: 2px solid var(--lake-ink); outline-offset: 0; }
+.popup ::selection { background: var(--lamplight-selection); color: var(--lake-ink); }
 
 /* header + scroll body: the layout every page drops its content into */
 .pop-head { display: flex; flex-direction: column; gap: 8px; padding-right: 52px; }
@@ -93,18 +104,18 @@
 .pop-scroll {
   flex: 1; min-height: 0; margin-top: 22px; padding: 4px; overflow: auto;
   overscroll-behavior: contain; touch-action: pan-y;
-  scrollbar-width: thin; scrollbar-color: rgba(20,28,38,0.22) transparent;
+  scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--lake-ink) 22%, transparent) transparent;
 }
 
 /* Playground grid + cards (unchanged look; the hover lift moves the inner surface so the hit area stays put) */
 .pop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 14px; align-content: start; }
-.pop-card { display: flex; color: inherit; text-decoration: none; cursor: pointer; border-radius: var(--glass-radius); }
+.pop-card { display: flex; color: inherit; text-decoration: none; cursor: pointer; border-radius: var(--radius-glass); }
 .pop-card__surface {
   flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 10px;
   transition: transform 250ms var(--ease-out), box-shadow 250ms var(--ease-hover);
 }
 .pop-thumb {
-  aspect-ratio: 16/10; border-radius: var(--thumb-radius); display: grid; place-items: center;
+  aspect-ratio: 16/10; border-radius: var(--radius-thumb); display: grid; place-items: center;
   background: radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), var(--tint);
   font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
 }
@@ -119,18 +130,18 @@
 .pop-prose p + p { margin-top: 12px; }
 .pop-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 
-.pop-list > li + li { border-top: 1px solid rgba(20,28,38,0.10); }   /* hairline between rows */
+.pop-list > li + li { border-top: 1px solid var(--hairline); }   /* hairline between rows */
 /* text pages: let row hover surfaces bleed 10px past the text column without being clipped by the scroller */
 .pop-scroll:not(.pop-grid) { margin-inline: -10px; padding-inline: 14px; }
 .pop-row {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 20px; align-items: baseline;
-  padding: 12px 10px; margin-inline: -10px; border: 1px solid transparent; border-radius: var(--glass-radius);
+  padding: 12px 10px; margin-inline: -10px; border: 1px solid transparent; border-radius: var(--radius-glass);
   color: inherit; text-decoration: none;
   transition: background-color var(--dur-hover) var(--ease-hover), box-shadow var(--dur-hover) var(--ease-hover), border-color var(--dur-hover) var(--ease-hover);
 }
-a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba(255,255,255,0.6); }
+a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--frost-edge); }
 .pop-row__title { font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
-.pop-row__meta { font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; color: rgba(20,28,38,0.72); }
+.pop-row__meta { font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--lake-ink-muted); }
 .pop-row__body { grid-column: 1 / -1; font-size: 12px; line-height: 1.5; max-width: 70ch; text-wrap: pretty; }
 .pop-row__go { display: inline-block; margin-left: 6px; transition: transform var(--dur-hover) var(--ease-out); }
 .pop-facts { display: grid; grid-template-columns: max-content 1fr; gap: 8px 22px; margin: 0; font-size: 12px; line-height: 1.5; }
@@ -142,7 +153,7 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
 .pop-button {
   display: inline-flex; align-items: center; gap: 8px; min-height: 44px; box-sizing: border-box; padding: 0 16px;
   font: inherit; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
-  color: var(--ink); text-decoration: none; cursor: pointer;
+  color: var(--lake-ink); text-decoration: none; cursor: pointer;
   transition: box-shadow var(--dur-hover) var(--ease-hover), background-color var(--dur-hover) var(--ease-hover), transform var(--dur-press) var(--ease-out);
 }
 .pop-button:active { transform: scale(0.97); }
@@ -160,7 +171,7 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
   min-height: 32px; padding: 0 12px; font: inherit; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
   transition: box-shadow var(--dur-hover) var(--ease-hover), background-color var(--dur-hover) var(--ease-hover);
 }
-.scene-nav__item:focus-visible { outline: 2px solid var(--ink); outline-offset: 0; background: var(--glass-bg-hover); }
+.scene-nav__item:focus-visible { outline: 2px solid var(--lake-ink); outline-offset: 0; background: var(--frost-lit); }
 
 /* Staggered entry: items carry data-reveal and --i (set in JS). Hidden only while closed, so closing never snaps. */
 .popup[data-state="closed"] [data-reveal] { opacity: 0; transform: translateY(6px); }
@@ -171,10 +182,10 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
 
 /* Hover micro-interactions — pointer devices only, so touch never gets stuck hover states */
 @media (hover: hover) and (pointer: fine) {
-  .popup__close:hover, .pop-button:hover { background: var(--glass-bg-hover); box-shadow: var(--glass-shadow-glow); }
-  .pop-card:hover .pop-card__surface { transform: translateY(-3px); box-shadow: var(--glass-shadow-lift); }
-  .pop-row:hover { background: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.5); }
-  a.pop-row:hover { background: var(--glass-bg-strong); border-color: rgba(255,255,255,0.6); box-shadow: var(--glass-shadow-glow); }
+  .popup__close:hover, .pop-button:hover { background: var(--frost-lit); box-shadow: var(--shadow-lamplit); }
+  .pop-card:hover .pop-card__surface { transform: translateY(-3px); box-shadow: var(--shadow-lifted); }
+  .pop-row:hover { background: color-mix(in srgb, var(--frost) 65%, transparent); }   /* static rows: a faint frost tint only */
+  a.pop-row:hover { background: var(--frost-dense); border-color: var(--frost-edge); box-shadow: var(--shadow-lamplit); }
   a.pop-row:hover .pop-row__go { transform: translateX(3px); }
 }
 
@@ -424,7 +435,7 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
     </header>
     <div class="pop-scroll pop-grid">
         <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--strong">
+          <div class="pop-card__surface glass glass--dense">
             <div class="pop-thumb" style="--tint:rgba(158,182,160,0.42)">Thumbnail</div>
             <div class="pop-card__text">
               <div class="pop-card__title">Project 01</div>
@@ -433,7 +444,7 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
           </div>
         </a>
         <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--strong">
+          <div class="pop-card__surface glass glass--dense">
             <div class="pop-thumb" style="--tint:rgba(236,196,128,0.42)">Thumbnail</div>
             <div class="pop-card__text">
               <div class="pop-card__title">Project 02</div>
@@ -442,7 +453,7 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
           </div>
         </a>
         <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--strong">
+          <div class="pop-card__surface glass glass--dense">
             <div class="pop-thumb" style="--tint:rgba(208,128,96,0.42)">Thumbnail</div>
             <div class="pop-card__text">
               <div class="pop-card__title">Project 03</div>
@@ -451,7 +462,7 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
           </div>
         </a>
         <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--strong">
+          <div class="pop-card__surface glass glass--dense">
             <div class="pop-thumb" style="--tint:rgba(168,88,52,0.42)">Thumbnail</div>
             <div class="pop-card__text">
               <div class="pop-card__title">Project 04</div>
@@ -460,7 +471,7 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
           </div>
         </a>
         <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--strong">
+          <div class="pop-card__surface glass glass--dense">
             <div class="pop-thumb" style="--tint:rgba(124,146,150,0.42)">Thumbnail</div>
             <div class="pop-card__text">
               <div class="pop-card__title">Project 05</div>
@@ -469,7 +480,7 @@ a.pop-row:focus-visible { background: var(--glass-bg-strong); border-color: rgba
           </div>
         </a>
         <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--strong">
+          <div class="pop-card__surface glass glass--dense">
             <div class="pop-thumb" style="--tint:rgba(64,78,112,0.42)">Thumbnail</div>
             <div class="pop-card__text">
               <div class="pop-card__title">Project 06</div>
