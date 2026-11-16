@@ -65,8 +65,14 @@
    Pages are <template data-popup-page> blocks; only their content differs.
    States: data-state="closed" | "open" | "closing" (set by openPopup / closePopup).
    ====================================================================== */
+/* The scrim is the scroller: the whole sheet (header included) scrolls inside it, from its resting
+   top offset up to the top edge of the page, and its bottom always meets the bottom of the page. */
 .popup {
-  position: absolute; inset: 0; z-index: 20; display: grid; place-items: center;
+  --panel-pad: clamp(18px, 3vw, 36px);
+  --panel-top: calc((100vh - min(calc(100vh - 24px), max(70vh, calc(100vh - 30vw)))) / 2); /* where the original fixed-height panel's top sat */
+  position: absolute; inset: 0; z-index: 20; display: block;
+  overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y;
+  scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--lake-ink) 22%, transparent) transparent;
   background: var(--dusk-scrim);
   -webkit-backdrop-filter: var(--scrim-filter); backdrop-filter: var(--scrim-filter);
   font-family: var(--font-mono); color: var(--lake-ink);
@@ -80,15 +86,23 @@
 .popup__panel {
   position: relative; box-sizing: border-box; display: flex; flex-direction: column;
   width: max(76vw, min(calc(100vw - 24px), 560px)); max-width: 1240px;
-  height: min(calc(100vh - 24px), max(70vh, calc(100vh - 30vw)));
-  padding: clamp(18px, 3vw, 36px);
+  margin: var(--panel-top) auto 0;
+  min-height: 100vh;   /* at least a full page: every sheet can scroll until it fills the page edge to edge, and its bottom always meets the page bottom */
+  padding: var(--panel-pad);
+  border-bottom-width: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; /* the sheet runs off the bottom edge */
   user-select: text; cursor: default;
   transform: scale(0.96);
   transition: transform var(--dur-close) var(--ease-exit);
 }
 .popup[data-state="open"] .popup__panel { transform: scale(1); transition: transform var(--dur-open) var(--ease-out); }
+/* zero-height sticky bar: holds the close button 12px from the sheet's top-right, then pins it 12px
+   below the top of the page once the sheet scrolls past, so it is always reachable */
+.popup__bar {
+  position: sticky; top: 12px; z-index: 2; height: 0;
+  margin-top: calc(12px - var(--panel-pad));
+}
 .popup__close {
-  position: absolute; top: 12px; right: 12px; z-index: 1; width: 44px; height: 44px;
+  position: absolute; top: 0; right: calc(12px - var(--panel-pad)); width: 44px; height: 44px;
   display: grid; place-items: center; padding: 0;
   font-family: inherit; font-size: 18px; line-height: 1; cursor: pointer;
   transition: box-shadow var(--dur-hover) var(--ease-hover), background-color var(--dur-hover) var(--ease-hover), transform var(--dur-press) var(--ease-out);
@@ -101,11 +115,7 @@
 .pop-head { display: flex; flex-direction: column; gap: 8px; padding-right: 52px; }
 .pop-head h2 { margin: 0; font-size: 22px; line-height: 1.1; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; }
 .pop-head p { margin: 0; font-size: 13px; line-height: 1.5; max-width: 56ch; text-wrap: pretty; }
-.pop-scroll {
-  flex: 1; min-height: 0; margin-top: 22px; padding: 4px; overflow: auto;
-  overscroll-behavior: contain; touch-action: pan-y;
-  scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--lake-ink) 22%, transparent) transparent;
-}
+.pop-scroll { margin-top: 22px; padding: 4px; }   /* page body: flows in the sheet; the scrim scrolls it */
 
 /* Playground grid + cards (unchanged look; the hover lift moves the inner surface so the hit area stays put) */
 .pop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 14px; align-content: start; }
@@ -331,7 +341,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
        The shell swallows wheel/pointer/click so the season scroll never sees them. ==== -->
   <div class="popup" data-popup="" data-state="closed" role="dialog" aria-modal="true" aria-labelledby="popup-title">
     <div class="popup__panel glass" data-popup-panel="">
-      <button class="popup__close glass" type="button" data-popup-close="" aria-label="Close">×</button>
+      <div class="popup__bar"><button class="popup__close glass" type="button" data-popup-close="" aria-label="Close">×</button></div>
       <div class="popup__content" data-popup-content="" style="display:contents"></div>
     </div>
   </div>
@@ -760,10 +770,11 @@ class SeasonsScene {
     content.querySelectorAll('[data-reveal]').forEach((n, i) => n.style.setProperty('--i', i));
     pop.dataset.page = page;
     pop.dataset.state = 'closed';
-    // transform-origin = the clicked point, clamped into the panel (panel is centred; offset* ignore its scale)
-    const pr = pop.getBoundingClientRect(), w = panel.offsetWidth, h = panel.offsetHeight;
-    const ox = origin ? Math.max(0, Math.min(w, origin.x - pr.left - (pr.width - w) / 2)) : w / 2;
-    const oy = origin ? Math.max(0, Math.min(h, origin.y - pr.top - (pr.height - h) / 2)) : h / 2;
+    pop.scrollTop = 0; // every page opens at its top
+    // transform-origin = the clicked point, clamped into the visible part of the sheet (offset* ignore its scale)
+    const pr = pop.getBoundingClientRect(), w = panel.offsetWidth, h = Math.min(panel.offsetHeight, pr.height - panel.offsetTop);
+    const ox = origin ? Math.max(0, Math.min(w, origin.x - pr.left - panel.offsetLeft)) : w / 2;
+    const oy = origin ? Math.max(0, Math.min(h, origin.y - pr.top - panel.offsetTop)) : h / 2;
     panel.style.transformOrigin = `${ox}px ${oy}px`;
     void pop.offsetWidth; // commit the closed state so the open transition runs
     pop.dataset.state = 'open';

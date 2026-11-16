@@ -175,7 +175,7 @@ Placeholder thumbnail tints (sage, sand, terracotta, rust, slate, dusk at 0.42 a
 
 The scene is authored on a 1456 × 813 canvas and scaled to cover the viewport (`width: max(100vw, 179.09vh)`, `height: max(55.84vw, 100vh)`, centred). Everything placed in the scene is positioned in percentages of that stage. Narrow screens therefore crop the sides of the painting rather than letting it shrink.
 
-Pop-ups are centred on the scene. The panel is about 76vw × 70vh, capped at 1240px wide, and fills the screen less 12px gutters on phones. It has fluid padding (`spacing.panel`) and is laid out as a fixed header plus one scrolling body. Rhythm inside is 8px within the header, 22px between header and body, 14px gutters in grids and 30px between sections. The Playground is an auto-fill grid of cards at least 200px wide. Text pages use a single column, and About pairs a 180–280px portrait with prose. At 640px and below, two-column blocks stack and fact lists drop to one column.
+Pop-ups are sheets. The panel is horizontally centred, about 76vw wide (capped at 1240px; the full width less 12px gutters on phones), with fluid padding (`spacing.panel`). It opens with its top where a 70vh panel's top would sit and is at least one page tall, so its bottom always runs to the bottom edge of the page. The whole sheet, header included, scrolls inside the scrim: it can always travel up until it fills the page edge to edge, and longer pages keep going until their bottom meets the bottom of the page. Rhythm inside is 8px within the header, 22px between header and body, 14px gutters in grids and 30px between sections. The Playground is an auto-fill grid of cards at least 200px wide. Text pages use a single column, and About pairs a 180–280px portrait with prose. At 640px and below, two-column blocks stack and fact lists drop to one column.
 
 ## Elevation & Depth
 
@@ -193,7 +193,7 @@ Depth is floating glass. Surfaces hover just above the painting on one soft, coo
 
 ## Shapes
 
-One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, panel, buttons, cards, rows and chips. Image slots inside cards use a slightly tighter 6px (`rounded.thumb`) so they nest inside the card's curve. Borders are a single 1px frost edge. Dividers are 1px ink hairlines. There are no pills, circles or decorative outlines.
+One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, panel, buttons, cards, rows and chips. The one exception is the pop-up sheet's bottom edge, which runs off the bottom of the page, so its bottom corners are square and it has no bottom border. Image slots inside cards use a slightly tighter 6px (`rounded.thumb`) so they nest inside the card's curve. Borders are a single 1px frost edge. Dividers are 1px ink hairlines. There are no pills, circles or decorative outlines.
 
 ## Components
 
@@ -201,7 +201,7 @@ One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, p
 *The scene's whisper.* A small frost tag that follows the cursor 22px below it (flipping above near the bottom edge). It names the object under the pointer in uppercase label-small type with a → arrow. It fades in over 0.25s while scaling from 0.94 to 1.
 
 ### Pop-up Shell (signature)
-*One pane of glass for every page.* Dusk Scrim over the scene, a centred frost panel, and a 44px frost close button (×) pinned 12px from the top-right. Pages differ only in their content, which is a header (headline plus an intro line) and one scrolling body.
+*One pane of glass for every page.* Dusk Scrim over the scene, a frost sheet that runs to the bottom of the page and scrolls as one piece, and a 44px frost close button (×) 12px from the sheet's top-right. Once the sheet scrolls past, the close button stays pinned 12px below the top of the page. Every page opens scrolled to its top. Pages differ only in their content, which is a header (headline plus an intro line) and a body.
 - **Open:** panel scales 0.96 → 1 and fades in with the scrim over 300ms on an expo ease-out (`cubic-bezier(0.16, 1, 0.3, 1)`). The panel grows from the scene object that was clicked.
 - **Stagger:** content blocks rise 6px and fade over 280ms, starting 60ms in and 35ms apart, capped at 8 steps.
 - **Close:** the same scale and fade reversed over 220ms on an in-out curve (`cubic-bezier(0.455, 0.03, 0.515, 0.955)`). Content stays put while the panel leaves.

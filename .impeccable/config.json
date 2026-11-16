@@ -51,6 +51,15 @@
         "value": "18px",
         "createdAt": "2026-11-16T19:40:08.794Z",
         "reason": "Agent: close-button x glyph size from the original Playground design; an icon, not text on the type ramp"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-16T19:49:18.555Z",
+        "reason": "User confirmed: 'Floating, glow on touch' elevation in /impeccable document; DESIGN.md Lamplight Rule (warm glow only on hover/press/focus)"
       }
     ]
   }
