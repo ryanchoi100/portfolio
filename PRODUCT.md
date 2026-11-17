@@ -24,7 +24,7 @@ Professional positioning comes from the resume: UI/UX and brand design across in
 
 ## Operating Context
 
-- Navigation by scene object: house → About Me, tree → Resume, boat (snowman in winter) → Experience & Projects, garden → Playground. Each opens a frosted-glass pop-up over the scene.
+- Navigation by scene object: house → About Me, tree → Resume, boat (snowman in winter) → Interfaces (projects and experience), garden → Playground. Each opens a frosted-glass pop-up over the scene.
 - Seasons change by wheel, touch swipe and arrow / Page / Space keys. While a pop-up is open the season never changes.
 - A sections menu, invisible until tabbed into, opens every pop-up from the keyboard.
 - Visitors arrive on desktop and on phones. The painting keeps its proportions on every screen; on phones it is wider than the screen, so a sideways swipe pans across it (up/down still changes the season) and every object, the boat included, can be reached and tapped.
@@ -49,7 +49,7 @@ Professional positioning comes from the resume: UI/UX and brand design across in
 ## Evidence on Hand
 
 - Artwork: `seasons/` (four seasons × plate, tree, reflection, lights).
-- Resume: `resume/RyanChoi_Resume.pdf` (one page; also rendered to `resume/resume-page.webp` for the unfold). It is the source for About Me and Experience & Projects. It includes a phone number and email, so it is public once deployed.
+- Resume: `resume/RyanChoi_Resume.pdf` (one page; also rendered to `resume/resume-page.webp` for the unfold). It is the source for About Me and Interfaces. It includes a phone number and email, so it is public once deployed.
 - BCAN case-study text: supplied by the owner (scope, client, year, industry, context, approach, outcome); it is the source for the BCAN page.
 - Still missing: a portrait photo, full case studies for the other four projects, all project imagery (every image is a labelled placeholder) and Playground content (six placeholder cards). There are no metrics, client quotes or testimonials beyond the resume. Future work must not fabricate any of them.
 
@@ -57,7 +57,7 @@ Professional positioning comes from the resume: UI/UX and brand design across in
 
 1. **Recruiter in seconds.** The scene must never make the role, experience or resume hard to find. The fast path to them is always one click or one key away.
 2. **The scene is the navigation, not decoration.** New sections attach to the landscape and its objects instead of competing UI. The artwork is never sacrificed for interface.
-3. **Show the thinking.** Experience & Projects exists for leads: process, decisions and outcomes, not just screenshots.
+3. **Show the thinking.** Interfaces exists for leads: process, decisions and outcomes, not just screenshots.
 4. **Experiments stay in the Playground.** Personal and exploratory work is welcome, kept apart from the job-critical path.
 5. **Real or nothing.** Placeholder content is labelled as placeholder until the owner supplies the real thing; nothing is invented to fill a gap.
 

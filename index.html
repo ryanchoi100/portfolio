@@ -88,7 +88,7 @@
   position: relative; box-sizing: border-box; display: flex; flex-direction: column;
   width: max(80vw, min(calc(100vw - 24px), 560px)); max-width: 1600px;
   height: calc(100vh - 2 * max(12px, 5vh));   /* fixed panel, 5vh from top and bottom; the page body scrolls inside it */
-  padding: clamp(18px, 3vw, 36px);
+  --panel-pad: clamp(18px, 3vw, 36px); padding: var(--panel-pad);
   user-select: text; cursor: default;
   transform: scale(0.96);
   transition: transform var(--dur-close) var(--ease-exit);
@@ -233,7 +233,9 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 .shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 
 /* list: names (left) travel with the images (right); the centred image's name is lit */
-.xp-scroll { scroll-snap-type: y proximity; }
+.popup[data-page="experience"] .popup__panel { overflow: hidden; }   /* the list bleeds to the panel's edges; clip it to the rounded glass */
+.xp-view[data-xp-view="list"] { margin-block: calc(-1 * var(--panel-pad)); }
+.xp-scroll { margin-top: 0; scroll-snap-type: y proximity; }
 .xp-grid { display: grid; grid-template-columns: minmax(0, 1fr) var(--shot-w, 40%); gap: var(--xp-gap); }
 .xp-names-wrap { position: sticky; top: 0; align-self: start; height: var(--list-h, 100%); overflow: hidden; }
 .xp-names { list-style: none; margin: 0; padding: 0 0 0 4px; }
@@ -469,7 +471,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   <nav class="scene-nav" aria-label="Portfolio sections" data-scene-nav="">
     <button class="scene-nav__item glass" type="button" data-open="about">About Me</button>
     <button class="scene-nav__item glass" type="button" data-open="resume">Resume</button>
-    <button class="scene-nav__item glass" type="button" data-open="experience">Experience &amp; Projects</button>
+    <button class="scene-nav__item glass" type="button" data-open="experience">Interfaces</button>
     <button class="scene-nav__item glass" type="button" data-open="playground">Playground</button>
   </nav>
 
@@ -565,20 +567,19 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
     </div>
   </template>
 
-  <!-- Experience and Projects — opened from the boat (the snowman in winter); content from resume/RyanChoi_Resume.pdf.
+  <!-- Interfaces (internally the "experience" page) — opened from the boat (the snowman in winter); content from resume/RyanChoi_Resume.pdf.
        Two stacked views share the panel: the list (names on the left travel with the images on the right) and one
        project page at a time, cloned from <template data-project="id">. openProject() / closeProject() morph
        between them (the name becomes the title, the image keeps its place on the right).
+       The list runs from the panel's top edge to its bottom edge and loops: xpInit clones the items (and names)
+       once above and once below the originals, and the scroll wraps by one set, so it never ends.
        IMAGES: every .shot is a labelled placeholder. To use a real image, put it inside the .shot:
        <div class="shot"><img src="projects/bcan/cover.webp" alt="…"></div>. The list image and a project's
        first figure image should be the same picture so the morph is seamless. -->
   <template data-popup-page="experience">
     <div class="xp" data-xp data-view="list">
       <div class="xp-view" data-xp-view="list">
-        <header class="pop-head" data-reveal>
-          <h2 id="popup-title">Experience &amp; Projects</h2>
-          <p>Design internships and the projects I’ve led, 2024–2026. Choose one to read the story.</p>
-        </header>
+        <h2 id="popup-title" class="sr-only">Interfaces</h2>
         <div class="pop-scroll xp-scroll" data-xp-scroll data-reveal>
           <div class="xp-grid">
             <div class="xp-names-wrap">
@@ -609,7 +610,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
        with data-shot (index into the figure's .shot list; the head shows image 0, the same picture as the list).
        Elements marked data-proj-in fade up after the morph. -->
   <template data-project="bcan">
-    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Experience &amp; Projects</span></div>
+    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Interfaces</span></div>
     <div class="pop-scroll proj-scroll" data-proj-scroll>
       <div class="proj-grid">
         <div class="proj-main">
@@ -691,7 +692,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   </template>
 
   <template data-project="sagetopia">
-    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Experience &amp; Projects</span></div>
+    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Interfaces</span></div>
     <div class="pop-scroll proj-scroll" data-proj-scroll>
       <div class="proj-grid">
         <div class="proj-main">
@@ -732,7 +733,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   </template>
 
   <template data-project="rainfall">
-    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Experience &amp; Projects</span></div>
+    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Interfaces</span></div>
     <div class="pop-scroll proj-scroll" data-proj-scroll>
       <div class="proj-grid">
         <div class="proj-main">
@@ -773,7 +774,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   </template>
 
   <template data-project="recreon">
-    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Experience &amp; Projects</span></div>
+    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Interfaces</span></div>
     <div class="pop-scroll proj-scroll" data-proj-scroll>
       <div class="proj-grid">
         <div class="proj-main">
@@ -813,7 +814,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   </template>
 
   <template data-project="itconcepts">
-    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Experience &amp; Projects</span></div>
+    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Interfaces</span></div>
     <div class="pop-scroll proj-scroll" data-proj-scroll>
       <div class="proj-grid">
         <div class="proj-main">
@@ -941,10 +942,10 @@ class SeasonsScene {
   // wins) and arranged so none overlap: house and tree meet at x=785 / the 785–828 notch, garden sits
   // between boat and house. 'boat' is only active outside winter, 'snowman' only in winter (same spot).
   // Hover key format: "<slideIndex>:<key>", stored in this.hlKey and read by every overlay.
-  // Labels: boat/snowman → Experience · house → About Me · tree → Resume · garden → Playground (click opens pop-up).
+  // Labels: boat/snowman → Interfaces · house → About Me · tree → Resume · garden → Playground (click opens pop-up).
   // ======================================================================
   hits = [['house', 662, 362, 785, 502], ['house', 785, 380, 828, 502], ['tree', 785, 285, 1010, 505], ['boat', 360, 508, 495, 550], ['snowman', 398, 468, 460, 548], ['garden', 590, 474, 634, 506]];
-  labels = { boat: 'Experience', snowman: 'Experience', house: 'About Me', tree: 'Resume', garden: 'Playground' };
+  labels = { boat: 'Interfaces', snowman: 'Interfaces', house: 'About Me', tree: 'Resume', garden: 'Playground' };
   mouse = null; hlKey = '';
   // ======================================================================
   // TREE — falling leaves (sprites sampled from the tree PNG) or snow while the tree is hovered.
@@ -1278,17 +1279,42 @@ class SeasonsScene {
   xpProject = null; xpBusy = false;
   xpInit(pop) {
     const xp = pop.querySelector('[data-xp]'); if (!xp) return;
-    const list = xp.querySelector('[data-xp-scroll]');
-    list.addEventListener('scroll', () => this.xpSync(xp), { passive: true });
-    // keyboard: a focused name brings its image to the middle
-    xp.querySelector('[data-xp-names]').addEventListener('focusin', e => {
-      const b = e.target.closest('.xp-name'); if (!b || !b.matches(':focus-visible')) return;
-      const items = [...xp.querySelectorAll('.xp-item')], i = [...xp.querySelectorAll('.xp-name')].indexOf(b);
-      list.scrollTo({ top: items[i].offsetTop - items[0].offsetTop, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    const list = xp.querySelector('[data-xp-scroll]'), shots = xp.querySelector('.xp-shots'), ol = xp.querySelector('[data-xp-names]');
+    // Endless loop: one copy of the projects above the originals and one below. Every item and name carries
+    // data-k (its absolute position, 0 … 3N−1); the originals are the middle set N … 2N−1. Copies are hidden
+    // from assistive tech and the Tab order but still clickable.
+    const N = this.xpN = shots.children.length;
+    const mark = (n, k, copy) => { n.dataset.k = k; if (copy) { n.setAttribute('aria-hidden', 'true'); n.querySelectorAll('button').forEach(b => { b.tabIndex = -1; }); } };
+    [shots, ol].forEach(box => {
+      const orig = [...box.children]; orig.forEach((n, i) => mark(n, N + i));
+      box.prepend(...orig.map((n, i) => { const c = n.cloneNode(true); mark(c, i, true); return c; }));
+      box.append(...orig.map((n, i) => { const c = n.cloneNode(true); mark(c, 2 * N + i, true); return c; }));
     });
-    this.xpRO = new ResizeObserver(() => { this.xpLayout(xp); this.xpSync(xp); });
+    // wrap by one set whenever the middle set is left, so the scroll never ends (not during a morph)
+    list.addEventListener('scroll', () => {
+      if (!this.xpBusy && !this.xpProject) {
+        const S = this.xpStride(xp), st = list.scrollTop;
+        if (st < (N - 0.5) * S) list.scrollTop = st + N * S; else if (st >= (2 * N - 0.5) * S) list.scrollTop = st - N * S;
+      }
+      this.xpSync(xp);
+    }, { passive: true });
+    // keyboard: a focused name brings its image to the middle
+    ol.addEventListener('focusin', e => {
+      const b = e.target.closest('.xp-name'); if (!b || !b.matches(':focus-visible')) return;
+      list.scrollTo({ top: +b.closest('[data-k]').dataset.k * this.xpStride(xp), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    });
+    // keep the same project in the middle when the panel resizes
+    this.xpRO = new ResizeObserver(() => {
+      const k = Math.round(list.scrollTop / (this.xpS || 1)); this.xpLayout(xp);
+      if (!this.xpProject) list.scrollTop = k * this.xpStride(xp); this.xpSync(xp);
+    });
+    this.xpLayout(xp);
+    list.scrollTop = N * this.xpStride(xp); // start on the first original project
+    this.xpSync(xp);
     this.xpRO.observe(xp);
-    this.xpLayout(xp); this.xpSync(xp);
+  }
+  xpStride(xp) { // distance between two images (item k is centred at scrollTop = k × stride)
+    const it = xp.querySelectorAll('.xp-item'); return this.xpS = (it.length > 1 ? it[1].offsetTop - it[0].offsetTop : 1);
   }
   xpLayout(xp) {
     const list = xp.querySelector('[data-xp-scroll]'), proj = xp.querySelector('[data-proj-scroll]');
@@ -1309,14 +1335,15 @@ class SeasonsScene {
     const list = xp.querySelector('[data-xp-scroll]'), ol = xp.querySelector('[data-xp-names]');
     const items = xp.querySelectorAll('.xp-item'), names = xp.querySelectorAll('.xp-name');
     if (!items.length || !ol.offsetParent) return; // phones: no names column
-    const S = items.length > 1 ? items[1].offsetTop - items[0].offsetTop : 1;
+    const S = this.xpStride(xp);
     const f = Math.max(0, Math.min(items.length - 1, list.scrollTop / S)), rh = ol.firstElementChild.offsetHeight;
+    const cur = this.xpN + (Math.round(f) % this.xpN); // aria-current always marks the original, not a copy
     ol.style.transform = `translate3d(0, ${(list.clientHeight / 2 - (f + 0.5) * rh).toFixed(1)}px, 0)`;
     names.forEach((b, i) => {
       const d = Math.abs(i - f);
       b.style.setProperty('--o', (1 - Math.min(1, d) * 0.62).toFixed(3));
       b.querySelector('.xp-name__meta').style.setProperty('--m', Math.max(0, 1 - d * 2).toFixed(3));
-      if (Math.round(f) === i) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+      if (i === cur) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
     });
   }
   projSync(pv) {
@@ -1326,22 +1353,24 @@ class SeasonsScene {
     pv.querySelectorAll('.proj-sec[data-shot]').forEach(s => { if (s.getBoundingClientRect().top <= line) k = +s.dataset.shot; });
     shots.forEach((n, i) => n.toggleAttribute('data-on', i === k));
   }
-  // the list's visible copies of a project's name (names column on desktop, caption on phones) and image
-  xpParts(lv, id) {
-    const vis = n => n.getClientRects().length > 0;
-    const btn = [...lv.querySelectorAll(`button[data-open-project="${id}"]`)].find(vis);
-    return { btn, title: btn?.querySelector('[data-xp-title]'), shot: lv.querySelector(`[data-xp-shot][data-open-project="${id}"]`) };
+  // item k's visible name (names column on desktop, caption on phones) and image
+  xpParts(lv, k) {
+    const item = lv.querySelector(`.xp-item[data-k="${k}"]`), name = lv.querySelector(`.xp-names [data-k="${k}"] .xp-name`);
+    const btn = name && name.getClientRects().length ? name : item?.querySelector('.xp-cap');
+    return { btn, title: btn?.querySelector('[data-xp-title]'), shot: item?.querySelector('[data-xp-shot]') };
   }
   flip(from, to, scale) { // transform that puts `to` exactly over `from`
     const sx = scale ? scale[0] : from.width / to.width, sy = scale ? scale[1] : from.height / to.height;
     return `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${sx}, ${sy})`;
   }
-  openProject(id) {
+  openProject(id, trigger) {
     const pop = this.rootRef.current?.querySelector('[data-popup]'), xp = pop?.querySelector('[data-xp]');
     const tpl = this.rootRef.current?.querySelector(`template[data-project="${id}"]`);
     if (!xp || !tpl || this.xpProject || this.xpBusy) return;
     const lv = xp.querySelector('[data-xp-view="list"]'), pv = xp.querySelector('[data-xp-view="project"]');
-    const src = this.xpParts(lv, id); if (!src.title || !src.shot) return;
+    const k = +(trigger?.closest('[data-k]')?.dataset.k ?? this.xpN);
+    const src = this.xpParts(lv, k); if (!src.title || !src.shot) return;
+    this.xpK = k;
     const a = src.title.getBoundingClientRect(), s1 = src.shot.getBoundingClientRect(), fa = parseFloat(getComputedStyle(src.title).fontSize);
     pv.replaceChildren(tpl.content.cloneNode(true));
     pv.querySelector('[data-proj-figure] > .shot')?.setAttribute('data-on', '');
@@ -1377,17 +1406,16 @@ class SeasonsScene {
   closeProject() {
     const pop = this.rootRef.current?.querySelector('[data-popup]'), xp = pop?.querySelector('[data-xp]');
     if (!xp || !this.xpProject || this.xpBusy) return;
-    const id = this.xpProject, lv = xp.querySelector('[data-xp-view="list"]'), pv = xp.querySelector('[data-xp-view="project"]');
+    const lv = xp.querySelector('[data-xp-view="list"]'), pv = xp.querySelector('[data-xp-view="project"]');
     const title = pv.querySelector('[data-proj-title]'), fig = pv.querySelector('[data-proj-figure]');
     const b = title.getBoundingClientRect(), s2 = fig.getBoundingClientRect(), fb = parseFloat(getComputedStyle(title).fontSize);
     const sc = pv.querySelector('[data-proj-scroll]').getBoundingClientRect(), titleOnScreen = b.bottom > sc.top + 8 && b.top < sc.bottom;
     delete lv.dataset.hidden; lv.inert = false; pv.inert = true;
-    // bring this project's image back to the middle of the list before measuring where things land
-    const list = lv.querySelector('[data-xp-scroll]'), items = [...lv.querySelectorAll('.xp-item')];
-    const item = items.find(n => n.querySelector(`[data-open-project="${id}"]`));
-    list.style.scrollSnapType = 'none'; list.scrollTop = item.offsetTop - items[0].offsetTop; list.style.scrollSnapType = '';
+    // bring this project's original (middle-set) image back to the middle of the list before measuring
+    const list = lv.querySelector('[data-xp-scroll]'), k = this.xpN + (this.xpK % this.xpN);
+    list.style.scrollSnapType = 'none'; list.scrollTop = k * this.xpStride(xp); list.style.scrollSnapType = '';
     this.xpSync(xp);
-    const dst = this.xpParts(lv, id);
+    const dst = this.xpParts(lv, k);
     const a = dst.title.getBoundingClientRect(), s1 = dst.shot.getBoundingClientRect(), fa = parseFloat(getComputedStyle(dst.title).fontSize);
     this.xpProject = null; xp.dataset.view = 'list';
     pop.setAttribute('aria-labelledby', 'popup-title');
@@ -1400,7 +1428,7 @@ class SeasonsScene {
     } else {
       title.style.visibility = fig.style.visibility = 'hidden';
       dst.shot.style.transformOrigin = '0 0';
-      const others = [lv.querySelector('.pop-head'), ...lv.querySelectorAll('.xp-item, .xp-names li')]
+      const others = [...lv.querySelectorAll('.xp-item, .xp-names li')]
         .filter(n => !n.contains(dst.shot) && !n.contains(dst.btn));
       if (dst.btn.classList.contains('xp-name')) others.push(dst.btn.querySelector('.xp-name__meta'));
       anims = [
@@ -1941,7 +1969,7 @@ class SeasonsScene {
       e.stopPropagation();
       if (e.target.closest('a[href="#"]')) e.preventDefault(); // placeholder links: no navigation until real URLs are added
       if (e.target.closest('[data-proj-back]')) { this.closeProject(); return; }
-      const proj = e.target.closest('[data-open-project]'); if (proj) { this.openProject(proj.dataset.openProject); return; }
+      const proj = e.target.closest('[data-open-project]'); if (proj) { this.openProject(proj.dataset.openProject, proj); return; }
       if (e.target === pop || e.target.hasAttribute?.('data-backdrop') || e.target.closest('[data-popup-close]')) this.closePopup();
     });
     el.addEventListener('click', this.onClick);
