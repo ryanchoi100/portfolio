@@ -19,7 +19,7 @@ All logic lives in `class SeasonsScene` in `index.html`, split into commented se
 | Tree | 785,285→1010,505 | all | reader fades in; leaves / snow fall | RESUME | TODO |
 | Boat | 360,508→495,550 | not winter | fisher fades in; ripples | EXPERIENCE | TODO |
 | Snowman | 398,468→460,548 | winter | kneeler fixes scarf | EXPERIENCE | TODO |
-| Garden | 590,474→634,506 | all | warm glow; gardener fades in | PLAYGROUND | opens Playground pop-up |
+| Garden | 590,474→634,506 | all | white glow; gardener fades in | PLAYGROUND | opens Playground pop-up |
 
 Hitboxes don't overlap (boat and snowman share a spot but are never active in the same season). First match in `hits` wins.
 
@@ -45,7 +45,7 @@ Procedurally painted with soft brush strokes (`paintFig`). Mid-brown skin `rgb(1
 - Fisher (boat), Reader (tree), Kneeler (snowman), Gardener (garden): spring waters tulips, summer picks flowers into a basket, autumn carries a pumpkin, winter pats the snow mound.
 
 ## Garden patch
-Painted once per season into a canvas (`paintGarden`) — same footprint in all four: spring tulip cluster, summer fern clump with blooms, autumn pumpkin pile, winter snow dome. Hover adds a warm `drop-shadow` glow.
+Painted once per season into a canvas (`paintGarden`) — same footprint in all four: spring tulip cluster, summer fern clump with blooms, autumn pumpkin pile, winter snow dome. Hover adds a white `drop-shadow` glow.
 
 ## Hover label
 Follows the cursor, centred 22 px below, flips above near the bottom, clamped 6 px from edges, eased 0.35/frame.

@@ -10,7 +10,7 @@ colors:
   frost-lit: "rgba(255, 255, 255, 0.8)"
   frost-edge: "rgba(255, 255, 255, 0.6)"
   dusk-scrim: "rgba(20, 28, 38, 0.16)"
-  lamplight: "rgba(255, 222, 156, 0.6)"
+  lamplight: "rgba(255, 255, 255, 0.6)"
   night-water: "#1d2630"
   paper: "#ffffff"
   paper-back: "#f7f4ef"
@@ -136,23 +136,23 @@ components:
 
 The artwork is the system. A painted lake (house, tree, boat, garden, water) fills the viewport and turns Spring → Summer → Autumn → Winter as the visitor scrolls. Every piece of interface is a seasonal guest in that painting. It arrives when called, sits on frosted glass so the season stays visible through it, and leaves without a trace. Nothing in the UI is opaque, and nothing competes with the paint for colour.
 
-Against the soft brushwork, the interface is a **crisp counterpoint**. There is a single monospace face set small, uppercase labels with wide tracking, hairline edges and exact 9px corners. That precision reads like a designer's annotations on a painting: technical and quiet, never decorative. The only colour the UI adds is lamplight, a glow borrowed from the season on screen: blossom pink in spring, sun gold in summer, ember orange in autumn, frost blue in winter. It appears only when something is touched.
+Against the soft brushwork, the interface is a **crisp counterpoint**. There is a single monospace face set small, uppercase labels with wide tracking, hairline edges and exact 9px corners. That precision reads like a designer's annotations on a painting: technical and quiet, never decorative. The only light the UI adds is lamplight, a white glow like light caught in liquid glass, the same in every season. It appears only when something is touched.
 
 Density is low. Glass panels float above the scene on soft ambient shadows, and the scene behind them is blurred and dimmed just enough to read over. Motion follows the same rule: arrivals decelerate confidently, exits are quick and calm, and only transform and opacity move.
 
 **Key Characteristics:**
 - Translucent frosted glass for every surface; the season always shows through.
 - One typeface (IBM Plex Mono); hierarchy from size, uppercase tracking and two weights.
-- Ink-on-frost colour; the warm lamplight glow is the only accent, and it only answers interaction.
+- Ink-on-frost colour; the white lamplight glow is the only accent, and it only answers interaction.
 - Floating depth: soft ambient shadow at rest, lift and glow on hover.
 - Calm, exact motion: expo ease-out arrivals, short in-out exits, no bounce.
 
 ## Colors
 
-A near-monochrome system of cool ink on white frost, warmed only by lamplight; all hue comes from the painting behind it.
+A near-monochrome system of cool ink on white frost, lit only by a white lamplight glow; all hue comes from the painting behind it.
 
 ### Primary
-- **Lamplight** (`lamplight`): the glow, at 0.6 alpha, whose hue follows the season. Spring is blossom pink `rgb(255, 188, 212)`, summer sun gold `rgb(255, 214, 120)`, autumn ember orange `rgb(255, 160, 96)` and winter frost blue `rgb(168, 206, 255)`. The scene publishes the current hue as `--glow-rgb` on `<html>`, blending between two seasons while the visitor scrolls. The frontmatter value is the fallback before the scene loads. It is used only as a state response: the glow ring on hovered buttons, rows and cards, the Lifted halo, the garden's hover glow, and as text-selection colour (at 0.75 alpha). Never shown at rest.
+- **Lamplight** (`lamplight`): a white glow (`rgba(255, 255, 255, 0.6)`, exposed as `--glow-rgb: 255, 255, 255`) that reads like light caught in liquid glass. It is the same in every season. It is used only as a state response: the glow ring on hovered buttons, rows and cards, the Lifted halo, the Playground tile's rim light and the garden's hover glow. Never shown at rest. Text selection does not use it (white would vanish on the frost); selection is a 16% ink tint, `rgba(20, 28, 38, 0.16)`.
 
 ### Neutral
 - **Lake Ink** (`lake-ink`): all text, icons, focus outlines and the tint of every shadow. Cool, deep blue-black from the lake's darkest water.
@@ -171,7 +171,7 @@ Placeholder thumbnail tints (sage, sand, terracotta, rust, slate, dusk at 0.42 a
 ### Named Rules
 **The Painting Leads Rule.** No interface surface is opaque. Glass fills stay at or below 0.8 white so the current season always reads through.
 
-**The Lamplight Rule.** The season glow exists only as a response to hover, press or focus. A surface that glows at rest is a bug.
+**The Lamplight Rule.** The white glow exists only as a response to hover, press or focus. A surface that glows at rest is a bug.
 
 ## Typography
 
@@ -205,12 +205,12 @@ Pop-ups are centred on the scene. The panel is about 80vw wide (capped at 1600px
 
 ## Elevation & Depth
 
-Depth is floating glass. Surfaces hover just above the painting on one soft, cool ambient shadow with a 1px inner top highlight, as if light catches the top edge of a pane. Glass on glass separates by density (`frost-dense`), not by a heavier shadow. Interaction lifts and warms. Hovered cards rise 3px with a deeper shadow and lamplight halo; hovered buttons and linked rows gain the lamplight ring in place.
+Depth is floating glass. Surfaces hover just above the painting on one soft, cool ambient shadow with a 1px inner top highlight, as if light catches the top edge of a pane. Glass on glass separates by density (`frost-dense`), not by a heavier shadow. Interaction lifts and lights up. Hovered cards rise 3px with a deeper shadow and lamplight halo; hovered buttons and linked rows gain the lamplight ring in place.
 
 ### Shadow Vocabulary
 - **Resting glass** (`box-shadow: 0 4px 14px rgba(20,28,38,0.10), inset 0 1px 0 rgba(255,255,255,0.35)`): every glass surface at rest.
-- **Lamplit** (`box-shadow: 0 4px 14px rgba(20,28,38,0.10), 0 0 14px rgba(255,222,156,0.6), inset 0 1px 0 rgba(255,255,255,0.35)`): hovered buttons, close button and linked rows.
-- **Lifted** (`box-shadow: 0 10px 24px rgba(20,28,38,0.14), 0 0 18px rgba(255,222,156,0.55), inset 0 1px 0 rgba(255,255,255,0.35)`): hovered cards.
+- **Lamplit** (`box-shadow: 0 4px 14px rgba(20,28,38,0.10), 0 0 14px rgba(255,255,255,0.6), inset 0 1px 0 rgba(255,255,255,0.35)`): hovered buttons, close button and linked rows.
+- **Lifted** (`box-shadow: 0 10px 24px rgba(20,28,38,0.14), 0 0 18px rgba(255,255,255,0.55), inset 0 1px 0 rgba(255,255,255,0.35)`): hovered cards.
 
 ### Named Rules
 **The Frost Rule.** Glass is `backdrop-filter: blur(10px) saturate(1.4)`, always the same values. The blur is never animated.
@@ -257,7 +257,7 @@ One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, p
 ### Playground (signature)
 *Work laid on a diagonal, poured like glass.* The garden's page is a looping track of 4:5 media tiles (`rounded.media`, a solid paper-back base, a deep soft shadow) running from top-left to bottom-right. The centred tile is upright and about 60% of the panel's height. Each step away moves it a third of the panel along the diagonal, tilts it 9° (counter-clockwise up the track, clockwise down it), shrinks it to 58% and fades it. The track is masked so tiles appear out of the panel's edges. The panel's bottom-left holds the "Playground" kicker, the centred tile's title (Heading) and its kind, placeholder status and count (label).
 - **Scroll:** the wheel (either axis), a drag along the diagonal, or the arrow keys move the track. It eases toward the input and settles on the nearest tile once input stops, frame-rate independent. The track loops endlessly.
-- **Hover (fluid glass, the only liquid effect):** the tile grows 2%, a season-coloured rim light and a soft highlight follow the pointer, and the `#pg-liquid` SVG filter ripples only the tile's edge band (noise displaced through a rim mask), eased in over about 300ms and out on leave. It applies to pointer devices only and is off under reduced motion.
+- **Hover (fluid glass, the only liquid effect):** the tile grows 2%, a white rim light and a soft highlight follow the pointer, and the `#pg-liquid` SVG filter ripples only the tile's edge band (noise displaced through a rim mask), eased in over about 300ms and out on leave. It applies to pointer devices only and is off under reduced motion.
 - **Open** (matched frame by frame to the owner's reference recording): clicking the centred tile (or Enter on it) opens it across the whole pop-up panel (not the screen; the panel clips it to its rounded corners). Clicking another tile brings it to the centre first. The tile is picked up by its right side. Its right and bottom edges sweep out first (540ms, `cubic-bezier(0.45, 0, 0.2, 1)`), while its left and top edges hold back and catch up at the end (540ms from 60ms, `cubic-bezier(0.7, 0, 0.3, 1)`). Over the 600ms it leans slightly anticlockwise (−4° at the halfway point) with its right side turned toward the viewer (`perspective(1000px) rotateY(-8deg)`). It keeps its 18px corners until 80% of the way, then squares off. The edges stay clean, with no ripple. The frost Back button and caption fade up just after it lands.
 - **Close:** Back or Escape fades the caption and Back button (150ms), then reverses the move over 600ms on in-out cubic. The tile shrinks back to its place on the track, its right and bottom edges slightly ahead, leaning a little clockwise (4°) with its right side turned away (rotateY 8°), and its corners round off early. Focus returns to the tile.
 - **Reduced motion:** the full view fades in and out over 200ms.

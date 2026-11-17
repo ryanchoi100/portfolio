@@ -23,11 +23,10 @@
   --frost-lit: rgba(255, 255, 255, 0.8);      /* hovered glass buttons (the 0.8 ceiling) */
   --frost-edge: rgba(255, 255, 255, 0.6);     /* 1px border on every glass surface */
   --dusk-scrim: rgba(20, 28, 38, 0.16);       /* wash over the scene behind a pop-up */
-  /* the only accent (state responses only). Its hue follows the season: the scene sets --glow-rgb on <html>
-     as the visitor scrolls (spring blossom, summer sun, autumn ember, winter frost), blending between them. */
-  --glow-rgb: 255, 222, 156;
+  /* the only accent (state responses only): a white glow, like light caught in liquid glass, in every season */
+  --glow-rgb: 255, 255, 255;
   --lamplight: rgba(var(--glow-rgb), 0.6);
-  --lamplight-selection: rgba(var(--glow-rgb), 0.75);
+  --lamplight-selection: rgba(20, 28, 38, 0.16);   /* selection stays an ink tint: white would vanish on the frost */
   --night-water: #1d2630;
   --paper: #ffffff;                           /* Resume paper face */
   --paper-back: #f7f4ef;                      /* back of the folded sheet */
@@ -315,7 +314,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 /* ======================================================================
    PLAYGROUND — a diagonal, endlessly looping track of cards (positions set per frame by playFrame:
    translate along the diagonal, tilt and shrink with distance from the centre). Hover = fluid glass:
-   the #pg-liquid SVG filter ripples the card's rim while a season-coloured rim light follows the pointer.
+   the #pg-liquid SVG filter ripples the card's rim while a white rim light follows the pointer.
    .pg-full is the full view (fills the pop-up panel); playOpen / playClose swing it in and out.
    ====================================================================== */
 .popup[data-page="playground"] .popup__panel { overflow: hidden; }
@@ -968,15 +967,6 @@ class SeasonsScene {
   // SEASON DATA — one slide per season. isWinter swaps boat → snowman and enables chimney smoke.
   // Assets per season: -plate.jpg (background), -tree.png, -refl.png, -lights.png (lit windows).
   // ======================================================================
-  // Season glow (the --glow-rgb accent): spring blossom pink, summer sun gold, autumn ember orange, winter frost blue.
-  GLOW = { spring: [255, 188, 212], summer: [255, 214, 120], autumn: [255, 160, 96], winter: [168, 206, 255] };
-  // blend the glow between the two seasons on screen and publish it on <html> (only when it changes)
-  setGlow(p) {
-    const n = this.seasons.length, f = ((p % n) + n) % n, i = Math.floor(f) % n, u = f - Math.floor(f);
-    const a = this.GLOW[this.seasons[i].name], b = this.GLOW[this.seasons[(i + 1) % n].name];
-    const c = a.map((v, k) => Math.round(v + (b[k] - v) * u)).join(', ');
-    if (c !== this.glowC) { this.glowC = c; document.documentElement.style.setProperty('--glow-rgb', c); }
-  }
   seasons = ['spring', 'summer', 'autumn', 'winter'].map(k => ({
     name: k, src: `seasons/${k}-plate.jpg`, tree: `seasons/${k}-tree.png`, refl: `seasons/${k}-refl.png`, lights: `seasons/${k}-lights.png`, isWinter: k === 'winter', hasBoat: k !== 'winter',
   }));
@@ -1113,8 +1103,7 @@ class SeasonsScene {
       el.style.cursor = lbl ? 'pointer' : 'default'; }
     el.querySelectorAll('[data-slide]').forEach((s, i) => {
       s.querySelectorAll('[data-glow]').forEach(d => { d.style.opacity = key === i + ':house' ? d.dataset.glow : 0; });
-      const g = this.GLOW[this.seasons[i].name], gi = g.map(v => Math.round(v + (255 - v) * 0.6)); // inner rim: the season glow lifted toward white
-      s.querySelectorAll('[data-garden]').forEach(d => { d.style.filter = key === i + ':garden' ? `drop-shadow(0 0 3px rgba(${gi},0.95)) drop-shadow(0 0 9px rgba(${g},0.6)) brightness(1.06)` : 'none'; });
+      s.querySelectorAll('[data-garden]').forEach(d => { d.style.filter = key === i + ':garden' ? 'drop-shadow(0 0 3px rgba(255,255,255,0.95)) drop-shadow(0 0 9px rgba(255,255,255,0.6)) brightness(1.06)' : 'none'; });
     });
   }
   // ======================================================================
@@ -2240,7 +2229,6 @@ class SeasonsScene {
       if ((this.props.snap ?? true) && performance.now() - this.lastInput > 180) this.target += (Math.round(this.target) - this.target) * 0.12;
       this.pos += (this.target - this.pos) * 0.09;
       const n = 4, p = this.pos;
-      this.setGlow(p);
       const t = performance.now() / 1000, A = this.props.swayAmount ?? 1;
       const cv = el.querySelector('[data-smoke]'); if (cv) this.drawSmoke(cv, t);
       this.updateHover(el, p);
