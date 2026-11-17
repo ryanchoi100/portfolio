@@ -1564,10 +1564,10 @@ class SeasonsScene {
   playSize() {
     const g = this.play; if (!g) return;
     const W = g.el.clientWidth, H = g.el.clientHeight, narrow = W < 560;
-    const s = Math.round(narrow ? W / 4.3 : Math.max(110, Math.min(180, W / 7.6, H / 5)));
-    // the cluster: a tight group about 2.7 tiles wide and 2.4 tall in the middle of the panel, with empty space around it
-    const hw = narrow ? W * 0.24 : s * 1.25, hh = narrow ? H * 0.14 : s * 0.8;
-    Object.assign(g, { W, H, s, hw, hh, L: 2 * hw + s * 1.6 });
+    const s = Math.round(narrow ? W / 4.3 : Math.max(96, Math.min(170, W * 0.105, H * 0.19)));
+    // the tiles' area sits in the middle of the panel with empty space all round; tiles never leave it
+    const hw = narrow ? W * 0.3 : W * 0.2, hh = narrow ? H * 0.17 : Math.max(s * 0.6, H * 0.34 - s * 0.6); // the tiles' area: about 42% of the panel wide and 70% tall, as in the reference
+    Object.assign(g, { W, H, s, hw, hh, L: 2 * hw });
     g.cw = narrow ? W * 0.84 : Math.min(W * 0.5, H * 0.46 * 1.5); g.ch = g.cw / 1.5;
     g.cx = W / 2; g.cy = narrow ? H * 0.4 : H * 0.42;
     g.el.style.setProperty('--pg-s', s + 'px');
@@ -1613,6 +1613,7 @@ class SeasonsScene {
     const g = this.play; if (!g) return;
     const now = performance.now(), f = Math.min(4, (now - (g.ft || now)) / 16.67 || 1); g.ft = now; // frames elapsed
     const ease = k => 1 - Math.pow(1 - k, f), still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const sm = (a, b, v) => { const u = Math.min(1, Math.max(0, (v - a) / (b - a))); return u * u * (3 - 2 * u); };
     const T = still ? 0 : now / 1000;
     if (!still) g.drift += 0.025 * f;                  // idle: barely moving (about 1.5px a second)
     // scroll / drag slide the lanes (odd right, even left) in an endless loop: a tile that leaves one edge of
@@ -1620,7 +1621,7 @@ class SeasonsScene {
     g.push += (g.pushT - g.push) * ease(g.drag ? 0.3 : 0.07);
     // pointer, smoothed slowly: while a card is open the field floats a little with the mouse
     g.mxs += ((g.sel ? g.mx : 0) - g.mxs) * ease(0.035); g.mys += ((g.sel ? g.my : 0) - g.mys) * ease(0.035);
-    const { s, hw, hh, H, W } = g, cyF = H / 2, L = W + s * 1.6; // one lap: the panel's width plus a tile either side
+    const { s, hw, hh, H, L } = g, cyF = H / 2; // one lap = the width of the tiles' area
     const Rx = g.cw / 2 + s * 0.7, Ry = g.ch / 2 + s * 0.7 + 70, Cy = g.cy + 60; // the clearing around a focused card
     for (const t of g.tiles) {
       const z = Math.min(1, Math.max(0, t._z0 + t._za * Math.sin(T * t._zf * 6.28 + t._zp)));   // 0 far … 1 near
@@ -1628,22 +1629,26 @@ class SeasonsScene {
       const par = 0.85 + 0.3 * z;                       // nearer tiles move a little further (parallax)
       const base = (t._u - 0.5) * 2 * hw;               // home spot across the cluster
       const sway = Math.sin(g.drift * 0.02 * t._sp + t._bp) * s * 0.06;   // a slow idle sway, a few px
-      const lx = ((((base + dir * g.push * par + sway + L / 2) % L) + L) % L) - L / 2; // wrapped around the panel
+      const lx = ((((base + dir * g.push * par + sway + L / 2) % L) + L) % L) - L / 2; // wrapped inside the tiles' area
+      const keep = 1 - sm(0.86, 1, Math.abs(lx) / hw);  // at the area's sides a tile shrinks away and grows back in on the other side (no fading)
       const ly = (t._ly + t._jy * 0.45) * hh + t._ba * Math.sin(T * t._bf * 6.28 + t._bp);
       const x = g.cx + lx, y = cyF + ly;
       let tx = 0, ty = 0;
       if (g.sel) {                                       // scatter outward around the card and its caption
         const vx = x - g.cx, vy = y - Cy, e = Math.max(0.15, Math.hypot(vx / Rx, vy / Ry));
         const k = Math.max(0, 1.18 / e - 1) + 0.12; tx = vx * k; ty = vy * k;
+        const mx = g.W / 2 - s * 0.8 - 56, my = g.H / 2 - s * 0.8 - 46;   // …but never past the panel's border (room for the mouse float)
+        tx = Math.max(-mx - (x - g.cx), Math.min(mx - (x - g.cx), tx)); ty = Math.max(-my - (y - cyF), Math.min(my - (y - cyF), ty));
       }
       const wrapped = t._x !== null && Math.abs(x - t._x) > L / 2; t._x = x; t._y = y;
       if (wrapped) { t._ox = tx; t._oy = ty; }
       t._ox += (tx - t._ox) * ease(0.045); t._oy += (ty - t._oy) * ease(0.045);         // gradual, never abrupt
       t._fs += ((g.sel ? 0.84 : 1) - t._fs) * ease(0.04);                               // shrink a little while a card is open
       const px = -g.mxs * (10 + 34 * z), py = -g.mys * (8 + 26 * z);                    // mouse parallax: nearer tiles move more
-      const sc = (0.72 + 0.4 * z) * t._fs, rY = -Math.max(-1, Math.min(1, lx / (W / 2))) * 10 + g.mxs * 6, rX = (ly / hh) * 6 - g.mys * 5;
+      const sc = Math.max(0.001, (0.72 + 0.4 * z) * t._fs * keep), rY = -(lx / hw) * 10 + g.mxs * 6, rX = (ly / hh) * 6 - g.mys * 5;
       t.style.transform = `translate3d(${(x - s / 2 + t._ox + px).toFixed(1)}px, ${(y - s / 2 + t._oy + py).toFixed(1)}px, 0) perspective(900px) rotateY(${rY.toFixed(2)}deg) rotateX(${rX.toFixed(2)}deg) rotate(${t._rz.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
       t.style.zIndex = 1 + Math.round(z * 300);
+      t.style.pointerEvents = keep < 0.4 ? 'none' : '';
     }
     if (g.hover) {                                       // fluid-glass strength on the hovered tile
       g.disp += (g.dispTarget - g.disp) * ease(0.12);
@@ -1657,7 +1662,7 @@ class SeasonsScene {
   }
   playFocusLogo(i) { // keyboard: the copy of logo i nearest the centre
     const g = this.play; let best = null, bd = Infinity;
-    for (const t of g.tiles) { if (+t.dataset.i !== i || t === g.sel) continue; const d = Math.hypot(t._x - g.cx, t._y - g.H / 2); if (d < bd) { bd = d; best = t; } }
+    for (const t of g.tiles) { if (+t.dataset.i !== i || t === g.sel || t.style.pointerEvents === 'none') continue; const d = Math.hypot(t._x - g.cx, t._y - g.H / 2); if (d < bd) { bd = d; best = t; } }
     if (best) this.playFocus(best);
   }
   playFocus(tile) {
