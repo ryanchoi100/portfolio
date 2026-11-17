@@ -90,7 +90,7 @@ components:
     textColor: "{colors.lake-ink}"
     rounded: "{rounded.glass}"
     padding: "{spacing.panel}"
-    width: "max(76vw, min(calc(100vw - 24px), 560px))"
+    width: "max(80vw, min(calc(100vw - 24px), 560px))"
   popup-close:
     backgroundColor: "{colors.frost}"
     textColor: "{colors.lake-ink}"
@@ -200,7 +200,7 @@ Placeholder thumbnail tints (sage, sand, terracotta, rust, slate, dusk at 0.42 a
 
 The scene is authored on a 1456 × 813 canvas and scaled to cover the viewport (`width: max(100vw, 179.09vh)`, `height: max(55.84vw, 100vh)`, centred). Everything placed in the scene is positioned in percentages of that stage. Narrow screens never shrink the painting: on touch screens where it is wider than the viewport, a sideways swipe pans across it at full size (clamped to its edges), and up/down swipes change the season.
 
-Pop-ups are centred on the scene. The panel is about 76vw × 70vh, capped at 1240px wide, and fills the screen less 12px gutters on phones. It has fluid padding (`spacing.panel`) and is laid out as a fixed header plus one scrolling body: long pages scroll inside the panel, and the panel never touches the screen's edges. Rhythm inside is 8px within the header, 22px between header and body, 14px gutters in grids and 30px between sections. The Playground is an auto-fill grid of cards at least 200px wide. Text pages use a single column, and About pairs a 180–280px portrait with prose. At 640px and below, two-column blocks stack and fact lists drop to one column.
+Pop-ups are centred on the scene. The panel is about 80vw wide (capped at 1600px) and 90vh tall, sitting 5vh from the top and bottom of the screen, and fills the screen less 12px gutters on phones. It has fluid padding (`spacing.panel`) and is laid out as a fixed header plus one scrolling body: long pages scroll inside the panel, and the panel never touches the screen's edges. Rhythm inside is 8px within the header, 22px between header and body, 14px gutters in grids and 30px between sections. The Playground is an auto-fill grid of cards at least 200px wide. Text pages use a single column, and About pairs a 180–280px portrait with prose. At 640px and below, two-column blocks stack and fact lists drop to one column.
 
 ## Elevation & Depth
 
