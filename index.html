@@ -1508,7 +1508,7 @@ class SeasonsScene {
   }
   // ======================================================================
   // PLAYGROUND — "assembly" (see the playground template).
-  //   22 tiles in a cluster in the middle of the panel, with empty space around it. They drift in lanes (odd
+  //   8 tiles in a cluster in the middle of the panel, with empty space around it. They drift in lanes (odd
   //   lanes right, even left) and the wheel or a drag pushes them further the same ways; each lane wraps.
   //   Every tile has its own depth that slowly drifts, so size, speed (parallax), stacking, brightness and
   //   softness keep changing; plus its own bob and a hair of tilt, and the field curves away in perspective
@@ -1565,8 +1565,8 @@ class SeasonsScene {
     const g = this.play; if (!g) return;
     const W = g.el.clientWidth, H = g.el.clientHeight, narrow = W < 560;
     const s = Math.round(narrow ? W / 4.3 : Math.max(110, Math.min(180, W / 7.6, H / 5)));
-    // the cluster: a tight group about 3.5 tiles wide and 3.3 tall in the middle of the panel, with empty space around it
-    const hw = narrow ? W * 0.3 : s * 1.75, hh = narrow ? H * 0.22 : s * 1.15;
+    // the cluster: a tight group about 2.7 tiles wide and 2.4 tall in the middle of the panel, with empty space around it
+    const hw = narrow ? W * 0.24 : s * 1.25, hh = narrow ? H * 0.14 : s * 0.8;
     Object.assign(g, { W, H, s, hw, hh, L: 2 * hw + s * 1.6 });
     g.cw = narrow ? W * 0.84 : Math.min(W * 0.5, H * 0.46 * 1.5); g.ch = g.cw / 1.5;
     g.cx = W / 2; g.cy = narrow ? H * 0.4 : H * 0.42;
@@ -1575,14 +1575,14 @@ class SeasonsScene {
     const cap = g.el.querySelector('[data-pg-cap]'); cap.style.top = (g.cy + g.ch / 2 + 22) + 'px';
     if (g.stage && !g.stage.anim) Object.assign(g.stage.el.style, { left: g.cx - g.cw / 2 + 'px', top: g.cy - g.ch / 2 + 'px', width: g.cw + 'px', height: g.ch + 'px' });
     if (g.tiles.length) return;
-    // 22 tiles (as in the reference) in 5 lanes; every tile gets its own depth, speed, bob and depth drift,
+    // 8 tiles in 3 lanes (3 · 2 · 3); every tile gets its own depth, speed, bob and depth drift,
     // so the field never moves in lockstep. Fixed seed: the arrangement is the same on every visit.
     let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    const lanes = [4, 5, 4, 5, 4], order = [0, 3, 1, 4, 2, 5];
+    const lanes = [3, 2, 3], order = [0, 3, 1, 4, 2, 5, 1, 3];
     let k = 0;
     lanes.forEach((count, r) => {
       for (let j = 0; j < count; j++, k++) {
-        const i = order[(k * 5 + r) % g.n], from = g.src[i];
+        const i = order[k] % g.n, from = g.src[i];
         const t = document.createElement('button');
         t.type = 'button'; t.className = 'pg-card'; t.tabIndex = -1; t.setAttribute('aria-hidden', 'true');
         t.innerHTML = '<span class="pg-card__body"><span class="pg-card__shine"></span></span>';
@@ -1591,7 +1591,7 @@ class SeasonsScene {
         t.style.setProperty('--tint', from.style.getPropertyValue('--tint'));
         Object.assign(t, {
           _r: r, _u: (j + rnd() * 0.55) / count,             // place along the lane (0..1 of its loop)
-          _ly: (r - 2) / 2,                                   // lane, −1 (top) … 1 (bottom)
+          _ly: r - 1,                                          // lane, −1 (top) … 1 (bottom)
           _jy: (rnd() - 0.5) * 0.5,                           // off the lane line
           _z0: rnd(), _za: 0.06 + rnd() * 0.1, _zf: 0.03 + rnd() * 0.05, _zp: rnd() * 6.28,   // depth and its slow drift
           _sp: 0.55 + rnd() * 0.9,                            // own speed
