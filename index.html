@@ -232,9 +232,10 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 /* list: names (left) travel with the images (right); the centred image's name is lit */
 .popup[data-page="experience"] .popup__panel { overflow: hidden; }   /* the list bleeds to the panel's edges; clip it to the rounded glass */
 .xp-view[data-xp-view="list"] { margin-block: calc(-1 * var(--panel-pad)); }
-.xp-scroll {
-  margin-top: 0; scroll-snap-type: y proximity; scrollbar-width: none;
-  /* images appear out of the glass instead of being cut by its edges (a mask reads only alpha, so any opaque colour works) */
+.xp-scroll { margin-top: 0; scroll-snap-type: y proximity; scrollbar-width: none; overscroll-behavior: contain; }
+/* images appear out of the glass instead of being cut by its edges. The fade sits on the list view, not on the
+   scroller itself, so the browser can keep scrolling on the compositor (a mask reads only alpha). */
+.xp-view[data-xp-view="list"] {
   -webkit-mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 14%, var(--lake-ink) 86%, transparent);
   mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 14%, var(--lake-ink) 86%, transparent);
 }
@@ -1342,40 +1343,56 @@ class SeasonsScene {
   xpInit(pop) {
     const xp = pop.querySelector('[data-xp]'); if (!xp) return;
     const list = xp.querySelector('[data-xp-scroll]'), shots = xp.querySelector('.xp-shots'), ol = xp.querySelector('[data-xp-names]');
-    // Endless loop: one copy of the projects above the originals and one below. Every item and name carries
-    // data-k (its absolute position, 0 … 3N−1); the originals are the middle set N … 2N−1. Copies are hidden
-    // from assistive tech and the Tab order but still clickable.
-    const N = this.xpN = shots.children.length;
+    // Endless loop: COPIES sets of the projects above the originals and COPIES below, so even a long fling never
+    // reaches a real end. Every item and name carries data-k (its absolute position); the originals are the middle
+    // set. Copies are hidden from assistive tech and the Tab order but still clickable.
+    const N = this.xpN = shots.children.length, COPIES = 3, base = this.xpBase = COPIES * N;
     const mark = (n, k, copy) => { n.dataset.k = k; if (copy) { n.setAttribute('aria-hidden', 'true'); n.querySelectorAll('button').forEach(b => { b.tabIndex = -1; }); } };
     [shots, ol].forEach(box => {
-      const orig = [...box.children]; orig.forEach((n, i) => mark(n, N + i));
-      box.prepend(...orig.map((n, i) => { const c = n.cloneNode(true); mark(c, i, true); return c; }));
-      box.append(...orig.map((n, i) => { const c = n.cloneNode(true); mark(c, 2 * N + i, true); return c; }));
+      const orig = [...box.children]; orig.forEach((n, i) => mark(n, base + i));
+      const before = [], after = [];
+      for (let c = 0; c < COPIES; c++) orig.forEach((n, i) => {
+        const x = n.cloneNode(true); mark(x, c * N + i, true); before.push(x);
+        const y = n.cloneNode(true); mark(y, base + N + c * N + i, true); after.push(y);
+      });
+      box.prepend(...before); box.append(...after);
     });
-    // wrap by one set whenever the middle set is left, so the scroll never ends (not during a morph)
+    this.xpItems = [...xp.querySelectorAll('.xp-item')]; this.xpNames = [...xp.querySelectorAll('.xp-name')];
+    this.xpMetas = this.xpNames.map(b => b.querySelector('.xp-name__meta'));
+    // Scroll handling stays cheap: the visual sync runs at most once per frame (no layout reads, all sizes are
+    // cached in xpLayout), and the loop only jumps back to the middle set once scrolling has come to rest, so a
+    // jump never interrupts trackpad momentum, a smooth scroll or snapping.
+    let raf = 0, idle = 0;
+    const wrapWhenIdle = () => {
+      if (this.xpBusy || this.xpProject) return;
+      const S = this.xpS, k = list.scrollTop / S, shift = Math.round((k - (base + (N - 1) / 2)) / N);
+      if (shift) list.scrollTop -= shift * N * S;    // same picture, same spot: invisible
+    };
     list.addEventListener('scroll', () => {
+      // safety net: a very long continuous scroll that nears a real end jumps back right away
       if (!this.xpBusy && !this.xpProject) {
-        const S = this.xpStride(xp), st = list.scrollTop;
-        if (st < (N - 0.5) * S) list.scrollTop = st + N * S; else if (st >= (2 * N - 0.5) * S) list.scrollTop = st - N * S;
+        const k = list.scrollTop / this.xpS;
+        if (k < N * 1.2 || k > base + N + (COPIES - 1.2) * N) wrapWhenIdle();
       }
-      this.xpSync(xp);
+      if (!raf) raf = requestAnimationFrame(() => { raf = 0; this.xpSync(xp); });
+      clearTimeout(idle); idle = setTimeout(wrapWhenIdle, 180);
     }, { passive: true });
     // keyboard: a focused name brings its image to the middle
     ol.addEventListener('focusin', e => {
       const b = e.target.closest('.xp-name'); if (!b || !b.matches(':focus-visible')) return;
-      list.scrollTo({ top: +b.closest('[data-k]').dataset.k * this.xpStride(xp), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      list.scrollTo({ top: +b.closest('[data-k]').dataset.k * this.xpS, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     });
     // keep the same project in the middle when the panel resizes
     this.xpRO = new ResizeObserver(() => {
       const k = Math.round(list.scrollTop / (this.xpS || 1)); this.xpLayout(xp);
-      if (!this.xpProject) list.scrollTop = k * this.xpStride(xp); this.xpSync(xp);
+      if (!this.xpProject) list.scrollTop = k * this.xpS; this.xpSync(xp);
     });
     this.xpLayout(xp);
-    list.scrollTop = N * this.xpStride(xp); // start on the first original project
+    list.scrollTop = base * this.xpS; // start on the first original project
     this.xpSync(xp);
     this.xpRO.observe(xp);
   }
-  xpStride(xp) { // distance between two images (item k is centred at scrollTop = k × stride)
+  xpStride(xp) { // distance between two images (item k is centred at scrollTop = k × stride); measured, then cached
     const it = xp.querySelectorAll('.xp-item'); return this.xpS = (it.length > 1 ? it[1].offsetTop - it[0].offsetTop : 1);
   }
   xpLayout(xp) {
@@ -1392,22 +1409,28 @@ class SeasonsScene {
     set('--row-h', Math.max(56, Math.min(84, lh / 6.5)));
     set('--fig-top', narrow ? 0 : Math.max(0, (ph - sh) / 2));
     set('--fig-h', Math.min(ph * 0.36, w * 0.66));
+    this.xpStride(xp);
+    const ol = xp.querySelector('[data-xp-names]');
+    this.xpRowH = ol?.firstElementChild?.offsetHeight || 0; this.xpWinH = ol?.parentElement?.clientHeight || 0; this.xpListH = lh;
   }
   xpSync(xp) {
     const list = xp.querySelector('[data-xp-scroll]'), ol = xp.querySelector('[data-xp-names]');
-    const items = xp.querySelectorAll('.xp-item'), names = xp.querySelectorAll('.xp-name');
-    if (!items.length || !ol.offsetParent) return; // phones: no names column
-    const S = this.xpStride(xp);
-    const f = Math.max(0, Math.min(items.length - 1, list.scrollTop / S)), rh = ol.firstElementChild.offsetHeight;
-    const cur = this.xpN + (Math.round(f) % this.xpN); // aria-current always marks the original, not a copy
-    ol.style.transform = `translate3d(0, ${(ol.parentElement.clientHeight / 2 - (f + 0.5) * rh).toFixed(1)}px, 0)`;
-    items.forEach((it, i) => it.firstElementChild.style.setProperty('--s', (1 - Math.min(1, Math.abs(i - f)) * 0.07).toFixed(4)));
-    names.forEach((b, i) => {
+    const items = this.xpItems, names = this.xpNames;
+    if (!items?.length || !this.xpRowH) return; // phones: no names column
+    const S = this.xpS, f = Math.max(0, Math.min(items.length - 1, list.scrollTop / S));
+    const cur = this.xpBase + (((Math.round(f) - this.xpBase) % this.xpN) + this.xpN) % this.xpN; // aria-current marks the original
+    ol.style.transform = `translate3d(0, ${(this.xpWinH / 2 - (f + 0.5) * this.xpRowH).toFixed(1)}px, 0)`;
+    // only the few items and names near the middle can change; skip the rest
+    const lo = Math.max(0, Math.floor(f) - 3), hi = Math.min(items.length - 1, Math.ceil(f) + 3);
+    for (let i = lo; i <= hi; i++) {
       const d = Math.abs(i - f);
-      b.style.setProperty('--o', (1 - Math.min(1, d) * 0.62).toFixed(3));
-      b.querySelector('.xp-name__meta').style.setProperty('--m', Math.max(0, 1 - d * 2).toFixed(3));
-      if (i === cur) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
-    });
+      items[i].firstElementChild.style.setProperty('--s', (1 - Math.min(1, d) * 0.07).toFixed(4));
+      names[i].style.setProperty('--o', (1 - Math.min(1, d) * 0.62).toFixed(3));
+      this.xpMetas[i].style.setProperty('--m', Math.max(0, 1 - d * 2).toFixed(3));
+    }
+    if (this.xpCur !== cur) {
+      names[this.xpCur]?.removeAttribute('aria-current'); names[cur]?.setAttribute('aria-current', 'true'); this.xpCur = cur;
+    }
   }
   projSync(pv) {
     const sc = pv.querySelector('[data-proj-scroll]'); if (!sc) return;
@@ -1431,7 +1454,7 @@ class SeasonsScene {
     const tpl = this.rootRef.current?.querySelector(`template[data-project="${id}"]`);
     if (!xp || !tpl || this.xpProject || this.xpBusy) return;
     const lv = xp.querySelector('[data-xp-view="list"]'), pv = xp.querySelector('[data-xp-view="project"]');
-    const k = +(trigger?.closest('[data-k]')?.dataset.k ?? this.xpN);
+    const k = +(trigger?.closest('[data-k]')?.dataset.k ?? this.xpBase);
     const src = this.xpParts(lv, k); if (!src.title || !src.shot) return;
     this.xpK = k;
     const a = src.title.getBoundingClientRect(), s1 = src.shot.getBoundingClientRect(), fa = parseFloat(getComputedStyle(src.title).fontSize);
@@ -1475,8 +1498,8 @@ class SeasonsScene {
     const sc = pv.querySelector('[data-proj-scroll]').getBoundingClientRect(), titleOnScreen = b.bottom > sc.top + 8 && b.top < sc.bottom;
     delete lv.dataset.hidden; lv.inert = false; pv.inert = true;
     // bring this project's original (middle-set) image back to the middle of the list before measuring
-    const list = lv.querySelector('[data-xp-scroll]'), k = this.xpN + (this.xpK % this.xpN);
-    list.style.scrollSnapType = 'none'; list.scrollTop = k * this.xpStride(xp); list.style.scrollSnapType = '';
+    const list = lv.querySelector('[data-xp-scroll]'), k = this.xpBase + (((this.xpK - this.xpBase) % this.xpN) + this.xpN) % this.xpN;
+    list.style.scrollSnapType = 'none'; list.scrollTop = k * this.xpS; list.style.scrollSnapType = '';
     this.xpSync(xp);
     const dst = this.xpParts(lv, k);
     const a = dst.title.getBoundingClientRect(), s1 = dst.shot.getBoundingClientRect(), fa = parseFloat(getComputedStyle(dst.title).fontSize);
