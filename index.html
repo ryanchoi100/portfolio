@@ -1528,7 +1528,7 @@ class SeasonsScene {
     this.playSize();
     el.addEventListener('wheel', e => {
       e.preventDefault();
-      g.pushT += (e.deltaY + e.deltaX) * (e.deltaMode === 1 ? 30 : 1) * 1.1; g.last = performance.now();
+      g.pushT += (e.deltaY + e.deltaX) * (e.deltaMode === 1 ? 30 : 1) * 0.8; g.last = performance.now();
     }, { passive: false });
     el.addEventListener('pointerdown', e => {
       if (e.button > 0) return;
@@ -1566,7 +1566,7 @@ class SeasonsScene {
     const W = g.el.clientWidth, H = g.el.clientHeight, narrow = W < 560;
     const s = Math.round(narrow ? W / 4.3 : Math.max(96, Math.min(170, W * 0.105, H * 0.19)));
     // the tiles' area sits in the middle of the panel with empty space all round; tiles never leave it
-    const hw = narrow ? W * 0.3 : W * 0.2, hh = narrow ? H * 0.17 : Math.max(s * 0.6, H * 0.34 - s * 0.6); // the tiles' area: about 42% of the panel wide and 70% tall, as in the reference
+    const hw = narrow ? W * 0.26 : Math.min(W * 0.17, s * 1.45), hh = narrow ? H * 0.13 : s * 0.82; // the carousels' reach: a compact cluster in the middle
     Object.assign(g, { W, H, s, hw, hh, L: 2 * hw });
     g.cw = narrow ? W * 0.84 : Math.min(W * 0.5, H * 0.46 * 1.5); g.ch = g.cw / 1.5;
     g.cx = W / 2; g.cy = narrow ? H * 0.4 : H * 0.42;
@@ -1624,14 +1624,16 @@ class SeasonsScene {
     const { s, hw, hh, H, L } = g, cyF = H / 2; // one lap = the width of the tiles' area
     const Rx = g.cw / 2 + s * 0.7, Ry = g.ch / 2 + s * 0.7 + 70, Cy = g.cy + 60; // the clearing around a focused card
     for (const t of g.tiles) {
-      const z = Math.min(1, Math.max(0, t._z0 + t._za * Math.sin(T * t._zf * 6.28 + t._zp)));   // 0 far … 1 near
-      const dir = t._r % 2 ? 1 : -1;                    // odd lanes right, even lanes left
-      const par = 0.85 + 0.3 * z;                       // nearer tiles move a little further (parallax)
-      const base = (t._u - 0.5) * 2 * hw;               // home spot across the cluster
-      const sway = Math.sin(g.drift * 0.02 * t._sp + t._bp) * s * 0.06;   // a slow idle sway, a few px
-      const lx = ((((base + dir * g.push * par + sway + L / 2) % L) + L) % L) - L / 2; // wrapped inside the tiles' area
-      const keep = 1 - sm(0.86, 1, Math.abs(lx) / hw);  // at the area's sides a tile shrinks away and grows back in on the other side (no fading)
-      const ly = (t._ly + t._jy * 0.45) * hh + t._ba * Math.sin(T * t._bf * 6.28 + t._bp);
+      // each lane is a small carousel seen from the front: its tiles circle round, passing in front (larger,
+      // on top) and behind (smaller, underneath) one another, so every tile is always in view in the cluster
+      const dir = t._r % 2 ? 1 : -1;                    // odd lanes turn to the right along the front, even lanes to the left
+      const sway = Math.sin(g.drift * 0.02 * t._sp + t._bp) * 0.05;       // a slow idle sway
+      const a = t._u * 6.2832 + t._r * 0.9 + dir * (g.push / (hw * 1.7) + sway);
+      const front = (Math.cos(a) + 1) / 2;              // 1 at the front of the carousel, 0 at the back
+      const z = Math.min(1, Math.max(0, front * 0.82 + 0.09 + t._za * 0.35 * Math.sin(T * t._zf * 6.28 + t._zp))); // 0 far … 1 near
+      const lx = Math.sin(a) * hw;
+      const keep = 1;
+      const ly = (t._ly + t._jy * 0.45) * hh - (front - 0.5) * s * 0.22 + t._ba * Math.sin(T * t._bf * 6.28 + t._bp);
       const x = g.cx + lx, y = cyF + ly;
       let tx = 0, ty = 0;
       if (g.sel) {                                       // scatter outward around the card and its caption
@@ -1645,7 +1647,7 @@ class SeasonsScene {
       t._ox += (tx - t._ox) * ease(0.045); t._oy += (ty - t._oy) * ease(0.045);         // gradual, never abrupt
       t._fs += ((g.sel ? 0.84 : 1) - t._fs) * ease(0.04);                               // shrink a little while a card is open
       const px = -g.mxs * (10 + 34 * z), py = -g.mys * (8 + 26 * z);                    // mouse parallax: nearer tiles move more
-      const sc = Math.max(0.001, (0.72 + 0.4 * z) * t._fs * keep), rY = -(lx / hw) * 10 + g.mxs * 6, rX = (ly / hh) * 6 - g.mys * 5;
+      const sc = (0.66 + 0.5 * z) * t._fs * keep, rY = -(lx / hw) * 12 + g.mxs * 6, rX = (ly / hh) * 6 - g.mys * 5;
       t.style.transform = `translate3d(${(x - s / 2 + t._ox + px).toFixed(1)}px, ${(y - s / 2 + t._oy + py).toFixed(1)}px, 0) perspective(900px) rotateY(${rY.toFixed(2)}deg) rotateX(${rX.toFixed(2)}deg) rotate(${t._rz.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
       t.style.zIndex = 1 + Math.round(z * 300);
       t.style.pointerEvents = keep < 0.4 ? 'none' : '';
