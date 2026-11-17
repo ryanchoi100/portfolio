@@ -2,3 +2,8 @@
 .impeccable/config.local.json
 .impeccable/hook.cache.json
 .claude/settings.local.json
+
+# test screenshots never belong in the repo root (site images live in seasons/ and resume/)
+/*.png
+/*.jpg
+/*.webp
