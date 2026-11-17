@@ -72,7 +72,6 @@ rounded:
   glass: "9px"
   thumb: "6px"
   paper: "2px"
-  media: "18px"
 spacing:
   xs: "4px"
   sm: "8px"
@@ -222,7 +221,7 @@ Depth is floating glass. Surfaces hover just above the painting on one soft, coo
 
 ## Shapes
 
-One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, panel, buttons, cards, rows and chips. Image slots inside cards use a slightly tighter 6px (`rounded.thumb`) so they nest inside the card's curve. The Resume paper is nearly square-cornered (`rounded.paper`, 2px), like a real sheet. Playground tiles are the one softer shape: corners at 20% of the tile (about 30px), and 28px on the focused landscape card (`rounded.media` is the 18px base). They are pictures, not glass. Borders are a single 1px frost edge. Dividers are 1px ink hairlines. There are no pills, circles or decorative outlines.
+One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, panel, buttons, cards, rows and chips. Image slots inside cards use a slightly tighter 6px (`rounded.thumb`) so they nest inside the card's curve. The Resume paper is nearly square-cornered (`rounded.paper`, 2px), like a real sheet. Playground tiles and the opened landscape card use the same 9px corner as everything else, so one barely-rounded rectangle runs through the whole site. Borders are a single 1px frost edge. Dividers are 1px ink hairlines. There are no pills, circles or decorative outlines.
 
 ## Components
 
@@ -264,7 +263,7 @@ One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, p
 - **Scroll (endless loop):** each of the three lanes is a small carousel seen from the front. The wheel (either axis) or a drag turns them, odd lanes along the front to the right and even lanes to the left, eased in. Each lane's tiles circle round, passing in front of (larger, on top) and behind (smaller, underneath) each other, and the lanes overlap as they turn. Every tile is visible at all times in one compact cluster in the middle of the panel; nothing travels to an edge or reappears from the other side. When input stops, the carousels stay where they are.
 - **Open a tile:** the other tiles scatter outward around the landscape card and its caption and shrink to 84%, both easing in gently (about two seconds to settle, never abrupt). Scattered tiles stay at least a tile's width inside the panel's border. While a card is open the whole field floats with the mouse, smoothed slowly: nearer tiles move up to about 44px and tilt a few degrees toward the pointer.
 - **Hover (fluid glass, the only liquid effect):** the tile rises over its neighbours. It scales to 1.08 with the Lifted shadow, a white rim light follows the pointer, and the `#pg-liquid` filter ripples its edge. Pointer devices only; off under reduced motion.
-- **Focus (click a tile):** the tile flies from where it is to the centre and opens out into a landscape 3:2 card (about half the panel's width, 28px corners, a deep shadow) over 760ms on the expo ease-out. The field scatters around it (see Open a tile). The panel takes on a soft wash of the tile's colour. Below the card a centred caption rises in (from 260ms, 60ms apart): the kind and placeholder status (label, 0.16em tracking), the title (600, 28–44px) and a short descriptor.
+- **Focus (click a tile):** the tile flies from where it is to the centre and opens out into a landscape 3:2 card (about half the panel's width, 9px corners, a deep shadow) over 760ms on the expo ease-out. The field scatters around it (see Open a tile). The panel takes on a soft wash of the tile's colour. Below the card a centred caption rises in (from 260ms, 60ms apart): the kind and placeholder status (label, 0.16em tracking), the title (600, 28–44px) and a short descriptor.
 - **Swap / release:** clicking another tile flies the new one in while the old card shrinks back into its tile, which is still moving with its row (620ms, in-out cubic). Escape, or a click on empty space, releases the card and lets the field close back in.
 - **Keyboard:** the field takes focus (outlined chip). Arrow keys step through the six logos, focusing the nearest copy of each, and Escape releases.
 - **Reduced motion:** no idle sway, bob or depth drift; the card and caption fade in place.

@@ -44,7 +44,6 @@
   --radius-glass: 9px;
   --radius-thumb: 6px;
   --radius-paper: 2px;
-  --radius-media: 18px;                       /* Playground cards (large media tiles) */
   /* material: the one frost filter (never animated) and the scrim filter */
   --frost-filter: blur(10px) saturate(1.4);
   --frost-border: 1px solid var(--frost-edge);
@@ -335,7 +334,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 .pg-track { position: absolute; inset: 0; }
 .pg-card {
   position: absolute; left: 0; top: 0; width: var(--pg-s, 160px); height: var(--pg-s, 160px); padding: 0; border: 0; background: none;
-  border-radius: var(--radius-tile, 30px); cursor: pointer; will-change: transform;
+  border-radius: var(--radius-glass); cursor: pointer; will-change: transform;
 }
 .pg-card:hover { z-index: 400 !important; }   /* the lifted tile rides over its neighbours */
 .pg-card__body {
@@ -352,7 +351,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   transition: opacity 350ms var(--ease-out);
 }
 /* the focused card (landscape) and its caption */
-.pg-stage { position: absolute; z-index: 500; overflow: hidden; border-radius: var(--radius-stage, 28px); background: var(--paper-back); box-shadow: 0 30px 60px rgba(20, 28, 38, 0.32), 0 6px 16px rgba(20, 28, 38, 0.16); will-change: left, top, width, height; }
+.pg-stage { position: absolute; z-index: 500; overflow: hidden; border-radius: var(--radius-glass); background: var(--paper-back); box-shadow: 0 30px 60px rgba(20, 28, 38, 0.32), 0 6px 16px rgba(20, 28, 38, 0.16); will-change: left, top, width, height; }
 .pg-stage .pg-card__media { border-radius: 0; font-size: 13px; }
 .pg-cap { position: absolute; z-index: 500; left: 50%; display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(90%, 560px); text-align: center; transform: translateX(-50%); pointer-events: none; }
 .pg-cap[hidden] { display: none; }
@@ -1581,7 +1580,6 @@ class SeasonsScene {
     g.cw = narrow ? W * 0.84 : Math.min(W * 0.5, H * 0.46 * 1.5); g.ch = g.cw / 1.5;
     g.cx = W / 2; g.cy = narrow ? H * 0.4 : H * 0.42;
     g.el.style.setProperty('--pg-s', s + 'px');
-    g.el.style.setProperty('--radius-tile', Math.round(s * 0.2) + 'px');
     const cap = g.el.querySelector('[data-pg-cap]'); cap.style.top = (g.cy + g.ch / 2 + 22) + 'px';
     if (g.stage && !g.stage.anim) Object.assign(g.stage.el.style, { left: g.cx - g.cw / 2 + 'px', top: g.cy - g.ch / 2 + 'px', width: g.cw + 'px', height: g.ch + 'px' });
     if (g.tiles.length) return;
