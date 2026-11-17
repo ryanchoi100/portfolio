@@ -7,9 +7,9 @@
 <title>Seasons</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400;1,500;1,600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
-<!-- Adobe Fonts: to use Adobe Garamond Pro and Myriad Pro, add the web project's kit link here, e.g.
-     <link rel="stylesheet" href="https://use.typekit.net/XXXXXXX.css">. The font stacks below already name them first. -->
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<!-- Adobe Fonts: to use Myriad Pro itself, add the web project's kit link here, e.g.
+     <link rel="stylesheet" href="https://use.typekit.net/XXXXXXX.css">. --font-sans already names myriad-pro first. -->
 <style>html,body{margin:0;height:100%;overflow:hidden;background:var(--night-water);color:var(--lake-ink);overscroll-behavior:none}a{color:var(--lake-ink)}a:hover{color:var(--lake-ink)}</style>
 <style>
 /* ======================================================================
@@ -36,11 +36,9 @@
   --paper-back: #f7f4ef;                      /* back of the folded sheet */
   --paper-back-shade: #ebe6de;
   /* type */
-  /* Serif: Garamond italic for titles, headlines and the grey intro lines. Adobe Garamond Pro when an Adobe Fonts
-     kit is linked, otherwise EB Garamond (Google Fonts). Sans: its partner, Myriad Pro (the resume's face, also
-     Adobe's) when the kit is linked, otherwise Source Sans 3, Adobe's open-source humanist sans: body text,
-     labels, buttons, kickers and meta. */
-  --font-serif: 'adobe-garamond-pro', 'EB Garamond', Garamond, Georgia, serif;
+  /* One family everywhere: Myriad (the resume's face). Myriad Pro when an Adobe Fonts kit is linked, otherwise
+     Source Sans 3, Adobe's open-source humanist sans in the same spirit. Regular for body text, semibold / bold
+     where the design calls for weight (titles, headlines, labels). */
   --font-sans: 'myriad-pro', 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* shape */
   --radius-glass: 9px;
@@ -385,19 +383,10 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 .pop-head p, .proj-lede { color: var(--lake-ink-muted); }
 .hl { color: var(--lake-ink); }
 .pop-prose p, .proj-sec > p:not(.proj-kicker), .pop-row__body, .pop-points, .pop-facts dd, .proj-meta dd { color: var(--lake-ink-soft); }
-/* Garamond italic: titles, headlines, the Interfaces names and the grey intro / lede lines. Garamond sets smaller
-   than the sans at the same size, so these step up. Everything else (body, labels, buttons) is the sans. */
-.pop-head h2, .pg-cap__title, .pg-now__title, .xp-name__title, .proj-title, .proj-h, .pop-head p, .proj-lede {
-  font-family: var(--font-serif); font-style: italic; font-weight: 500; letter-spacing: 0;
-}
-.pop-head h2 { font-size: 36px; }
-.pop-head p { font-size: 19px; line-height: 1.4; }
-.proj-lede { font-size: 21px; line-height: 1.45; }
-.proj-title { font-size: clamp(32px, 3.6vw, 50px); }
-.proj-h { font-size: clamp(24px, 2.6vw, 34px); line-height: 1.2; }
-.xp-name__title { font-size: clamp(24px, 2.3vw, 32px); }
-.pg-cap__title { font-size: clamp(32px, 3.6vw, 52px); }
-.pg-now__title { font-size: clamp(24px, 2.2vw, 30px); }
+/* Titles and headlines: Myriad semibold */
+.xp-name__title, .proj-title, .proj-h { font-weight: 600; }
+/* Buttons don't inherit the page font by default: make every control use Myriad too */
+button, input, select, textarea { font-family: inherit; }
 
 /* Keyboard access to the scene objects: invisible until a key-user tabs into it, then shown as glass chips */
 .scene-nav { position: absolute; top: 12px; left: 12px; z-index: 15; display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--font-sans); }

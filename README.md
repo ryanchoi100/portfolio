@@ -59,4 +59,4 @@ Glass tokens (reused by the pop-up): bg `rgba(255,255,255,0.62)`, `backdrop-filt
 ## TODO for the real build
 - Click destinations for About Me / Resume / Experience.
 - Real Playground logos and logo animations.
-- Fonts: Garamond italic (EB Garamond) for titles and Source Sans 3 for text and labels, from Google Fonts. To use Adobe Garamond Pro and Myriad Pro, add an Adobe Fonts kit link in `<head>` (a comment marks the spot); the font stacks already name them first.
+- Fonts: Myriad everywhere: Myriad Pro via an Adobe Fonts kit (add its link in `<head>`, a comment marks the spot), otherwise Source Sans 3 from Google Fonts. Regular for body text, heavier weights for titles and labels.

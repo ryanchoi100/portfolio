@@ -318,10 +318,10 @@
   ],
   "narrative": {
     "northStar": "The Painted Season",
-    "overview": "The artwork is the system. A painted lake (house, tree, boat, garden, water) fills the viewport and turns Spring → Summer → Autumn → Winter as the visitor scrolls. Every piece of interface is a seasonal guest in that painting. It arrives when called, sits on frosted glass so the season stays visible through it, and leaves without a trace. Nothing in the UI is opaque, and nothing competes with the paint for colour.\n\nAgainst the soft brushwork, the interface is a **crisp counterpoint**. There are two faces from the resume's family (Garamond italic for titles and a humanist sans for reading), small uppercase labels with wide tracking, hairline edges and exact 9px corners. That precision reads like a designer's annotations on a painting: technical and quiet, never decorative. The only warmth the UI adds is lamplight, a pale gold glow borrowed from the house's lit windows. It appears only when something is touched.\n\nDensity is low. Glass panels float above the scene on soft ambient shadows, and the scene behind them is blurred and dimmed just enough to read over. Motion follows the same rule: arrivals decelerate confidently, exits are quick and calm, and only transform and opacity move.",
+    "overview": "The artwork is the system. A painted lake (house, tree, boat, garden, water) fills the viewport and turns Spring → Summer → Autumn → Winter as the visitor scrolls. Every piece of interface is a seasonal guest in that painting. It arrives when called, sits on frosted glass so the season stays visible through it, and leaves without a trace. Nothing in the UI is opaque, and nothing competes with the paint for colour.\n\nAgainst the soft brushwork, the interface is a **crisp counterpoint**. There are two faces from the resume's family (one humanist sans, Myriad, for everything), small uppercase labels with wide tracking, hairline edges and exact 9px corners. That precision reads like a designer's annotations on a painting: technical and quiet, never decorative. The only warmth the UI adds is lamplight, a pale gold glow borrowed from the house's lit windows. It appears only when something is touched.\n\nDensity is low. Glass panels float above the scene on soft ambient shadows, and the scene behind them is blurred and dimmed just enough to read over. Motion follows the same rule: arrivals decelerate confidently, exits are quick and calm, and only transform and opacity move.",
     "keyCharacteristics": [
       "Translucent frosted glass for every surface; the season always shows through.",
-      "Two typefaces: Garamond italic for titles, a humanist sans for everything else.",
+      "One typeface: Myriad, regular for body text.",
       "Ink-on-frost colour; the warm lamplight glow is the only accent, and it only answers interaction.",
       "Floating depth: soft ambient shadow at rest, lift and glow on hover.",
       "Calm, exact motion: expo ease-out arrivals, short in-out exits, no bounce."
@@ -338,8 +338,8 @@
         "section": "colors"
       },
       {
-        "name": "The Two Faces Rule",
-        "body": "Garamond italic is for titles, headlines and the grey intro / lede lines; everything else is the sans. No third family.",
+        "name": "The One Face Rule",
+        "body": "Everything is Myriad (Myriad Pro, or Source Sans 3 until the Adobe kit is linked). Regular for body text; heavier weights only where the design or content calls for them. No second family.",
         "section": "typography"
       },
       {
