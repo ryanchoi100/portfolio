@@ -38,6 +38,7 @@
   --radius-glass: 9px;
   --radius-thumb: 6px;
   --radius-paper: 2px;
+  --radius-media: 18px;                       /* Playground cards (large media tiles) */
   /* material: the one frost filter (never animated) and the scrim filter */
   --frost-filter: blur(10px) saturate(1.4);
   --frost-border: 1px solid var(--frost-edge);
@@ -115,21 +116,12 @@
   scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--lake-ink) 22%, transparent) transparent;
 }
 
-/* Playground grid + cards (unchanged look; the hover lift moves the inner surface so the hit area stays put) */
-.pop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); gap: 14px; align-content: start; }
-.pop-card { display: flex; color: inherit; text-decoration: none; cursor: pointer; border-radius: var(--radius-glass); }
-.pop-card__surface {
-  flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 10px;
-  transition: transform 250ms var(--ease-out), box-shadow 250ms var(--ease-hover);
-}
+/* Image placeholder (About portrait) */
 .pop-thumb {
   aspect-ratio: 16/10; border-radius: var(--radius-thumb); display: grid; place-items: center;
   background: radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), var(--tint);
   font-size: 10px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
 }
-.pop-card__text { display: flex; flex-direction: column; gap: 4px; padding: 0 2px 2px; }
-.pop-card__title { font-size: 12px; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
-.pop-card__caption { font-size: 12px; line-height: 1.45; text-wrap: pretty; }
 
 /* Shared content parts for the text pages (About, Resume, Experience) */
 .pop-section + .pop-section { margin-top: 30px; }
@@ -140,7 +132,7 @@
 
 .pop-list > li + li { border-top: 1px solid var(--hairline); }   /* hairline between rows */
 /* text pages: let row hover surfaces bleed 10px past the text column without being clipped by the scroller */
-.pop-scroll:not(.pop-grid) { margin-inline: -10px; padding-inline: 14px; }
+.pop-scroll { margin-inline: -10px; padding-inline: 14px; }
 .pop-row {
   display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 20px; align-items: baseline;
   padding: 12px 10px; margin-inline: -10px; border: 1px solid transparent; border-radius: var(--radius-glass);
@@ -320,6 +312,62 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   .proj-figure > .shot { grid-area: 1 / 1; }
   .proj-sec { min-height: 0; padding-top: 56px; }
 }
+/* ======================================================================
+   PLAYGROUND — a diagonal, endlessly looping track of cards (positions set per frame by playFrame:
+   translate along the diagonal, tilt and shrink with distance from the centre). Hover = fluid glass:
+   the #pg-liquid SVG filter ripples the card's rim while a season-coloured rim light follows the pointer.
+   .pg-full is the full-screen view; playOpen / playClose swing it in and out.
+   ====================================================================== */
+.popup[data-page="playground"] .popup__panel { overflow: hidden; }
+.pg { position: relative; isolation: isolate; flex: 1; min-height: 0; margin: calc(-1 * var(--panel-pad)); touch-action: none; }
+.pg-track {
+  position: absolute; inset: 0;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 9%, var(--lake-ink) 91%, transparent), linear-gradient(to right, transparent, var(--lake-ink) 6%, var(--lake-ink) 94%, transparent);
+  -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 9%, var(--lake-ink) 91%, transparent), linear-gradient(to right, transparent, var(--lake-ink) 6%, var(--lake-ink) 94%, transparent);
+  mask-composite: intersect;
+}
+.pg-card {
+  position: absolute; left: 50%; top: 50%; width: var(--pg-w, 300px); height: var(--pg-h, 375px);
+  margin: calc(var(--pg-h, 375px) / -2) 0 0 calc(var(--pg-w, 300px) / -2); padding: 0; border: 0; background: none;
+  border-radius: var(--radius-media); cursor: pointer; will-change: transform, opacity;
+}
+.pg-card:focus-visible { outline: 2px solid var(--lake-ink); outline-offset: 4px; }
+.pg-card__body {
+  position: absolute; inset: 0; display: block; border-radius: inherit; background: var(--paper-back);   /* solid tile under the media */
+  box-shadow: 0 24px 48px rgba(20, 28, 38, 0.26), 0 4px 12px rgba(20, 28, 38, 0.14);
+  transition: scale 450ms var(--ease-out);
+}
+.pg-card__media { position: absolute; inset: 0; border-radius: inherit; }
+.pg-card__media > img, .pg-card__media > video, .pg-full__media > img, .pg-full__media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pg-card__shine {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
+  background: radial-gradient(55% 45% at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 70%);
+  box-shadow: inset 0 0 0 1.5px rgba(var(--glow-rgb), 0.85), inset 0 0 28px rgba(var(--glow-rgb), 0.4);
+  transition: opacity 350ms var(--ease-out);
+}
+.pg-now { position: absolute; left: var(--panel-pad); bottom: var(--panel-pad); z-index: 200; display: flex; flex-direction: column; gap: 10px; max-width: 46%; pointer-events: none; }
+@media (max-width: 720px) { .pg-now { max-width: calc(100% - 2 * var(--panel-pad)); } }
+.pg-now p, .pg-kicker { margin: 0; }
+.pg-kicker { font-size: 11px; font-weight: 500; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lake-ink-muted); }
+.pg-now__title { font-size: clamp(20px, 1.9vw, 26px); font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
+.pg-now__meta { font-size: 11px; font-weight: 500; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lake-ink-muted); font-variant-numeric: tabular-nums; }
+
+/* full-screen view (a child of .popup, above the panel) */
+.pg-full { position: absolute; z-index: 30; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; background: var(--paper-back); box-shadow: 0 30px 80px rgba(20, 28, 38, 0.35); }
+.pg-full__media { position: absolute; inset: 0; border-radius: 0; font-size: 13px; }
+.pg-full__back { position: absolute; top: 16px; left: 16px; z-index: 2; }
+.pg-full__cap { position: absolute; left: 16px; bottom: 16px; z-index: 2; display: flex; flex-direction: column; gap: 10px; max-width: min(440px, calc(100% - 32px)); padding: 18px 20px; box-sizing: border-box; }
+.pg-full__cap h3 { margin: 0; font-size: clamp(20px, 2.2vw, 28px); font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
+.pg-full__cap p { margin: 0; font-size: 13px; line-height: 1.5; }
+@media (hover: hover) and (pointer: fine) {
+  .pg-card:hover .pg-card__shine { opacity: 1; }
+  .pg-card:hover .pg-card__body { scale: 1.02; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pg-card__body { transition: none; }
+  .pg-card:hover .pg-card__body { scale: none; }
+}
 /* Keyboard access to the scene objects: invisible until a key-user tabs into it, then shown as glass chips */
 .scene-nav { position: absolute; top: 12px; left: 12px; z-index: 15; display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--font-mono); }
 .scene-nav:not(:focus-within):not([data-held]) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
@@ -339,7 +387,6 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 /* Hover micro-interactions — pointer devices only, so touch never gets stuck hover states */
 @media (hover: hover) and (pointer: fine) {
   .popup__close:hover, .pop-button:hover { background: var(--frost-lit); box-shadow: var(--shadow-lamplit); }
-  .pop-card:hover .pop-card__surface { transform: translateY(-3px); box-shadow: var(--shadow-lifted); }
   .pop-row:hover { background: color-mix(in srgb, var(--frost) 65%, transparent); }   /* static rows: a faint frost tint only */
   a.pop-row:hover { background: var(--frost-dense); border-color: var(--frost-edge); box-shadow: var(--shadow-lamplit); }
   a.pop-row:hover .pop-row__go { transform: translateX(3px); }
@@ -356,8 +403,8 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   .popup__panel, .popup[data-state="open"] .popup__panel { transform: none; transition: none; }
   .popup[data-state="closed"] [data-reveal] { transform: none; }
   .popup[data-state="open"] [data-reveal] { transition: opacity 150ms ease; transition-delay: 0ms; }
-  .pop-card__surface, .pop-row__go, .popup__close, .pop-button { transition-property: box-shadow, background-color; }
-  .pop-card:hover .pop-card__surface, .pop-row:hover .pop-row__go { transform: none; }
+  .pop-row__go, .popup__close, .pop-button { transition-property: box-shadow, background-color; }
+  .pop-row:hover .pop-row__go { transform: none; }
   .popup__close:active, .pop-button:active { transform: none; }
   .xp-shot, .proj-back > span { transition-property: box-shadow; }
   .xp-shot:hover { translate: none; }
@@ -493,6 +540,25 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   <!-- ==== POP-UP SHELL — one reusable glass dialog (styles: .popup in <head>). Clicking a scene object calls openPopup(key):
        the matching <template data-popup-page> below is cloned into [data-popup-content]. To edit a page, edit only its template.
        The shell swallows wheel/pointer/click so the season scroll never sees them. ==== -->
+  <!-- Fluid-glass hover for Playground cards: noise confined to a band around the card's edge (dilated alpha
+       minus eroded alpha) displaces only the rim, so the edges ripple like liquid while the middle stays still.
+       The displacement scale is eased in and out by playFrame; the noise drifts via SMIL. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <filter id="pg-liquid" x="-8%" y="-8%" width="116%" height="116%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency="0.011 0.015" numOctaves="2" seed="4" result="noise">
+        <animate attributeName="baseFrequency" dur="7s" values="0.011 0.015;0.016 0.010;0.011 0.015" repeatCount="indefinite"/>
+      </feTurbulence>
+      <feMorphology in="SourceAlpha" operator="dilate" radius="10" result="outer"/>
+      <feMorphology in="SourceAlpha" operator="erode" radius="22" result="inner"/>
+      <feGaussianBlur in="inner" stdDeviation="9" result="innerSoft"/>
+      <feComposite in="outer" in2="innerSoft" operator="out" result="rim"/>
+      <feGaussianBlur in="rim" stdDeviation="4" result="rimSoft"/>
+      <feComposite in="noise" in2="rimSoft" operator="in" result="rimNoise"/>
+      <feFlood flood-color="rgb(128,128,128)" result="neutral"/>
+      <feComposite in="rimNoise" in2="neutral" operator="over" result="map"/>
+      <feDisplacementMap in="SourceGraphic" in2="map" scale="0" xChannelSelector="R" yChannelSelector="G" data-pg-disp=""/>
+    </filter>
+  </svg>
   <div class="popup" data-popup="" data-state="closed" role="dialog" aria-modal="true" aria-labelledby="popup-title">
     <div class="popup__panel glass" data-popup-panel="">
       <div class="popup__bar"><button class="popup__close glass" type="button" data-popup-close="" aria-label="Close">×</button></div>
@@ -869,67 +935,29 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
     </div>
   </template>
 
-  <!-- Playground — opened from the garden (look unchanged from the original pop-up) -->
+  <!-- Playground — opened from the garden. Logos and logo animations on a diagonal, endlessly looping track.
+       Scroll (wheel, drag, arrow keys) moves the cards along the diagonal; the centred card is upright and large,
+       the others smaller and tilted. Hover: fluid glass (SVG #pg-liquid ripples the card's edges). Click the centred
+       card to open it full screen (it swings in tilted right; Back swings it out tilted left). Clicking another card
+       brings it to the centre first.
+       MEDIA: every card is a labelled placeholder. To use real work, put an <img> or <video> inside its
+       .pg-card__media (e.g. <video src="playground/logo-anim-01.mp4" autoplay muted loop playsinline></video>);
+       the full-screen view reuses the same media. data-title / data-kind feed the caption. -->
   <template data-popup-page="playground">
-    <header class="pop-head" data-reveal>
-      <h2 id="popup-title">Playground</h2>
-      <p>Experiments, sketches and side projects — things built for the fun of it.</p>
-    </header>
-    <div class="pop-scroll pop-grid">
-        <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--dense">
-            <div class="pop-thumb" style="--tint:rgba(158,182,160,0.42)">Thumbnail</div>
-            <div class="pop-card__text">
-              <div class="pop-card__title">Project 01</div>
-              <div class="pop-card__caption">One-line caption about this experiment.</div>
-            </div>
-          </div>
-        </a>
-        <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--dense">
-            <div class="pop-thumb" style="--tint:rgba(236,196,128,0.42)">Thumbnail</div>
-            <div class="pop-card__text">
-              <div class="pop-card__title">Project 02</div>
-              <div class="pop-card__caption">One-line caption about this experiment.</div>
-            </div>
-          </div>
-        </a>
-        <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--dense">
-            <div class="pop-thumb" style="--tint:rgba(208,128,96,0.42)">Thumbnail</div>
-            <div class="pop-card__text">
-              <div class="pop-card__title">Project 03</div>
-              <div class="pop-card__caption">One-line caption about this experiment.</div>
-            </div>
-          </div>
-        </a>
-        <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--dense">
-            <div class="pop-thumb" style="--tint:rgba(168,88,52,0.42)">Thumbnail</div>
-            <div class="pop-card__text">
-              <div class="pop-card__title">Project 04</div>
-              <div class="pop-card__caption">One-line caption about this experiment.</div>
-            </div>
-          </div>
-        </a>
-        <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--dense">
-            <div class="pop-thumb" style="--tint:rgba(124,146,150,0.42)">Thumbnail</div>
-            <div class="pop-card__text">
-              <div class="pop-card__title">Project 05</div>
-              <div class="pop-card__caption">One-line caption about this experiment.</div>
-            </div>
-          </div>
-        </a>
-        <a class="pop-card" href="#" data-reveal>
-          <div class="pop-card__surface glass glass--dense">
-            <div class="pop-thumb" style="--tint:rgba(64,78,112,0.42)">Thumbnail</div>
-            <div class="pop-card__text">
-              <div class="pop-card__title">Project 06</div>
-              <div class="pop-card__caption">One-line caption about this experiment.</div>
-            </div>
-          </div>
-        </a>
+    <div class="pg" data-pg>
+      <div class="pg-track" data-pg-track>
+        <button class="pg-card" type="button" data-pg-card data-title="Logo animation 01" data-kind="Motion" style="--tint:rgba(158,182,160,0.42)"><span class="pg-card__body"><span class="shot pg-card__media">Logo animation 01 · placeholder</span><span class="pg-card__shine" aria-hidden="true"></span></span></button>
+        <button class="pg-card" type="button" data-pg-card data-title="Logo 01" data-kind="Identity" style="--tint:rgba(236,196,128,0.42)"><span class="pg-card__body"><span class="shot pg-card__media">Logo 01 · placeholder</span><span class="pg-card__shine" aria-hidden="true"></span></span></button>
+        <button class="pg-card" type="button" data-pg-card data-title="Logo animation 02" data-kind="Motion" style="--tint:rgba(64,78,112,0.42)"><span class="pg-card__body"><span class="shot pg-card__media">Logo animation 02 · placeholder</span><span class="pg-card__shine" aria-hidden="true"></span></span></button>
+        <button class="pg-card" type="button" data-pg-card data-title="Logo 02" data-kind="Identity" style="--tint:rgba(208,128,96,0.42)"><span class="pg-card__body"><span class="shot pg-card__media">Logo 02 · placeholder</span><span class="pg-card__shine" aria-hidden="true"></span></span></button>
+        <button class="pg-card" type="button" data-pg-card data-title="Logo animation 03" data-kind="Motion" style="--tint:rgba(168,88,52,0.42)"><span class="pg-card__body"><span class="shot pg-card__media">Logo animation 03 · placeholder</span><span class="pg-card__shine" aria-hidden="true"></span></span></button>
+        <button class="pg-card" type="button" data-pg-card data-title="Logo 03" data-kind="Identity" style="--tint:rgba(124,146,150,0.42)"><span class="pg-card__body"><span class="shot pg-card__media">Logo 03 · placeholder</span><span class="pg-card__shine" aria-hidden="true"></span></span></button>
+      </div>
+      <div class="pg-now" data-reveal>
+        <h2 id="popup-title" class="pg-kicker">Playground</h2>
+        <p class="pg-now__title" data-pg-now-title aria-live="polite">Logo animation 01</p>
+        <p class="pg-now__meta" data-pg-now-meta>Motion · placeholder · 01 / 06</p>
+      </div>
     </div>
   </template>
 </div>
@@ -1223,6 +1251,7 @@ class SeasonsScene {
     pop.dataset.state = 'open';
     if (pop.dataset.variant === 'paper') this.unfoldPaper(pop, origin);
     if (page === 'experience') this.xpInit(pop);
+    if (page === 'playground') this.playInit(pop);
     pop.querySelector('[data-popup-close]')?.focus({ preventScroll: true });
   }
   // ORIGAMI UNFOLD (Resume) — Web Animations on transform/opacity only. Folded state = the keyframes' first
@@ -1266,6 +1295,7 @@ class SeasonsScene {
       this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null; delete pop.dataset.variant;
       this.xpRO?.disconnect(); this.xpRO = null; this.xpAnims?.forEach(a => a.cancel()); this.xpAnims = null;
       this.xpProject = null; this.xpBusy = false; pop.setAttribute('aria-labelledby', 'popup-title');
+      this.playStop(pop);
       delete el.querySelector('[data-scene-nav]')?.dataset.held; // focus is back on the nav, so :focus-within keeps it shown
     };
     const onEnd = e => { if (e.target === pop && e.propertyName === 'opacity') finish(); };
@@ -1467,6 +1497,194 @@ class SeasonsScene {
       if (this.xpAnims !== anims) return; // the pop-up closed meanwhile
       this.xpBusy = false; this.xpAnims = null; done();
     });
+  }
+  // ======================================================================
+  // PLAYGROUND — diagonal looping track (see the playground template).
+  //   play.p     eased position along the track, in cards (card i sits at offset d = i − p, wrapped to ±n/2)
+  //   playFrame  one rAF loop while the page is open: eases p toward its target (snapping to a card once
+  //              input stops), lays the cards out on the diagonal (tilt d×9°, smaller and fainter with
+  //              distance), eases the fluid-glass displacement on the hovered card and updates the caption.
+  //   playOpen / playClose  swing the centred card out to fill the screen (tilting right on the way, ease
+  //              in-out) and back (tilting left). Reduced motion: a 200ms fade instead.
+  // ======================================================================
+  PLAY_EASE = 'cubic-bezier(0.65, 0, 0.35, 1)'; // in-out cubic: the card leaves gently and lands gently
+  playInit(pop) {
+    const el = pop.querySelector('[data-pg]'); if (!el) return;
+    const cards = [...el.querySelectorAll('[data-pg-card]')], n = cards.length;
+    const g = this.play = { el, pop, cards, n, p: 0, target: 0, last: 0, k: -1, geo: [], disp: 0, dispTarget: 0, hover: null, full: null, busy: false };
+    const reduce = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const nearest = i => g.p + ((((i - g.p) % n) + n * 1.5) % n - n / 2); // the copy of card i closest to p
+    this.playSize();
+    // wheel: both axes move along the diagonal
+    el.addEventListener('wheel', e => {
+      e.preventDefault(); if (g.full) return;
+      g.target += (e.deltaY + e.deltaX) * (e.deltaMode === 1 ? 30 : 1) / 520; g.last = performance.now();
+    }, { passive: false });
+    // drag (touch, pen or mouse): the card follows the pointer along the diagonal
+    el.addEventListener('pointerdown', e => {
+      if (g.full || e.button > 0) return;
+      g.drag = { x: e.clientX, y: e.clientY, t: g.target, moved: false };
+    });
+    el.addEventListener('pointermove', e => {
+      const c = e.target.closest?.('[data-pg-card]');
+      if (c) { const r = c.getBoundingClientRect(); c.style.setProperty('--mx', ((e.clientX - r.left) / r.width * 100).toFixed(1) + '%'); c.style.setProperty('--my', ((e.clientY - r.top) / r.height * 100).toFixed(1) + '%'); }
+      if (!g.drag) return;
+      const dx = e.clientX - g.drag.x, dy = e.clientY - g.drag.y;
+      if (!g.drag.moved && Math.hypot(dx, dy) < 6) return;
+      if (!g.drag.moved) { g.drag.moved = true; el.setPointerCapture?.(e.pointerId); }
+      g.target = g.drag.t - (dx * g.sx + dy * g.sy) / (g.sx * g.sx + g.sy * g.sy); g.last = performance.now();
+    });
+    const endDrag = () => { if (g.drag) { g.dragged = g.drag.moved; g.drag = null; g.last = performance.now(); } };
+    el.addEventListener('pointerup', endDrag); el.addEventListener('pointercancel', endDrag);
+    // click: the centred card opens; any other card is brought to the centre first
+    el.addEventListener('click', e => {
+      const c = e.target.closest('[data-pg-card]'); if (!c) return;
+      if (g.dragged) { g.dragged = false; return; }
+      const i = cards.indexOf(c);
+      if (i === ((Math.round(g.target) % n) + n) % n) this.playOpen(i);
+      else { g.target = Math.round(nearest(i)); g.last = 0; }
+    });
+    // keyboard: arrows step along the track; a focused card comes to the centre (Enter / Space then opens it)
+    el.addEventListener('keydown', e => {
+      const step = { ArrowDown: 1, ArrowRight: 1, PageDown: 1, ArrowUp: -1, ArrowLeft: -1, PageUp: -1 }[e.key]; if (!step || g.full) return;
+      e.preventDefault(); g.target = Math.round(g.target) + step; g.last = 0;
+      cards[((g.target % n) + n) % n].focus({ preventScroll: true });
+    });
+    el.addEventListener('focusin', e => {
+      const c = e.target.closest('[data-pg-card]'); if (!c || !c.matches(':focus-visible')) return;
+      g.target = Math.round(nearest(cards.indexOf(c))); g.last = 0;
+    });
+    // fluid glass: the hovered card gets the #pg-liquid filter, its strength eased in playFrame
+    const fine = matchMedia('(hover: hover) and (pointer: fine)');
+    cards.forEach(c => {
+      c.addEventListener('pointerenter', () => {
+        if (!fine.matches || reduce() || g.full) return;
+        if (g.hover && g.hover !== c) g.hover.querySelector('.pg-card__body').style.filter = '';
+        g.hover = c; g.dispTarget = 20; c.querySelector('.pg-card__body').style.filter = 'url(#pg-liquid)';
+      });
+      c.addEventListener('pointerleave', () => { if (g.hover === c) g.dispTarget = 0; });
+    });
+    this.playRO = new ResizeObserver(() => this.playSize()); this.playRO.observe(el);
+    const frame = () => { this.playFrame(); g.raf = requestAnimationFrame(frame); };
+    frame();
+  }
+  playSize() {
+    const g = this.play; if (!g) return;
+    const W = g.el.clientWidth, H = g.el.clientHeight, narrow = W < 560;
+    g.w = Math.min(H * 0.6 * 0.8, W * (narrow ? 0.66 : 0.34)); g.h = g.w / 0.8; // 4:5 cards
+    g.sx = W * (narrow ? 0.4 : 0.33); g.sy = H * (narrow ? 0.3 : 0.31);   // one step along the diagonal
+    g.el.style.setProperty('--pg-w', g.w.toFixed(1) + 'px'); g.el.style.setProperty('--pg-h', g.h.toFixed(1) + 'px');
+  }
+  playFrame() {
+    const g = this.play; if (!g) return;
+    const now = performance.now(), f = Math.min(4, (now - (g.ft || now)) / 16.67 || 1); g.ft = now; // frames elapsed (frame-rate independent easing)
+    const ease = k => 1 - Math.pow(1 - k, f);
+    if (!g.drag && now - g.last > 160) g.target += (Math.round(g.target) - g.target) * ease(0.14); // settle on a card
+    g.p += (g.target - g.p) * ease(0.12); if (Math.abs(g.target - g.p) < 1e-4) g.p = g.target;
+    const n = g.n;
+    g.cards.forEach((c, i) => {
+      let d = (((i - g.p) % n) + n) % n; if (d > n / 2) d -= n;
+      const a = Math.abs(d);
+      const s = a <= 1 ? 1 - 0.42 * a : Math.max(0.4, 0.58 - 0.1 * (a - 1));
+      const r = Math.max(-1.6, Math.min(1.6, d)) * 9, o = a <= 0.5 ? 1 : Math.max(0, 1 - (a - 0.5) * 0.5);
+      const x = d * g.sx, y = d * g.sy;
+      g.geo[i] = { x, y, r, s };
+      c.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) rotate(${r.toFixed(2)}deg) scale(${s.toFixed(4)})`;
+      c.style.opacity = o.toFixed(3); c.style.zIndex = 100 - Math.round(a * 10);
+      c.style.pointerEvents = o < 0.2 ? 'none' : '';
+    });
+    // caption for the centred card
+    const k = ((Math.round(g.p) % n) + n) % n;
+    if (k !== g.k) {
+      g.k = k; const c = g.cards[k], pad = v => String(v).padStart(2, '0');
+      g.el.querySelector('[data-pg-now-title]').textContent = c.dataset.title;
+      g.el.querySelector('[data-pg-now-meta]').textContent = `${c.dataset.kind} · placeholder · ${pad(k + 1)} / ${pad(n)}`;
+      g.cards.forEach((x, j) => x.setAttribute('aria-label', `${x.dataset.title}${j === k ? ', open' : ', bring to the centre'}`));
+    }
+    // fluid-glass strength (eased in on hover, out on leave, then the filter comes off)
+    if (g.hover) {
+      g.disp += (g.dispTarget - g.disp) * ease(0.12);
+      document.querySelector('[data-pg-disp]')?.setAttribute('scale', g.disp.toFixed(2));
+      if (g.dispTarget === 0 && g.disp < 0.3) { g.hover.querySelector('.pg-card__body').style.filter = ''; g.hover = null; g.disp = 0; }
+    }
+  }
+  // the card's untilted box in the pop-up's coordinates
+  playBox(i) {
+    const g = this.play, P = g.pop.getBoundingClientRect(), T = g.el.getBoundingClientRect(), q = g.geo[i];
+    const w = g.w * q.s, h = g.h * q.s, cx = T.left - P.left + T.width / 2 + q.x, cy = T.top - P.top + T.height / 2 + q.y;
+    return { left: cx - w / 2 + 'px', top: cy - h / 2 + 'px', width: w + 'px', height: h + 'px', r: q.r, P };
+  }
+  playOpen(i) {
+    const g = this.play; if (!g || g.full || g.busy) return;
+    const card = g.cards[i], body = card.querySelector('.pg-card__body');
+    if (g.hover) { g.hover.querySelector('.pg-card__body').style.filter = ''; g.hover = null; g.disp = 0; g.dispTarget = 0; }
+    const b = this.playBox(i), full = document.createElement('div');
+    full.className = 'pg-full'; full.setAttribute('role', 'group'); full.setAttribute('aria-labelledby', 'pg-full-title');
+    const media = card.querySelector('.pg-card__media').cloneNode(true);
+    media.className = media.className.replace('pg-card__media', 'pg-full__media'); media.style.setProperty('--tint', getComputedStyle(card).getPropertyValue('--tint'));
+    if (!media.querySelector('img, video')) media.textContent = `${card.dataset.title} · full-screen placeholder`;
+    full.append(media);
+    full.insertAdjacentHTML('beforeend', `<button class="proj-back glass pg-full__back" type="button" data-pg-back><span aria-hidden="true">←</span> Back</button><div class="pg-full__cap glass"><h3 id="pg-full-title"></h3><p>${card.dataset.kind} · placeholder. Your work goes here.</p></div>`);
+    full.querySelector('h3').textContent = card.dataset.title;
+    g.pop.append(full); g.full = { el: full, i };
+    g.pop.querySelector('[data-popup-panel]').inert = true;
+    const chrome = [...full.querySelectorAll('.pg-full__back, .pg-full__cap')];
+    let anims;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      anims = [full.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease' })];
+    } else {
+      card.style.visibility = 'hidden';
+      const E = this.PLAY_EASE, R = getComputedStyle(body).borderRadius;
+      anims = [
+        full.animate([
+          { left: b.left, top: b.top, width: b.width, height: b.height, transform: `translate(0px, 0px) rotate(${b.r}deg)`, borderRadius: R, easing: E },
+          { offset: 0.5, transform: `translate(${(g.sx * 0.12).toFixed(1)}px, ${(g.sy * 0.12).toFixed(1)}px) rotate(6deg)`, easing: E }, // swings out along the diagonal, tilted to the right
+          { left: '0px', top: '0px', width: b.P.width + 'px', height: b.P.height + 'px', transform: 'translate(0px, 0px) rotate(0deg)', borderRadius: '0px' },
+        ], { duration: 820, fill: 'backwards' }),
+        ...chrome.map((n, j) => n.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
+          { duration: 360, delay: 640 + j * 60, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' })),
+      ];
+    }
+    g.busy = true;
+    Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => {
+      if (this.play !== g) return; g.busy = false;
+      card.style.visibility = 'hidden';
+      full.querySelector('[data-pg-back]').focus({ preventScroll: true });
+    });
+  }
+  playClose() {
+    const g = this.play; if (!g || !g.full || g.busy) return;
+    const { el: full, i } = g.full, card = g.cards[i], b = this.playBox(i);
+    const chrome = [...full.querySelectorAll('.pg-full__back, .pg-full__cap')];
+    let anims;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      card.style.visibility = '';
+      anims = [full.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease', fill: 'forwards' })];
+    } else {
+      const E = this.PLAY_EASE, R = getComputedStyle(card.querySelector('.pg-card__body')).borderRadius;
+      anims = [
+        ...chrome.map(n => n.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease', fill: 'forwards' })),
+        full.animate([
+          { left: '0px', top: '0px', width: b.P.width + 'px', height: b.P.height + 'px', transform: 'translate(0px, 0px) rotate(0deg)', borderRadius: '0px', easing: E },
+          { offset: 0.5, transform: `translate(${(-g.sx * 0.12).toFixed(1)}px, ${(-g.sy * 0.12).toFixed(1)}px) rotate(-6deg)`, easing: E }, // swings back up the diagonal, tilted to the left
+          { left: b.left, top: b.top, width: b.width, height: b.height, transform: `translate(0px, 0px) rotate(${b.r}deg)`, borderRadius: R },
+        ], { duration: 760, delay: 80, fill: 'forwards' }),
+      ];
+    }
+    g.busy = true;
+    Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => {
+      if (this.play !== g) return;
+      card.style.visibility = ''; full.remove(); g.full = null; g.busy = false;
+      g.pop.querySelector('[data-popup-panel]').inert = false;
+      card.focus({ preventScroll: true });
+    });
+  }
+  playStop(pop) {
+    const g = this.play; if (!g) return;
+    cancelAnimationFrame(g.raf); this.playRO?.disconnect(); this.playRO = null;
+    g.full?.el.remove(); pop.querySelector('[data-popup-panel]').inert = false;
+    document.querySelector('[data-pg-disp]')?.setAttribute('scale', '0');
+    this.play = null;
   }
   // ======================================================================
   // HOVER LABEL POSITION — centred 22px below the cursor, flips above near the bottom edge,
@@ -1935,7 +2153,7 @@ class SeasonsScene {
     this.onWheel = e => { e.preventDefault(); const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; this.target += d * (e.deltaMode === 1 ? 30 : 1) * speed(); this.lastInput = performance.now(); };
     this.onKey = e => {
       if ((e.key === ' ' || e.key === 'Enter') && e.target.closest?.('button, a')) return; // let focused controls activate
-      if (this.pgOpen) { if (e.key === 'Escape') { e.preventDefault(); if (this.xpProject) this.closeProject(); else this.closePopup(); } else if (e.key === 'Tab') this.trapFocus(e); return; }
+      if (this.pgOpen) { if (e.key === 'Escape') { e.preventDefault(); if (this.play?.full) this.playClose(); else if (this.xpProject) this.closeProject(); else this.closePopup(); } else if (e.key === 'Tab') this.trapFocus(e); return; }
       if (['ArrowDown','ArrowRight','PageDown',' '].includes(e.key)) { this.target = Math.round(this.target) + 1; }
       else if (['ArrowUp','ArrowLeft','PageUp'].includes(e.key)) { this.target = Math.round(this.target) - 1; } else return;
       e.preventDefault(); this.lastInput = 0;
@@ -1985,6 +2203,7 @@ class SeasonsScene {
       e.stopPropagation();
       if (e.target.closest('a[href="#"]')) e.preventDefault(); // placeholder links: no navigation until real URLs are added
       if (e.target.closest('[data-proj-back]')) { this.closeProject(); return; }
+      if (e.target.closest('[data-pg-back]')) { this.playClose(); return; }
       const proj = e.target.closest('[data-open-project]'); if (proj) { this.openProject(proj.dataset.openProject, proj); return; }
       if (e.target === pop || e.target.hasAttribute?.('data-backdrop') || e.target.closest('[data-popup-close]')) this.closePopup();
     });

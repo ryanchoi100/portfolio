@@ -69,6 +69,15 @@
         ],
         "createdAt": "2026-11-16T19:49:39.715Z",
         "reason": "Agent: the opacity-0 rasters are the house window-light PNGs from the original handoff, faded in on house hover (README: 'window lights fade in'); scene artwork the owner asked not to change"
+      },
+      {
+        "rule": "flat-type-hierarchy",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-17T18:56:51.145Z",
+        "reason": "Agent: false positive - the scanner cannot resolve clamp() font sizes (Display 26-40px, Heading 20-28px) and reads them as 16px; the real steps are 15px body to 20-28px headings to 26-40px titles"
       }
     ]
   }

@@ -71,6 +71,7 @@ rounded:
   glass: "9px"
   thumb: "6px"
   paper: "2px"
+  media: "18px"
 spacing:
   xs: "4px"
   sm: "8px"
@@ -158,7 +159,7 @@ A near-monochrome system of cool ink on white frost, warmed only by lamplight; a
 - **Lake Ink, muted** (`lake-ink-muted`): secondary metadata such as dates and years in list rows. Use it sparingly; most text is full ink.
 - **Hairline** (`hairline`): 1px dividers between list rows.
 - **Frost** (`frost`): the standard glass fill for the hover label, pop-up panel, close button, glass buttons and section chips.
-- **Frost, dense** (`frost-dense`): glass sitting on glass. Playground cards, and list rows on hover, use it so they separate from the panel beneath.
+- **Frost, dense** (`frost-dense`): glass sitting on glass. List rows on hover use it so they separate from the panel beneath.
 - **Frost, lit** (`frost-lit`): hovered glass buttons.
 - **Frost Edge** (`frost-edge`): the 1px border on every glass surface, which catches light like a pane's edge.
 - **Dusk Scrim** (`dusk-scrim`): the ink wash over the scene while a pop-up is open, paired with a 6px blur and 0.9 brightness.
@@ -218,7 +219,7 @@ Depth is floating glass. Surfaces hover just above the painting on one soft, coo
 
 ## Shapes
 
-One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, panel, buttons, cards, rows and chips. Image slots inside cards use a slightly tighter 6px (`rounded.thumb`) so they nest inside the card's curve. The Resume paper is nearly square-cornered (`rounded.paper`, 2px), like a real sheet. Borders are a single 1px frost edge. Dividers are 1px ink hairlines. There are no pills, circles or decorative outlines.
+One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, panel, buttons, cards, rows and chips. Image slots inside cards use a slightly tighter 6px (`rounded.thumb`) so they nest inside the card's curve. The Resume paper is nearly square-cornered (`rounded.paper`, 2px), like a real sheet. Playground media tiles are the one softer shape (`rounded.media`, 18px): they are pictures, not glass. Borders are a single 1px frost edge. Dividers are 1px ink hairlines. There are no pills, circles or decorative outlines.
 
 ## Components
 
@@ -253,11 +254,20 @@ One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, p
 - **Glass:** frost fill, frost edge, resting shadow, ink label text, with an optional trailing glyph.
 - **Hover / Focus:** frost-lit fill plus the lamplight ring (200ms ease). On press it scales to 0.97 over 120ms. Focus shows a 2px ink outline on the edge.
 
+### Playground (signature)
+*Work laid on a diagonal, poured like glass.* The garden's page is a looping track of 4:5 media tiles (`rounded.media`, a solid paper-back base, a deep soft shadow) running from top-left to bottom-right. The centred tile is upright and about 60% of the panel's height. Each step away moves it a third of the panel along the diagonal, tilts it 9° (counter-clockwise up the track, clockwise down it), shrinks it to 58% and fades it. The track is masked so tiles appear out of the panel's edges. The panel's bottom-left holds the "Playground" kicker, the centred tile's title (Heading) and its kind, placeholder status and count (label).
+- **Scroll:** the wheel (either axis), a drag along the diagonal, or the arrow keys move the track. It eases toward the input and settles on the nearest tile once input stops, frame-rate independent. The track loops endlessly.
+- **Hover (fluid glass):** the tile grows 2%, a season-coloured rim light and a soft highlight follow the pointer, and the `#pg-liquid` SVG filter ripples only the tile's edge band (noise displaced through a rim mask), eased in over about 300ms and out on leave. It applies to pointer devices only and is off under reduced motion.
+- **Open:** clicking the centred tile (or Enter on it) opens it full screen; clicking another tile brings it to the centre first. The tile swings out over 820ms on in-out cubic (`cubic-bezier(0.65, 0, 0.35, 1)`): it tilts right to 6° and drifts down the diagonal at the halfway point, then settles square while its corners go from 18px to 0. A frost Back button (top-left) and a frost caption (bottom-left) then rise in.
+- **Close:** Back or Escape fades the chrome and swings the tile back over 760ms: it tilts left to −6° and drifts up the diagonal, then lands at its place on the track. Focus returns to the tile.
+- **Reduced motion:** the full-screen view fades in and out over 200ms.
+- **Media:** every tile is a labelled placeholder until the owner adds logo files or logo animations (an `<img>` or `<video>` inside the tile's media), and the full-screen view reuses the same media.
+
 ### Cards / Containers
 - **Corner Style:** 9px; the image slot inside is 6px.
 - **Background:** frost-dense (glass on glass).
-- **Shadow Strategy:** resting at rest, Lifted on hover. The inner surface rises 3px while the outer hit area stays still, so the pointer never loses it.
-- **Internal Padding:** 10px, with a 10px gap between image and text.
+- **Shadow Strategy:** resting at rest, Lifted on hover.
+- **Internal Padding:** 10px.
 
 ### List Rows
 - **Rest:** no fill. Title and right-aligned date on one line, description below, separated by ink hairlines.
