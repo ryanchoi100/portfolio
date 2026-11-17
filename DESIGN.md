@@ -135,7 +135,7 @@ components:
 
 The artwork is the system. A painted lake (house, tree, boat, garden, water) fills the viewport and turns Spring → Summer → Autumn → Winter as the visitor scrolls. Every piece of interface is a seasonal guest in that painting. It arrives when called, sits on frosted glass so the season stays visible through it, and leaves without a trace. Nothing in the UI is opaque, and nothing competes with the paint for colour.
 
-Against the soft brushwork, the interface is a **crisp counterpoint**. There is a single monospace face set small, uppercase labels with wide tracking, hairline edges and exact 9px corners. That precision reads like a designer's annotations on a painting: technical and quiet, never decorative. The only warmth the UI adds is lamplight, a pale gold glow borrowed from the house's lit windows. It appears only when something is touched.
+Against the soft brushwork, the interface is a **crisp counterpoint**. There is a single monospace face set small, uppercase labels with wide tracking, hairline edges and exact 9px corners. That precision reads like a designer's annotations on a painting: technical and quiet, never decorative. The only colour the UI adds is lamplight, a glow borrowed from the season on screen: blossom pink in spring, sun gold in summer, ember orange in autumn, frost blue in winter. It appears only when something is touched.
 
 Density is low. Glass panels float above the scene on soft ambient shadows, and the scene behind them is blurred and dimmed just enough to read over. Motion follows the same rule: arrivals decelerate confidently, exits are quick and calm, and only transform and opacity move.
 
@@ -151,7 +151,7 @@ Density is low. Glass panels float above the scene on soft ambient shadows, and 
 A near-monochrome system of cool ink on white frost, warmed only by lamplight; all hue comes from the painting behind it.
 
 ### Primary
-- **Lamplight** (`lamplight`): the warm gold glow from the house windows. It is used only as a state response: the glow ring on hovered buttons, rows and cards, and as text-selection colour (at 0.75 alpha). Never shown at rest.
+- **Lamplight** (`lamplight`): the glow, at 0.6 alpha, whose hue follows the season. Spring is blossom pink `rgb(255, 188, 212)`, summer sun gold `rgb(255, 214, 120)`, autumn ember orange `rgb(255, 160, 96)` and winter frost blue `rgb(168, 206, 255)`. The scene publishes the current hue as `--glow-rgb` on `<html>`, blending between two seasons while the visitor scrolls. The frontmatter value is the fallback before the scene loads. It is used only as a state response: the glow ring on hovered buttons, rows and cards, the Lifted halo, the garden's hover glow, and as text-selection colour (at 0.75 alpha). Never shown at rest.
 
 ### Neutral
 - **Lake Ink** (`lake-ink`): all text, icons, focus outlines and the tint of every shadow. Cool, deep blue-black from the lake's darkest water.
@@ -170,7 +170,7 @@ Placeholder thumbnail tints (sage, sand, terracotta, rust, slate, dusk at 0.42 a
 ### Named Rules
 **The Painting Leads Rule.** No interface surface is opaque. Glass fills stay at or below 0.8 white so the current season always reads through.
 
-**The Lamplight Rule.** The warm glow exists only as a response to hover, press or focus. A surface that glows at rest is a bug.
+**The Lamplight Rule.** The season glow exists only as a response to hover, press or focus. A surface that glows at rest is a bug.
 
 ## Typography
 
