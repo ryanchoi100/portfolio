@@ -26,11 +26,15 @@
   --lamplight: rgba(255, 222, 156, 0.6);      /* the only accent; state responses only */
   --lamplight-selection: rgba(255, 222, 156, 0.75);
   --night-water: #1d2630;
+  --paper: #ffffff;                           /* Resume paper face */
+  --paper-back: #f7f4ef;                      /* back of the folded sheet */
+  --paper-back-shade: #ebe6de;
   /* type */
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
   /* shape */
   --radius-glass: 9px;
   --radius-thumb: 6px;
+  --radius-paper: 2px;
   /* material: the one frost filter (never animated) and the scrim filter */
   --frost-filter: blur(10px) saturate(1.4);
   --frost-border: 1px solid var(--frost-edge);
@@ -173,6 +177,49 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   .pop-facts dd + dt { margin-top: 10px; }
 }
 
+/* Resume bullet points inside a row */
+.pop-points { grid-column: 1 / -1; margin: 4px 0 0; padding: 0 0 0 14px; font-size: 12px; line-height: 1.5; max-width: 76ch; }
+.pop-points li { padding-left: 2px; text-wrap: pretty; }
+.pop-points li::marker { color: var(--lake-ink-muted); }
+.pop-points li + li { margin-top: 2px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* ======================================================================
+   PAPER VARIANT (Resume) — the shell drops its glass sheet and shows the PDF page itself, sized so the
+   whole page fits a desktop screen with no scrolling. The page is cut into 2 × 3 tiles: each half holds a
+   middle tile plus a top and bottom flap. Folded: flaps over the middle (rotateX ±179°) and the right half
+   over the left (rotateY −179°). unfoldPaper() animates them open with the Web Animations API.
+   ====================================================================== */
+.popup[data-variant="paper"] { overflow: hidden; }
+.popup[data-variant="paper"] .popup__panel {
+  position: absolute; inset: 0; width: auto; max-width: none; min-height: 0; margin: 0; padding: 0;
+  background: none; border: 0; border-radius: 0; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+  transform: none; transition: none;
+}
+.popup[data-variant="paper"] .popup__bar { position: absolute; top: 12px; right: 0; width: 0; height: 0; margin: 0; }
+.popup[data-variant="paper"] .popup__close { right: 12px; }
+.paper-stage {
+  --paper-h: min(calc(100vh - 128px), calc((100vw - 32px) * 792 / 612));
+  position: absolute; inset: 0; display: grid; place-items: center; perspective: 2000px;
+}
+.paper-actions { position: absolute; top: 12px; right: 68px; z-index: 2; display: flex; gap: 8px; }
+.paper {
+  position: relative; display: block; height: var(--paper-h); aspect-ratio: 612 / 792;
+  transform-style: preserve-3d; cursor: zoom-in; outline-offset: 4px;
+}
+.paper__shadow { position: absolute; inset: 0; border-radius: var(--radius-paper); box-shadow: 0 18px 48px rgba(20, 28, 38, 0.28), 0 3px 10px rgba(20, 28, 38, 0.16); }
+.paper__shift { position: absolute; inset: 0; transform-style: preserve-3d; }
+.paper__half { position: absolute; top: 0; bottom: 0; width: 50%; transform-style: preserve-3d; }
+.paper__half--l { left: 0; }
+.paper__half--r { left: 50%; transform-origin: 0 50%; }
+.tile { position: absolute; left: 0; right: 0; height: calc(100% / 3); transform-style: preserve-3d; }
+.tile--top { top: 0; transform-origin: 50% 100%; }
+.tile--mid { top: calc(100% / 3); }
+.tile--bot { top: calc(200% / 3); transform-origin: 50% 0; }
+.tile__front, .tile__back { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.tile__front { background-color: var(--paper); background-image: url("resume/resume-page.webp"); background-size: 200% 300%; background-repeat: no-repeat; }
+.tile__back { transform: rotateY(180deg); background: linear-gradient(160deg, var(--paper-back), var(--paper-back-shade)); box-shadow: inset 0 0 0 1px rgba(20, 28, 38, 0.06); }
+.tile__shade { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(20, 28, 38, 0.35), rgba(20, 28, 38, 0.1)); opacity: 0; pointer-events: none; }
 /* Keyboard access to the scene objects: invisible until a key-user tabs into it, then shown as glass chips */
 .scene-nav { position: absolute; top: 12px; left: 12px; z-index: 15; display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--font-mono); }
 .scene-nav:not(:focus-within):not([data-held]) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
@@ -348,27 +395,28 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   <!-- ==== POP-UP PAGES — content only. Every page: a .pop-head (h2 + intro) then a .pop-scroll body.
        Elements marked data-reveal enter with the shared stagger. Placeholder copy: replace with real text. ==== -->
 
-  <!-- About Me — opened from the house -->
+  <!-- About Me — opened from the house (facts from resume/RyanChoi_Resume.pdf) -->
   <template data-popup-page="about">
     <header class="pop-head" data-reveal>
       <h2 id="popup-title">About Me</h2>
-      <p>A short line introducing who you are and what you make.</p>
+      <p>UI/UX and brand designer studying Computer Science and Design at Northeastern University.</p>
     </header>
     <div class="pop-scroll">
       <div class="pop-about">
         <div class="pop-thumb pop-portrait" data-reveal>Portrait</div>
         <div>
           <section class="pop-section pop-prose" data-reveal>
-            <p>Placeholder paragraph. Two or three sentences about your background: where you started, what pulled you into this work and what you care about now.</p>
-            <p>Placeholder paragraph. How you like to work, the kind of problems you enjoy and what you are looking for next.</p>
+            <p>I’m Ryan Choi, a UI/UX and brand designer studying Computer Science and Design at Northeastern University in Boston. My work runs from naming, logos and ADA-compliant colour palettes to Figma prototypes, usability testing and design systems.</p>
+            <p>Most recently I led UI/UX design for a grant-tracking platform with the Boston Climate Action Network, built two company identities as a design intern at Sagetopia, and studied typography and graphic design at the Basel School of Design.</p>
           </section>
           <section class="pop-section" data-reveal>
             <h3>Quick facts</h3>
             <dl class="pop-facts">
-              <dt>Based in</dt><dd>City, Country</dd>
-              <dt>Focus</dt><dd>Your main discipline or craft</dd>
-              <dt>Currently</dt><dd>Role at Company, or what you are working on</dd>
-              <dt>Outside work</dt><dd>A hobby or two</dd>
+              <dt>Based in</dt><dd>Boston, MA</dd>
+              <dt>Studying</dt><dd>BS Computer Science and Design, Northeastern University · expected 2028</dd>
+              <dt>Focus</dt><dd>UI/UX design, product design, brand identity</dd>
+              <dt>Outside work</dt><dd>Code4Community, CTFs, Scout, game jams, intramural badminton and tennis</dd>
+              <dt>Email</dt><dd><a href="mailto:choi.rya@northeastern.edu">choi.rya@northeastern.edu</a></dd>
             </dl>
           </section>
         </div>
@@ -376,61 +424,76 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
     </div>
   </template>
 
-  <!-- Resume — opened from the tree -->
-  <template data-popup-page="resume">
-    <header class="pop-head" data-reveal>
-      <h2 id="popup-title">Resume</h2>
-      <p>A one-line summary of your experience and strengths.</p>
-      <div class="pop-actions">
-        <a class="pop-button glass" href="#">Download PDF <span aria-hidden="true">↓</span></a>
+  <!-- Resume — opened from the tree. The PDF page unfolds like origami (unfoldPaper): a folded packet flies out
+       of the tree, opens its vertical fold, then its top and bottom flaps. Each tile shows its slice of
+       resume/resume-page.webp (rendered from the PDF). Text alternative for screen readers below. -->
+  <template data-popup-page="resume" data-variant="paper">
+    <div class="paper-stage" data-backdrop="">
+      <div class="paper-actions">
+        <a class="pop-button glass" href="resume/RyanChoi_Resume.pdf" target="_blank" rel="noopener">Open PDF <span aria-hidden="true">↗</span></a>
+        <a class="pop-button glass" href="resume/RyanChoi_Resume.pdf" download="RyanChoi_Resume.pdf">Download <span aria-hidden="true">↓</span></a>
       </div>
-    </header>
-    <div class="pop-scroll">
-      <section class="pop-section" data-reveal>
-        <h3>Work</h3>
-        <ul class="pop-list">
-          <li class="pop-row"><span class="pop-row__title">Job title · Company</span><span class="pop-row__meta">2023 – Now</span><span class="pop-row__body">One line on what you owned and the result.</span></li>
-          <li class="pop-row"><span class="pop-row__title">Job title · Company</span><span class="pop-row__meta">2020 – 2023</span><span class="pop-row__body">One line on what you owned and the result.</span></li>
-          <li class="pop-row"><span class="pop-row__title">Job title · Company</span><span class="pop-row__meta">2018 – 2020</span><span class="pop-row__body">One line on what you owned and the result.</span></li>
+      <a class="paper" data-paper="" href="resume/RyanChoi_Resume.pdf" target="_blank" rel="noopener" aria-label="Ryan Choi’s resume, opens the PDF">
+        <div class="paper__shadow" data-paper-shadow=""></div>
+        <div class="paper__shift" data-paper-shift="">
+          <div class="paper__half paper__half--l" data-half="l">
+            <div class="tile tile--top" data-tile="top"><div class="tile__front" style="background-position:0% 0%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
+            <div class="tile tile--mid" data-tile="mid"><div class="tile__front" style="background-position:0% 50%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
+            <div class="tile tile--bot" data-tile="bot"><div class="tile__front" style="background-position:0% 100%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
+          </div>
+          <div class="paper__half paper__half--r" data-half="r">
+            <div class="tile tile--top" data-tile="top"><div class="tile__front" style="background-position:100% 0%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
+            <div class="tile tile--mid" data-tile="mid"><div class="tile__front" style="background-position:100% 50%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
+            <div class="tile tile--bot" data-tile="bot"><div class="tile__front" style="background-position:100% 100%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
+          </div>
+        </div>
+      </a>
+      <div class="sr-only">
+        <h2 id="popup-title">Resume</h2>
+        <p>Ryan Choi, UI/UX &amp; Brand Designer.</p>
+        <h3>Experience</h3>
+        <ul>
+          <li>Design Intern, Sagetopia, Leesburg, VA, July – August 2025. Worked with the Creative Director and six peers to co-create logos. Built two company identities, from naming to ADA-compliant color palettes to logo design. Enhanced skills in Illustrator, Photoshop, After Effects and Figma through client deliverables.</li>
+          <li>UI/UX Designer Intern, IT Concepts Incorporated, Vienna, VA, May – June 2024. Collaborated with peers to design user-friendly interfaces. Learned foundational UI Figma skills through Udemy online courses. Conducted usability testing to identify a critical admin-access vulnerability.</li>
         </ul>
-      </section>
-      <section class="pop-section" data-reveal>
+        <h3>Projects</h3>
+        <ul>
+          <li>Boston Climate Action Network, Boston, MA, Design Lead, January – April 2026. Led UI/UX design for a grant tracking platform, improving accessibility and usability for an elderly user audience. Designed and iterated on low- to high-fidelity prototypes with FigJam and Figma. Built a scalable design system using an atomic structure of components.</li>
+          <li>Rainfall, Design Lead, June – September 2025. Led a three-person team in designing low-fidelity wireframes and user testing. Created an eight-week project roadmap and assigned tasks with Trello. Presented three logo concepts to project leads and persuaded them to adopt the final design.</li>
+          <li>Recreon, Design Lead, June – September 2025. Researched and presented six licensable brand names through a voting system. Designed a logo animation with After Effects. Built a Figma mobile UI prototype as the sole UI designer.</li>
+        </ul>
         <h3>Education</h3>
-        <ul class="pop-list">
-          <li class="pop-row"><span class="pop-row__title">Degree · School</span><span class="pop-row__meta">2014 – 2018</span></li>
+        <ul>
+          <li>Northeastern University, Boston, MA. BS Computer Science and Design, GPA 3.8, 2024 – expected 2028. Code4Community, CTFs, Scout, game jams, intramural badminton and tennis.</li>
+          <li>Basel School of Design, Basel, Switzerland. Study abroad, May – June 2026. Typography, graphic design.</li>
         </ul>
-      </section>
-      <section class="pop-section" data-reveal>
         <h3>Skills</h3>
-        <dl class="pop-facts">
-          <dt>Design</dt><dd>Skill, skill, skill</dd>
-          <dt>Code</dt><dd>Skill, skill, skill</dd>
-          <dt>Tools</dt><dd>Tool, tool, tool</dd>
-        </dl>
-      </section>
+        <p>Design: Figma, Illustrator, Photoshop, InDesign, After Effects, Framer. Technical: Java, Python, JavaScript, Dr. Racket, GitHub, VS Code. Hard and soft: UI/UX design, product design, prototyping, ideation, accessibility design, A/B testing, visual design, design systems, qualitative and quantitative research.</p>
+        <p>Contact: choi.rya@northeastern.edu, ryanchoi.framer.website</p>
+      </div>
     </div>
   </template>
 
-  <!-- Experience and Projects — opened from the boat (the snowman in winter) -->
+  <!-- Experience and Projects — opened from the boat (the snowman in winter); content from resume/RyanChoi_Resume.pdf -->
   <template data-popup-page="experience">
     <header class="pop-head" data-reveal>
       <h2 id="popup-title">Experience &amp; Projects</h2>
-      <p>Selected roles and the work that came out of them.</p>
+      <p>Design internships and the projects I’ve led, 2024–2026.</p>
     </header>
     <div class="pop-scroll">
       <section class="pop-section" data-reveal>
         <h3>Experience</h3>
         <ul class="pop-list">
-          <li><a class="pop-row" href="#"><span class="pop-row__title">Role · Company<span class="pop-row__go" aria-hidden="true">→</span></span><span class="pop-row__meta">2023 – Now</span><span class="pop-row__body">Two lines on the team, your scope and one outcome you are proud of.</span></a></li>
-          <li><a class="pop-row" href="#"><span class="pop-row__title">Role · Company<span class="pop-row__go" aria-hidden="true">→</span></span><span class="pop-row__meta">2020 – 2023</span><span class="pop-row__body">Two lines on the team, your scope and one outcome you are proud of.</span></a></li>
+          <li class="pop-row"><span class="pop-row__title">Design Intern · Sagetopia</span><span class="pop-row__meta">Jul – Aug 2025</span><span class="pop-row__body">Leesburg, VA</span><ul class="pop-points"><li>Worked with the Creative Director and six peers to co-create logos</li><li>Built two company identities, from naming to ADA-compliant colour palettes to logo design</li><li>Sharpened Illustrator, Photoshop, After Effects and Figma through client deliverables</li></ul></li>
+          <li class="pop-row"><span class="pop-row__title">UI/UX Designer Intern · IT Concepts Incorporated</span><span class="pop-row__meta">May – Jun 2024</span><span class="pop-row__body">Vienna, VA</span><ul class="pop-points"><li>Collaborated with peers to design user-friendly interfaces</li><li>Learned foundational UI Figma skills through Udemy online courses</li><li>Ran usability testing that identified a critical admin-access vulnerability</li></ul></li>
         </ul>
       </section>
       <section class="pop-section" data-reveal>
         <h3>Projects</h3>
         <ul class="pop-list">
-          <li><a class="pop-row" href="#"><span class="pop-row__title">Project name<span class="pop-row__go" aria-hidden="true">→</span></span><span class="pop-row__meta">2024</span><span class="pop-row__body">What it is, your part in it and what happened.</span></a></li>
-          <li><a class="pop-row" href="#"><span class="pop-row__title">Project name<span class="pop-row__go" aria-hidden="true">→</span></span><span class="pop-row__meta">2023</span><span class="pop-row__body">What it is, your part in it and what happened.</span></a></li>
-          <li><a class="pop-row" href="#"><span class="pop-row__title">Project name<span class="pop-row__go" aria-hidden="true">→</span></span><span class="pop-row__meta">2022</span><span class="pop-row__body">What it is, your part in it and what happened.</span></a></li>
+          <li class="pop-row"><span class="pop-row__title">Boston Climate Action Network · Design Lead</span><span class="pop-row__meta">Jan – Apr 2026</span><span class="pop-row__body">Boston, MA</span><ul class="pop-points"><li>Led UI/UX design for a grant-tracking platform, improving accessibility and usability for an elderly audience</li><li>Designed and iterated low- to high-fidelity prototypes from user testing and stakeholder feedback in FigJam and Figma</li><li>Built a scalable design system with an atomic structure of components to support future development</li></ul></li>
+          <li class="pop-row"><span class="pop-row__title">Rainfall · Design Lead</span><span class="pop-row__meta">Jun – Sep 2025</span><ul class="pop-points"><li>Led a three-person team through low-fidelity wireframes and user testing focused on usability and iteration</li><li>Created an eight-week project roadmap and assigned tasks in Trello</li><li>Presented three logo concepts and persuaded project leads to adopt the final design</li></ul></li>
+          <li class="pop-row"><span class="pop-row__title">Recreon · Design Lead</span><span class="pop-row__meta">Jun – Sep 2025</span><ul class="pop-points"><li>Researched and presented six licensable brand names through a voting system to shape the identity</li><li>Designed a logo animation in After Effects to strengthen the brand story</li><li>Built a Figma mobile UI prototype as the sole UI designer, applying responsive and interaction design</li></ul></li>
         </ul>
       </section>
     </div>
@@ -768,6 +831,8 @@ class SeasonsScene {
     content.replaceChildren(tpl.content.cloneNode(true));
     content.querySelectorAll('[data-reveal]').forEach((n, i) => n.style.setProperty('--i', i));
     pop.dataset.page = page;
+    if (tpl.dataset.variant) pop.dataset.variant = tpl.dataset.variant; else delete pop.dataset.variant;
+    this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null;
     pop.dataset.state = 'closed';
     pop.scrollTop = 0; // every page opens at its top
     // transform-origin = the clicked point, clamped into the visible part of the sheet (offset* ignore its scale)
@@ -777,7 +842,36 @@ class SeasonsScene {
     panel.style.transformOrigin = `${ox}px ${oy}px`;
     void pop.offsetWidth; // commit the closed state so the open transition runs
     pop.dataset.state = 'open';
+    if (pop.dataset.variant === 'paper') this.unfoldPaper(pop, origin);
     pop.querySelector('[data-popup-close]')?.focus({ preventScroll: true });
+  }
+  // ORIGAMI UNFOLD (Resume) — Web Animations on transform/opacity only. Folded state = the keyframes' first
+  // frame (held with fill:'backwards' through each delay); the resting CSS state is the open page.
+  //   0–420ms    the folded packet (left half × middle third, shifted to the centre) flies out of the tree
+  //   340–860ms  the right half swings open about the vertical fold while the page re-centres
+  //   780–1240ms the top flaps open · 940–1400ms the bottom flaps open · 1150–1550ms the shadow lands
+  // Reduced motion: no unfold; the shell's 150ms fade shows the page flat.
+  unfoldPaper(pop, origin) {
+    const paper = pop.querySelector('[data-paper]'); if (!paper) return;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const r = paper.getBoundingClientRect();
+    const fx = origin ? origin.x - (r.left + r.width / 2) : 0, fy = origin ? origin.y - (r.top + r.height / 2) : 0;
+    const OUT = 'cubic-bezier(0.16, 1, 0.3, 1)', FOLD = 'cubic-bezier(0.645, 0.045, 0.355, 1)'; // arrive: expo-out · fold on screen: in-out cubic
+    const q = sel => [...paper.querySelectorAll(sel)];
+    const run = (els, frames, delay, duration, easing) => els.map(n => n.animate(frames, { delay, duration, easing, fill: 'both' }));
+    const shade = (els, delay, duration) => run(els.map(t => t.querySelector('.tile__shade')), [{ opacity: 0.9 }, { opacity: 0 }], delay, duration, FOLD);
+    const right = paper.querySelector('[data-half="r"]');
+    this.paperAnims = [
+      ...run([paper], [{ transform: `translate(${fx}px, ${fy}px) scale(0.25)`, opacity: 0 }, { transform: 'none', opacity: 1 }], 0, 420, OUT),
+      ...run([paper.querySelector('[data-paper-shift]')], [{ transform: 'translateX(25%)' }, { transform: 'none' }], 340, 520, FOLD),
+      ...run([right], [{ transform: 'rotateY(-179deg)' }, { transform: 'none' }], 340, 520, FOLD),
+      ...shade(q('[data-half="r"] [data-tile="mid"]'), 340, 520),
+      ...run(q('[data-tile="top"]'), [{ transform: 'rotateX(-179deg)' }, { transform: 'none' }], 780, 460, FOLD),
+      ...shade(q('[data-tile="top"]'), 780, 460),
+      ...run(q('[data-tile="bot"]'), [{ transform: 'rotateX(179deg)' }, { transform: 'none' }], 940, 460, FOLD),
+      ...shade(q('[data-tile="bot"]'), 940, 460),
+      ...run([paper.querySelector('[data-paper-shadow]')], [{ opacity: 0 }, { opacity: 1 }], 1150, 400, OUT), // the shadow lands with the last flap
+    ];
   }
   closePopup() {
     const el = this.rootRef.current, pop = el?.querySelector('[data-popup]'); if (!pop || !this.pgOpen) return;
@@ -789,6 +883,7 @@ class SeasonsScene {
       if (done || this.pgOpen) return; done = true;
       pop.removeEventListener('transitionend', onEnd); clearTimeout(this.popupTimer);
       pop.dataset.state = 'closed'; pop.querySelector('[data-popup-content]').replaceChildren();
+      this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null; delete pop.dataset.variant;
       delete el.querySelector('[data-scene-nav]')?.dataset.held; // focus is back on the nav, so :focus-within keeps it shown
     };
     const onEnd = e => { if (e.target === pop && e.propertyName === 'opacity') finish(); };
@@ -1322,7 +1417,7 @@ class SeasonsScene {
     pop.addEventListener('click', e => {
       e.stopPropagation();
       if (e.target.closest('a[href="#"]')) e.preventDefault(); // placeholder links: no navigation until real URLs are added
-      if (e.target === pop || e.target.closest('[data-popup-close]')) this.closePopup();
+      if (e.target === pop || e.target.hasAttribute?.('data-backdrop') || e.target.closest('[data-popup-close]')) this.closePopup();
     });
     el.addEventListener('click', this.onClick);
     this.onLeave = () => { this.mouse = null; this.tipP = null; };

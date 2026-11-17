@@ -12,6 +12,9 @@ colors:
   dusk-scrim: "rgba(20, 28, 38, 0.16)"
   lamplight: "rgba(255, 222, 156, 0.6)"
   night-water: "#1d2630"
+  paper: "#ffffff"
+  paper-back: "#f7f4ef"
+  paper-back-shade: "#ebe6de"
 typography:
   headline:
     fontFamily: "IBM Plex Mono, ui-monospace, monospace"
@@ -50,6 +53,7 @@ typography:
 rounded:
   glass: "9px"
   thumb: "6px"
+  paper: "2px"
 spacing:
   xs: "4px"
   sm: "8px"
@@ -142,6 +146,7 @@ A near-monochrome system of cool ink on white frost, warmed only by lamplight; a
 - **Frost Edge** (`frost-edge`): the 1px border on every glass surface, which catches light like a pane's edge.
 - **Dusk Scrim** (`dusk-scrim`): the ink wash over the scene while a pop-up is open, paired with a 6px blur and 0.9 brightness.
 - **Night Water** (`night-water`): the page background seen only before the artwork loads.
+- **Paper** (`paper`), **Paper Back** (`paper-back`) and **Paper Back, shaded** (`paper-back-shade`): only for the Resume paper. The page face is white, and the back of the folded sheet is a warm off-white graded into its shade.
 
 Placeholder thumbnail tints (sage, sand, terracotta, rust, slate, dusk at 0.42 alpha) are stand-ins sampled from the seasons. They give way to real imagery and are not system colours.
 
@@ -193,7 +198,7 @@ Depth is floating glass. Surfaces hover just above the painting on one soft, coo
 
 ## Shapes
 
-One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, panel, buttons, cards, rows and chips. Image slots inside cards use a slightly tighter 6px (`rounded.thumb`) so they nest inside the card's curve. Borders are a single 1px frost edge. Dividers are 1px ink hairlines. There are no pills, circles or decorative outlines.
+One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, panel, buttons, cards, rows and chips. Image slots inside cards use a slightly tighter 6px (`rounded.thumb`) so they nest inside the card's curve. The Resume paper is nearly square-cornered (`rounded.paper`, 2px), like a real sheet. Borders are a single 1px frost edge. Dividers are 1px ink hairlines. There are no pills, circles or decorative outlines.
 
 ## Components
 
@@ -207,6 +212,11 @@ One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, p
 - **Close:** the same scale and fade reversed over 220ms on an in-out curve (`cubic-bezier(0.455, 0.03, 0.515, 0.955)`). Content stays put while the panel leaves.
 - **Reduced motion:** no scale, rise or stagger. A 150ms fade only.
 - Closes on ×, scrim click or Escape. Focus is trapped inside while open and returns to the trigger on close.
+
+### Resume Paper (signature)
+*The one place the page itself leaves the glass.* The tree opens the resume as the actual PDF page, set on white paper with a soft paper shadow and no glass. It is sized to fit the screen with no scrolling: the page height is the screen height less 128px, or narrower on small screens. Open PDF and Download glass buttons sit left of the close button, and clicking the page opens the PDF.
+- **Unfold:** the page is cut along one vertical fold and two horizontal folds into 2 × 3 panels. A folded packet (paper-back side out) flies out of the tree and grows to full size over 420ms (expo ease-out). The right half swings open about the vertical fold over 520ms, then the top flaps and then the bottom flaps open, 460ms each, all on an in-out cubic curve. Folding faces darken slightly and clear as they open, and the shadow lands last. The whole sequence runs about 1.5s and animates transform and opacity only.
+- **Close:** the shell's 220ms fade. **Reduced motion:** no unfold; the flat page fades in.
 
 ### Buttons
 - **Shape:** gently curved (9px), 44px tall, 16px side padding.

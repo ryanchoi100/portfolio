@@ -103,6 +103,21 @@
           "#b5bdc6",
           "#e7eaee"
         ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#ffffff"
+      },
+      "paper-back": {
+        "role": "neutral",
+        "displayName": "Paper Back",
+        "canonical": "#f7f4ef"
+      },
+      "paper-back-shade": {
+        "role": "neutral",
+        "displayName": "Paper Back, shaded",
+        "canonical": "#ebe6de"
       }
     },
     "typographyMeta": {
@@ -156,6 +171,11 @@
         "name": "scrim-filter",
         "value": "backdrop-filter: blur(6px) brightness(0.9)",
         "purpose": "Scene behind an open pop-up."
+      },
+      {
+        "name": "paper",
+        "value": "0 18px 48px rgba(20,28,38,0.28), 0 3px 10px rgba(20,28,38,0.16)",
+        "purpose": "Resume paper resting on the scrim; lands last in the unfold."
       }
     ],
     "motion": [
@@ -203,6 +223,16 @@
         "name": "reduced-motion",
         "value": "opacity 150ms ease",
         "purpose": "Only motion under prefers-reduced-motion."
+      },
+      {
+        "name": "paper-travel",
+        "value": "420ms cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Resume packet flies out of the tree and grows to size."
+      },
+      {
+        "name": "paper-fold",
+        "value": "460–520ms cubic-bezier(0.645, 0.045, 0.355, 1)",
+        "purpose": "Each origami fold opening (vertical half, then top flaps, then bottom flaps)."
       }
     ],
     "breakpoints": [
