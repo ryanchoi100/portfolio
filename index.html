@@ -316,7 +316,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
    PLAYGROUND — a diagonal, endlessly looping track of cards (positions set per frame by playFrame:
    translate along the diagonal, tilt and shrink with distance from the centre). Hover = fluid glass:
    the #pg-liquid SVG filter ripples the card's rim while a season-coloured rim light follows the pointer.
-   .pg-full is the full-screen view; playOpen / playClose swing it in and out.
+   .pg-full is the full view (fills the pop-up panel); playOpen / playClose swing it in and out.
    ====================================================================== */
 .popup[data-page="playground"] .popup__panel { overflow: hidden; }
 .pg { position: relative; isolation: isolate; flex: 1; min-height: 0; margin: calc(-1 * var(--panel-pad)); touch-action: none; }
@@ -353,7 +353,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 .pg-now__title { font-size: clamp(20px, 1.9vw, 26px); font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
 .pg-now__meta { font-size: 11px; font-weight: 500; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lake-ink-muted); font-variant-numeric: tabular-nums; }
 
-/* full-screen view (a child of .popup, above the panel) */
+/* full view: fills the pop-up panel (a child of .popup__panel, which clips it to the glass's rounded corners) */
 .pg-full { position: absolute; z-index: 30; left: 0; top: 0; width: 100%; height: 100%; overflow: hidden; background: var(--paper-back); box-shadow: 0 30px 80px rgba(20, 28, 38, 0.35); }
 .pg-full__media { position: absolute; inset: 0; border-radius: 0; font-size: 13px; }
 .pg-full__back { position: absolute; top: 16px; left: 16px; z-index: 2; }
@@ -938,11 +938,11 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   <!-- Playground — opened from the garden. Logos and logo animations on a diagonal, endlessly looping track.
        Scroll (wheel, drag, arrow keys) moves the cards along the diagonal; the centred card is upright and large,
        the others smaller and tilted. Hover: fluid glass (SVG #pg-liquid ripples the card's edges). Click the centred
-       card to open it full screen (it swings in tilted right; Back swings it out tilted left). Clicking another card
+       card to open it across the whole pop-up (it swings in tilted right; Back swings it out tilted left). Clicking another card
        brings it to the centre first.
        MEDIA: every card is a labelled placeholder. To use real work, put an <img> or <video> inside its
        .pg-card__media (e.g. <video src="playground/logo-anim-01.mp4" autoplay muted loop playsinline></video>);
-       the full-screen view reuses the same media. data-title / data-kind feed the caption. -->
+       the full view reuses the same media. data-title / data-kind feed the caption. -->
   <template data-popup-page="playground">
     <div class="pg" data-pg>
       <div class="pg-track" data-pg-track>
@@ -1504,7 +1504,7 @@ class SeasonsScene {
   //   playFrame  one rAF loop while the page is open: eases p toward its target (snapping to a card once
   //              input stops), lays the cards out on the diagonal (tilt d×9°, smaller and fainter with
   //              distance), eases the fluid-glass displacement on the hovered card and updates the caption.
-  //   playOpen / playClose  swing the centred card out to fill the screen (tilting right on the way, ease
+  //   playOpen / playClose  swing the centred card out to fill the pop-up panel (tilting right on the way, ease
   //              in-out) and back (tilting left). Reduced motion: a 200ms fade instead.
   // ======================================================================
   PLAY_EASE = 'cubic-bezier(0.65, 0, 0.35, 1)'; // in-out cubic: the card leaves gently and lands gently
@@ -1608,11 +1608,15 @@ class SeasonsScene {
       if (g.dispTarget === 0 && g.disp < 0.3) { g.hover.querySelector('.pg-card__body').style.filter = ''; g.hover = null; g.disp = 0; }
     }
   }
-  // the card's untilted box in the pop-up's coordinates
+  // the card's untilted box in the panel's coordinates (the full view fills the panel, not the screen)
   playBox(i) {
-    const g = this.play, P = g.pop.getBoundingClientRect(), T = g.el.getBoundingClientRect(), q = g.geo[i];
-    const w = g.w * q.s, h = g.h * q.s, cx = T.left - P.left + T.width / 2 + q.x, cy = T.top - P.top + T.height / 2 + q.y;
-    return { left: cx - w / 2 + 'px', top: cy - h / 2 + 'px', width: w + 'px', height: h + 'px', r: q.r, P };
+    const g = this.play, panel = g.pop.querySelector('[data-popup-panel]'), R = panel.getBoundingClientRect(), T = g.el.getBoundingClientRect(), q = g.geo[i];
+    const ox = R.left + panel.clientLeft, oy = R.top + panel.clientTop; // padding-box origin
+    const w = g.w * q.s, h = g.h * q.s, cx = T.left - ox + T.width / 2 + q.x, cy = T.top - oy + T.height / 2 + q.y;
+    return { left: cx - w / 2 + 'px', top: cy - h / 2 + 'px', width: w + 'px', height: h + 'px', r: q.r, P: { width: panel.clientWidth, height: panel.clientHeight } };
+  }
+  playInert(on) { // while the full view is up, the track and the × underneath it are out of reach
+    const g = this.play; [g.el, g.pop.querySelector('.popup__bar')].forEach(n => { if (n) n.inert = on; });
   }
   playOpen(i) {
     const g = this.play; if (!g || g.full || g.busy) return;
@@ -1622,12 +1626,12 @@ class SeasonsScene {
     full.className = 'pg-full'; full.setAttribute('role', 'group'); full.setAttribute('aria-labelledby', 'pg-full-title');
     const media = card.querySelector('.pg-card__media').cloneNode(true);
     media.className = media.className.replace('pg-card__media', 'pg-full__media'); media.style.setProperty('--tint', getComputedStyle(card).getPropertyValue('--tint'));
-    if (!media.querySelector('img, video')) media.textContent = `${card.dataset.title} · full-screen placeholder`;
+    if (!media.querySelector('img, video')) media.textContent = `${card.dataset.title} · full-view placeholder`;
     full.append(media);
     full.insertAdjacentHTML('beforeend', `<button class="proj-back glass pg-full__back" type="button" data-pg-back><span aria-hidden="true">←</span> Back</button><div class="pg-full__cap glass"><h3 id="pg-full-title"></h3><p>${card.dataset.kind} · placeholder. Your work goes here.</p></div>`);
     full.querySelector('h3').textContent = card.dataset.title;
-    g.pop.append(full); g.full = { el: full, i };
-    g.pop.querySelector('[data-popup-panel]').inert = true;
+    g.pop.querySelector('[data-popup-panel]').append(full); g.full = { el: full, i };
+    this.playInert(true);
     const chrome = [...full.querySelectorAll('.pg-full__back, .pg-full__cap')];
     let anims;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -1675,14 +1679,14 @@ class SeasonsScene {
     Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => {
       if (this.play !== g) return;
       card.style.visibility = ''; full.remove(); g.full = null; g.busy = false;
-      g.pop.querySelector('[data-popup-panel]').inert = false;
+      this.playInert(false);
       card.focus({ preventScroll: true });
     });
   }
   playStop(pop) {
     const g = this.play; if (!g) return;
     cancelAnimationFrame(g.raf); this.playRO?.disconnect(); this.playRO = null;
-    g.full?.el.remove(); pop.querySelector('[data-popup-panel]').inert = false;
+    g.full?.el.remove(); this.playInert(false);
     document.querySelector('[data-pg-disp]')?.setAttribute('scale', '0');
     this.play = null;
   }

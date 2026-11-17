@@ -311,7 +311,7 @@
       "name": "Playground Track",
       "kind": "custom",
       "refersTo": "playground",
-      "description": "Looping diagonal track of 4:5 media tiles (18px corners, solid base, deep shadow): the centred tile is upright and large, the others tilted 9° per step, smaller and faded. Hover ripples the tile's edge like liquid glass with a season-coloured rim light; clicking swings the tile out to fill the screen, tilting right, and Back swings it back tilting left.",
+      "description": "Looping diagonal track of 4:5 media tiles (18px corners, solid base, deep shadow): the centred tile is upright and large, the others tilted 9° per step, smaller and faded. Hover ripples the tile's edge like liquid glass with a season-coloured rim light; clicking swings the tile out to fill the pop-up panel, tilting right, and Back swings it back tilting left.",
       "html": "<div class=\"ds-pg\"><div class=\"t a\">Logo 03</div><div class=\"t c\">Logo animation 01</div><div class=\"t b\">Logo 01</div></div>",
       "css": ".ds-pg{position:relative;height:320px;font-family:'IBM Plex Mono',ui-monospace,monospace}.ds-pg .t{position:absolute;display:grid;place-items:center;width:160px;height:200px;border-radius:18px;background:#f7f4ef;box-shadow:0 24px 48px rgba(20,28,38,.26),0 4px 12px rgba(20,28,38,.14);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase}.ds-pg .c{left:120px;top:60px}.ds-pg .a{left:0;top:0;transform:rotate(-9deg) scale(.58)}.ds-pg .b{left:240px;top:120px;transform:rotate(9deg) scale(.58)}"
     }
