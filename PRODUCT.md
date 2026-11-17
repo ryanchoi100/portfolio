@@ -38,7 +38,7 @@ Professional positioning comes from the resume: UI/UX and brand design across in
 - The Resume pop-up shows the PDF page itself (origami unfold), sized to fit a desktop screen without scrolling, with Open PDF and Download.
 - Deploy: GitHub Pages from `main`; a custom domain is planned for later.
 - Undecided:
-  - case-study or project pages (the Experience rows have no link destinations yet)
+  - the remaining case studies: BCAN has a full draft written from the owner's own text; Sagetopia, Rainfall, Recreon and IT Concepts have short pages built only from the resume, marked "Full case study in progress"
   - whether a Contact page or mailbox is added later (explicitly not now)
 
 ## Brand Commitments
@@ -50,7 +50,8 @@ Professional positioning comes from the resume: UI/UX and brand design across in
 
 - Artwork: `seasons/` (four seasons × plate, tree, reflection, lights).
 - Resume: `resume/RyanChoi_Resume.pdf` (one page; also rendered to `resume/resume-page.webp` for the unfold). It is the source for About Me and Experience & Projects. It includes a phone number and email, so it is public once deployed.
-- Still missing: a portrait photo, case studies, project imagery and Playground content (six placeholder cards). There are no metrics, client quotes or testimonials beyond the resume. Future work must not fabricate any of them.
+- BCAN case-study text: supplied by the owner (scope, client, year, industry, context, approach, outcome); it is the source for the BCAN page.
+- Still missing: a portrait photo, full case studies for the other four projects, all project imagery (every image is a labelled placeholder) and Playground content (six placeholder cards). There are no metrics, client quotes or testimonials beyond the resume. Future work must not fabricate any of them.
 
 ## Product Principles
 

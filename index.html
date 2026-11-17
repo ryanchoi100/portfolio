@@ -210,6 +210,95 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 .tile__front { background-color: var(--paper); background-image: url("resume/resume-page.webp"); background-size: 200% 300%; background-repeat: no-repeat; }
 .tile__back { transform: rotateY(180deg); background: linear-gradient(160deg, var(--paper-back), var(--paper-back-shade)); box-shadow: inset 0 0 0 1px rgba(20, 28, 38, 0.06); }
 .tile__shade { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(20, 28, 38, 0.35), rgba(20, 28, 38, 0.1)); opacity: 0; pointer-events: none; }
+/* ======================================================================
+   EXPERIENCE — two views stacked in one grid cell of the panel. Sizes come from JS (xpLayout):
+   --list-h / --proj-h = the two scrollers' heights, --shot-w / --shot-h = one image size shared by the
+   list and the project figure (so the image keeps its size through the morph), --row-h = name row,
+   --fig-top = where the sticky project figure rests.
+   ====================================================================== */
+.xp { --xp-gap: clamp(20px, 3vw, 48px); flex: 1; min-height: 0; display: grid; grid-template: minmax(0, 1fr) / minmax(0, 1fr); }
+.xp-view { grid-area: 1 / 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.xp-view[data-hidden] { visibility: hidden; }
+.shot {
+  position: relative; overflow: hidden; box-sizing: border-box; display: grid; place-items: center; padding: 16px;
+  border-radius: var(--radius-glass); text-align: center; text-wrap: balance;
+  background: radial-gradient(120% 90% at 30% 25%, rgba(255,255,255,0.35), rgba(255,255,255,0) 60%), var(--tint);
+  font-size: 11px; font-weight: 500; line-height: 1.45; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* list: names (left) travel with the images (right); the centred image's name is lit */
+.xp-scroll { scroll-snap-type: y proximity; }
+.xp-grid { display: grid; grid-template-columns: minmax(0, 1fr) var(--shot-w, 40%); gap: var(--xp-gap); }
+.xp-names-wrap { position: sticky; top: 0; align-self: start; height: var(--list-h, 100%); overflow: hidden; }
+.xp-names { list-style: none; margin: 0; padding: 0 0 0 4px; }
+.xp-names li { height: var(--row-h, 64px); }
+.xp-name, .xp-cap {
+  display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 8px;
+  box-sizing: border-box; width: 100%; height: 100%; padding: 0; border: 0; border-radius: var(--radius-thumb);
+  background: none; font: inherit; color: inherit; text-align: left; cursor: pointer;
+}
+.xp-name { opacity: max(var(--o, 1), var(--hov, 0)); }
+.xp-name__title {
+  display: block; max-width: 100%; font-size: clamp(20px, 2.1vw, 28px); font-weight: 500; line-height: 1.15; letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform-origin: 0 0;
+}
+.xp-name__meta {
+  display: block; max-width: 100%; font-size: 11px; font-weight: 500; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--lake-ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: var(--m, 1);
+}
+.xp-name:focus-visible { --hov: 1; }
+.xp-shots { display: flex; flex-direction: column; gap: var(--xp-gap); padding-block: calc((var(--list-h, 0px) - var(--shot-h, 0px)) / 2); }
+.xp-shot {
+  width: var(--shot-w); height: var(--shot-h); scroll-snap-align: center; cursor: pointer;
+  transition: transform 250ms var(--ease-out), box-shadow 250ms var(--ease-hover);
+}
+.xp-cap { display: none; }
+
+/* project: back bar, then a scroller with the story (left) and the sticky figure (right) */
+.proj-bar { display: flex; align-items: center; gap: 14px; min-height: 44px; padding-right: 52px; }
+.proj-back {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px 0 14px;
+  font: inherit; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lake-ink); cursor: pointer;
+  transition: box-shadow var(--dur-hover) var(--ease-hover), background-color var(--dur-hover) var(--ease-hover), transform var(--dur-press) var(--ease-out);
+}
+.proj-back > span { display: inline-block; transition: transform var(--dur-hover) var(--ease-out); }
+.proj-back:active { transform: scale(0.97); }
+.proj-crumb { font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lake-ink-muted); }
+.proj-scroll { margin-top: 14px; }
+.proj-grid { display: grid; grid-template-columns: minmax(0, 1fr) var(--shot-w, 40%); gap: var(--xp-gap); }
+.proj-main { min-width: 0; padding: var(--fig-top, 0px) 0 calc(var(--proj-h, 400px) * 0.45) 4px; }
+.proj-head { display: flex; flex-direction: column; gap: 16px; }
+.proj-title { margin: 0; font-size: clamp(26px, 3vw, 40px); font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; text-wrap: balance; transform-origin: 0 0; }
+.proj-kicker { margin: 0; font-size: 11px; font-weight: 500; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lake-ink-muted); }
+.proj-lede { margin: 0; font-size: 15px; line-height: 1.6; max-width: 44ch; text-wrap: pretty; }
+.proj-meta { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 20px 24px; margin: 12px 0 0; padding-top: 22px; border-top: 1px solid var(--hairline); }
+.proj-meta dt { margin-bottom: 8px; font-size: 11px; font-weight: 500; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lake-ink-muted); }
+.proj-meta dd { margin: 0; font-size: 13px; line-height: 1.45; text-wrap: pretty; }
+.proj-sec { min-height: calc(var(--proj-h, 400px) * 0.5); padding-top: clamp(64px, 14vh, 128px); }
+.proj-h { margin: 16px 0 28px; max-width: 22ch; font-size: clamp(20px, 2.2vw, 28px); font-weight: 500; line-height: 1.25; letter-spacing: -0.01em; text-wrap: balance; }
+.proj-sec > p:not(.proj-kicker) { margin: 0; max-width: 44ch; font-size: 15px; line-height: 1.7; text-wrap: pretty; }
+.proj-sec > p:not(.proj-kicker) + p { margin-top: 1.3em; }
+.proj-figure { position: sticky; top: var(--fig-top, 0px); align-self: start; display: grid; width: var(--shot-w); height: var(--shot-h); margin: var(--fig-top, 0px) 0 0; transform-origin: 0 0; }
+.proj-figure > .shot { grid-area: 1 / 1; opacity: 0; transform: scale(1.03); transition: opacity 450ms var(--ease-out), transform 700ms var(--ease-out); }
+.proj-figure > .shot[data-on] { opacity: 1; transform: none; }
+
+/* phones: one column; each image carries its own name, and the project figure sticks to the top as frost */
+@media (max-width: 720px) {
+  .xp-grid, .proj-grid { grid-template-columns: minmax(0, 1fr); }
+  .xp-names-wrap { display: none; }
+  .xp-scroll { scroll-snap-type: none; }
+  .xp-shots { padding-block: 0 8px; gap: 28px; }
+  .xp-shot { width: 100%; }
+  .xp-cap { display: flex; height: auto; min-height: 44px; padding-top: 12px; }
+  .proj-main { padding-top: 24px; }
+  .proj-figure {
+    order: -1; z-index: 1; top: -4px; width: 100%; height: var(--fig-h, 200px); margin: 0; padding: 6px; box-sizing: border-box;
+    background: var(--paper-back); border-radius: var(--radius-glass); box-shadow: var(--shadow-resting);   /* opaque: the story scrolls under it */
+  }
+  .proj-figure > .shot { grid-area: 1 / 1; }
+  .proj-sec { min-height: 0; padding-top: 56px; }
+}
 /* Keyboard access to the scene objects: invisible until a key-user tabs into it, then shown as glass chips */
 .scene-nav { position: absolute; top: 12px; left: 12px; z-index: 15; display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--font-mono); }
 .scene-nav:not(:focus-within):not([data-held]) { clip-path: inset(50%); width: 1px; height: 1px; overflow: hidden; white-space: nowrap; }
@@ -233,6 +322,10 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   .pop-row:hover { background: color-mix(in srgb, var(--frost) 65%, transparent); }   /* static rows: a faint frost tint only */
   a.pop-row:hover { background: var(--frost-dense); border-color: var(--frost-edge); box-shadow: var(--shadow-lamplit); }
   a.pop-row:hover .pop-row__go { transform: translateX(3px); }
+  .xp-name:hover { --hov: 1; }
+  .xp-shot:hover { transform: translateY(-3px); box-shadow: var(--shadow-lifted); }
+  .proj-back:hover { background: var(--frost-lit); box-shadow: var(--shadow-lamplit); }
+  .proj-back:hover > span { transform: translateX(-3px); }
 }
 
 /* Reduced motion: no scaling, sliding or stagger; keep a short opacity cross-fade so open/close still reads */
@@ -245,6 +338,9 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   .pop-card__surface, .pop-row__go, .popup__close, .pop-button { transition-property: box-shadow, background-color; }
   .pop-card:hover .pop-card__surface, .pop-row:hover .pop-row__go { transform: none; }
   .popup__close:active, .pop-button:active { transform: none; }
+  .xp-shot, .proj-back > span { transition-property: box-shadow; }
+  .xp-shot:hover, .proj-back:hover > span, .proj-back:active { transform: none; }
+  .proj-figure > .shot { transform: none; transition: opacity 150ms ease; }
 }
 </style>
 </head>
@@ -464,28 +560,291 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
     </div>
   </template>
 
-  <!-- Experience and Projects — opened from the boat (the snowman in winter); content from resume/RyanChoi_Resume.pdf -->
+  <!-- Experience and Projects — opened from the boat (the snowman in winter); content from resume/RyanChoi_Resume.pdf.
+       Two stacked views share the panel: the list (names on the left travel with the images on the right) and one
+       project page at a time, cloned from <template data-project="id">. openProject() / closeProject() morph
+       between them (the name becomes the title, the image keeps its place on the right).
+       IMAGES: every .shot is a labelled placeholder. To use a real image, put it inside the .shot:
+       <div class="shot"><img src="projects/bcan/cover.webp" alt="…"></div>. The list image and a project's
+       first figure image should be the same picture so the morph is seamless. -->
   <template data-popup-page="experience">
-    <header class="pop-head" data-reveal>
-      <h2 id="popup-title">Experience &amp; Projects</h2>
-      <p>Design internships and the projects I’ve led, 2024–2026.</p>
-    </header>
-    <div class="pop-scroll">
-      <section class="pop-section" data-reveal>
-        <h3>Experience</h3>
-        <ul class="pop-list">
-          <li class="pop-row"><span class="pop-row__title">Design Intern · Sagetopia</span><span class="pop-row__meta">Jul – Aug 2025</span><span class="pop-row__body">Leesburg, VA</span><ul class="pop-points"><li>Worked with the Creative Director and six peers to co-create logos</li><li>Built two company identities, from naming to ADA-compliant colour palettes to logo design</li><li>Sharpened Illustrator, Photoshop, After Effects and Figma through client deliverables</li></ul></li>
-          <li class="pop-row"><span class="pop-row__title">UI/UX Designer Intern · IT Concepts Incorporated</span><span class="pop-row__meta">May – Jun 2024</span><span class="pop-row__body">Vienna, VA</span><ul class="pop-points"><li>Collaborated with peers to design user-friendly interfaces</li><li>Learned foundational UI Figma skills through Udemy online courses</li><li>Ran usability testing that identified a critical admin-access vulnerability</li></ul></li>
-        </ul>
-      </section>
-      <section class="pop-section" data-reveal>
-        <h3>Projects</h3>
-        <ul class="pop-list">
-          <li class="pop-row"><span class="pop-row__title">Boston Climate Action Network · Design Lead</span><span class="pop-row__meta">Jan – Apr 2026</span><span class="pop-row__body">Boston, MA</span><ul class="pop-points"><li>Led UI/UX design for a grant-tracking platform, improving accessibility and usability for an elderly audience</li><li>Designed and iterated low- to high-fidelity prototypes from user testing and stakeholder feedback in FigJam and Figma</li><li>Built a scalable design system with an atomic structure of components to support future development</li></ul></li>
-          <li class="pop-row"><span class="pop-row__title">Rainfall · Design Lead</span><span class="pop-row__meta">Jun – Sep 2025</span><ul class="pop-points"><li>Led a three-person team through low-fidelity wireframes and user testing focused on usability and iteration</li><li>Created an eight-week project roadmap and assigned tasks in Trello</li><li>Presented three logo concepts and persuaded project leads to adopt the final design</li></ul></li>
-          <li class="pop-row"><span class="pop-row__title">Recreon · Design Lead</span><span class="pop-row__meta">Jun – Sep 2025</span><ul class="pop-points"><li>Researched and presented six licensable brand names through a voting system to shape the identity</li><li>Designed a logo animation in After Effects to strengthen the brand story</li><li>Built a Figma mobile UI prototype as the sole UI designer, applying responsive and interaction design</li></ul></li>
-        </ul>
-      </section>
+    <div class="xp" data-xp data-view="list">
+      <div class="xp-view" data-xp-view="list">
+        <header class="pop-head" data-reveal>
+          <h2 id="popup-title">Experience &amp; Projects</h2>
+          <p>Design internships and the projects I’ve led, 2024–2026. Choose one to read the story.</p>
+        </header>
+        <div class="pop-scroll xp-scroll" data-xp-scroll data-reveal>
+          <div class="xp-grid">
+            <div class="xp-names-wrap">
+              <ol class="xp-names" data-xp-names>
+                <li><button class="xp-name" type="button" data-open-project="bcan"><span class="xp-name__title" data-xp-title>BCAN · Grant Tracker</span><span class="xp-name__meta">Boston Climate Action Network · Design lead · 2026</span></button></li>
+                <li><button class="xp-name" type="button" data-open-project="sagetopia"><span class="xp-name__title" data-xp-title>Sagetopia · Brand Identity</span><span class="xp-name__meta">Design intern · 2025</span></button></li>
+                <li><button class="xp-name" type="button" data-open-project="rainfall"><span class="xp-name__title" data-xp-title>Rainfall · Team Lead</span><span class="xp-name__meta">Design lead · 2025</span></button></li>
+                <li><button class="xp-name" type="button" data-open-project="recreon"><span class="xp-name__title" data-xp-title>Recreon · Brand &amp; App</span><span class="xp-name__meta">Design lead · 2025</span></button></li>
+                <li><button class="xp-name" type="button" data-open-project="itconcepts"><span class="xp-name__title" data-xp-title>IT Concepts · UI/UX</span><span class="xp-name__meta">UI/UX designer intern · 2024</span></button></li>
+              </ol>
+            </div>
+            <div class="xp-shots">
+              <div class="xp-item"><div class="shot xp-shot" data-open-project="bcan" data-xp-shot style="--tint:rgba(158,182,160,0.42)">Image coming · BCAN grant tracker</div><button class="xp-cap" type="button" data-open-project="bcan"><span class="xp-name__title" data-xp-title>BCAN · Grant Tracker</span><span class="xp-name__meta">Design lead · 2026</span></button></div>
+              <div class="xp-item"><div class="shot xp-shot" data-open-project="sagetopia" data-xp-shot style="--tint:rgba(124,146,150,0.42)">Image coming · Sagetopia identities</div><button class="xp-cap" type="button" data-open-project="sagetopia"><span class="xp-name__title" data-xp-title>Sagetopia · Brand Identity</span><span class="xp-name__meta">Design intern · 2025</span></button></div>
+              <div class="xp-item"><div class="shot xp-shot" data-open-project="rainfall" data-xp-shot style="--tint:rgba(64,78,112,0.42)">Image coming · Rainfall wireframes</div><button class="xp-cap" type="button" data-open-project="rainfall"><span class="xp-name__title" data-xp-title>Rainfall · Team Lead</span><span class="xp-name__meta">Design lead · 2025</span></button></div>
+              <div class="xp-item"><div class="shot xp-shot" data-open-project="recreon" data-xp-shot style="--tint:rgba(208,128,96,0.42)">Image coming · Recreon app</div><button class="xp-cap" type="button" data-open-project="recreon"><span class="xp-name__title" data-xp-title>Recreon · Brand &amp; App</span><span class="xp-name__meta">Design lead · 2025</span></button></div>
+              <div class="xp-item"><div class="shot xp-shot" data-open-project="itconcepts" data-xp-shot style="--tint:rgba(236,196,128,0.42)">Image coming · IT Concepts interfaces</div><button class="xp-cap" type="button" data-open-project="itconcepts"><span class="xp-name__title" data-xp-title>IT Concepts · UI/UX</span><span class="xp-name__meta">UI/UX designer intern · 2024</span></button></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="xp-view xp-view--project" data-xp-view="project" inert></div>
+    </div>
+  </template>
+
+  <!-- PROJECT PAGES — one <template data-project="id"> each. Layout: .proj-bar (back) then a scroller holding
+       .proj-main (head + sections) and the sticky .proj-figure. Each .proj-sec names the figure image it shows
+       with data-shot (index into the figure's .shot list; the head shows image 0, the same picture as the list).
+       Elements marked data-proj-in fade up after the morph. -->
+  <template data-project="bcan">
+    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Experience &amp; Projects</span></div>
+    <div class="pop-scroll proj-scroll" data-proj-scroll>
+      <div class="proj-grid">
+        <div class="proj-main">
+          <header class="proj-head">
+            <p class="proj-kicker" data-proj-in>Case study · Spring 2026</p>
+            <h2 class="proj-title" id="project-title" data-proj-title>BCAN · Grant Tracker</h2>
+            <p class="proj-lede" data-proj-in>Redesigning a grant tracker and cashflow page so an elderly audience can use them with confidence.</p>
+            <dl class="proj-meta" data-proj-in>
+              <div><dt>Scope</dt><dd>Accessibility for elderly users</dd></div>
+              <div><dt>Client</dt><dd>Boston Climate Action Network</dd></div>
+              <div><dt>Year</dt><dd>Spring 2026</dd></div>
+              <div><dt>Industry</dt><dd>Climate action</dd></div>
+              <div><dt>Role</dt><dd>Design lead</dd></div>
+              <div><dt>Tools</dt><dd>FigJam, Figma</dd></div>
+            </dl>
+          </header>
+          <section class="proj-sec" data-shot="0" data-proj-in>
+            <p class="proj-kicker">The client</p>
+            <h3 class="proj-h">A coalition working for climate justice in Boston.</h3>
+            <p>Boston Climate Action Network brings community organizations, policymakers and the City of Boston together to advance climate justice and environmental equity.</p>
+            <p>Its work runs on advocacy, community engagement and inclusive policy, so climate action serves both sustainability and social impact.</p>
+          </section>
+          <section class="proj-sec" data-shot="1">
+            <p class="proj-kicker">The challenge</p>
+            <h3 class="proj-h">Built for people who rely on what feels familiar.</h3>
+            <p>BCAN’s grant tracker and cashflow page are used by an elderly audience.</p>
+            <p>The goal: make both pages more accessible and easier to use, without asking anyone to learn a new way of working.</p>
+          </section>
+          <section class="proj-sec" data-shot="2">
+            <p class="proj-kicker">My role</p>
+            <h3 class="proj-h">Design lead, building a system others can grow.</h3>
+            <p>I organized every component with an atomic structure, so future designers can pick up the system and build on it.</p>
+            <p>Key interactions stayed clear and direct: filters you can always see, and cards you edit in place.</p>
+          </section>
+          <section class="proj-sec" data-shot="3">
+            <p class="proj-kicker">Research</p>
+            <h3 class="proj-h">Borrowing clarity from tools people already know.</h3>
+            <p>We started by studying existing websites and gathering inspiration on Pinterest.</p>
+            <p>Outlook and NEUSearch showed which features make information easier to read and act on.</p>
+          </section>
+          <section class="proj-sec" data-shot="4">
+            <p class="proj-kicker">Exploration</p>
+            <h3 class="proj-h">Three prototypes. One bento.</h3>
+            <p>I built three low-fidelity prototypes of the grant tracker and cashflow pages and presented them to the client.</p>
+            <p>He chose a bento-style layout, close to his original concept.</p>
+          </section>
+          <section class="proj-sec" data-shot="5">
+            <p class="proj-kicker">Refinement</p>
+            <h3 class="proj-h">Everything visible. Nothing hidden.</h3>
+            <p>I refined the bento layout so every piece of information stays on screen.</p>
+            <p>Interactions got simpler, and each card can be edited directly, with no menus to dig through.</p>
+          </section>
+          <section class="proj-sec" data-shot="6">
+            <p class="proj-kicker">Collaboration</p>
+            <h3 class="proj-h">Designers and developers, side by side.</h3>
+            <p>Components were used the same way across every screen, so the system could scale.</p>
+            <p>Designers and developers worked in parallel. Weekly meetings kept us aligned, and feedback from the whole team shaped each iteration.</p>
+          </section>
+          <section class="proj-sec" data-shot="7">
+            <p class="proj-kicker">Outcome</p>
+            <h3 class="proj-h">Approved after playtesting.</h3>
+            <p>The final design is an intuitive, accessible interface the client approved after playtesting.</p>
+            <p>Familiar layouts, visible filters and direct interactions let elderly users move through the site efficiently.</p>
+            <p>And the atomic component structure gives the next designers a clear foundation to build on.</p>
+          </section>
+        </div>
+        <figure class="proj-figure" data-proj-figure>
+          <div class="shot" style="--tint:rgba(158,182,160,0.42)">Image coming · BCAN grant tracker</div>
+          <div class="shot" style="--tint:rgba(124,146,150,0.42)">Image coming · The original pages</div>
+          <div class="shot" style="--tint:rgba(158,182,160,0.42)">Image coming · Atomic component library</div>
+          <div class="shot" style="--tint:rgba(236,196,128,0.42)">Image coming · Research board</div>
+          <div class="shot" style="--tint:rgba(208,128,96,0.42)">Image coming · Three low-fidelity prototypes</div>
+          <div class="shot" style="--tint:rgba(158,182,160,0.42)">Image coming · The bento layout</div>
+          <div class="shot" style="--tint:rgba(64,78,112,0.42)">Image coming · Design and dev handoff</div>
+          <div class="shot" style="--tint:rgba(124,146,150,0.42)">Image coming · Final tracker and cashflow</div>
+        </figure>
+      </div>
+    </div>
+  </template>
+
+  <template data-project="sagetopia">
+    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Experience &amp; Projects</span></div>
+    <div class="pop-scroll proj-scroll" data-proj-scroll>
+      <div class="proj-grid">
+        <div class="proj-main">
+          <header class="proj-head">
+            <p class="proj-kicker" data-proj-in>Internship · Summer 2025</p>
+            <h2 class="proj-title" id="project-title" data-proj-title>Sagetopia · Brand Identity</h2>
+            <p class="proj-lede" data-proj-in>Building company identities, from the name to the logo. Full case study in progress.</p>
+            <dl class="proj-meta" data-proj-in>
+              <div><dt>Role</dt><dd>Design intern</dd></div>
+              <div><dt>Where</dt><dd>Leesburg, VA</dd></div>
+              <div><dt>When</dt><dd>Jul – Aug 2025</dd></div>
+              <div><dt>Tools</dt><dd>Illustrator, Photoshop, After Effects, Figma</dd></div>
+            </dl>
+          </header>
+          <section class="proj-sec" data-shot="0" data-proj-in>
+            <p class="proj-kicker">The team</p>
+            <h3 class="proj-h">Logos made together.</h3>
+            <p>I worked with the Creative Director and six peers to co-create logos.</p>
+          </section>
+          <section class="proj-sec" data-shot="1">
+            <p class="proj-kicker">The work</p>
+            <h3 class="proj-h">Two companies, from name to palette to mark.</h3>
+            <p>I built two company identities: naming, ADA-compliant colour palettes and logo design.</p>
+          </section>
+          <section class="proj-sec" data-shot="2">
+            <p class="proj-kicker">The craft</p>
+            <h3 class="proj-h">Learning the tools on real deliverables.</h3>
+            <p>Client work sharpened my Illustrator, Photoshop, After Effects and Figma skills.</p>
+          </section>
+        </div>
+        <figure class="proj-figure" data-proj-figure>
+          <div class="shot" style="--tint:rgba(124,146,150,0.42)">Image coming · Sagetopia identities</div>
+          <div class="shot" style="--tint:rgba(236,196,128,0.42)">Image coming · Palettes and marks</div>
+          <div class="shot" style="--tint:rgba(208,128,96,0.42)">Image coming · Client deliverables</div>
+        </figure>
+      </div>
+    </div>
+  </template>
+
+  <template data-project="rainfall">
+    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Experience &amp; Projects</span></div>
+    <div class="pop-scroll proj-scroll" data-proj-scroll>
+      <div class="proj-grid">
+        <div class="proj-main">
+          <header class="proj-head">
+            <p class="proj-kicker" data-proj-in>Project · Summer 2025</p>
+            <h2 class="proj-title" id="project-title" data-proj-title>Rainfall · Team Lead</h2>
+            <p class="proj-lede" data-proj-in>Leading a small design team from wireframes to a brand. Full case study in progress.</p>
+            <dl class="proj-meta" data-proj-in>
+              <div><dt>Role</dt><dd>Design lead</dd></div>
+              <div><dt>When</dt><dd>Jun – Sep 2025</dd></div>
+              <div><dt>Team</dt><dd>Three designers</dd></div>
+              <div><dt>Tools</dt><dd>Trello</dd></div>
+            </dl>
+          </header>
+          <section class="proj-sec" data-shot="0" data-proj-in>
+            <p class="proj-kicker">The team</p>
+            <h3 class="proj-h">Three designers, from wireframe to test.</h3>
+            <p>I led a three-person team through low-fidelity wireframes and user testing, focused on usability and iteration.</p>
+          </section>
+          <section class="proj-sec" data-shot="1">
+            <p class="proj-kicker">The plan</p>
+            <h3 class="proj-h">Eight weeks, mapped out.</h3>
+            <p>I created the project roadmap and assigned tasks in Trello.</p>
+          </section>
+          <section class="proj-sec" data-shot="2">
+            <p class="proj-kicker">The identity</p>
+            <h3 class="proj-h">Three logo concepts. One chosen.</h3>
+            <p>I presented three logo concepts and persuaded the project leads to adopt the final design.</p>
+          </section>
+        </div>
+        <figure class="proj-figure" data-proj-figure>
+          <div class="shot" style="--tint:rgba(64,78,112,0.42)">Image coming · Rainfall wireframes</div>
+          <div class="shot" style="--tint:rgba(124,146,150,0.42)">Image coming · The roadmap</div>
+          <div class="shot" style="--tint:rgba(236,196,128,0.42)">Image coming · Logo concepts</div>
+        </figure>
+      </div>
+    </div>
+  </template>
+
+  <template data-project="recreon">
+    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Experience &amp; Projects</span></div>
+    <div class="pop-scroll proj-scroll" data-proj-scroll>
+      <div class="proj-grid">
+        <div class="proj-main">
+          <header class="proj-head">
+            <p class="proj-kicker" data-proj-in>Project · Summer 2025</p>
+            <h2 class="proj-title" id="project-title" data-proj-title>Recreon · Brand &amp; App</h2>
+            <p class="proj-lede" data-proj-in>A brand name, a moving logo and a mobile app. Full case study in progress.</p>
+            <dl class="proj-meta" data-proj-in>
+              <div><dt>Role</dt><dd>Design lead</dd></div>
+              <div><dt>When</dt><dd>Jun – Sep 2025</dd></div>
+              <div><dt>Tools</dt><dd>After Effects, Figma</dd></div>
+            </dl>
+          </header>
+          <section class="proj-sec" data-shot="0" data-proj-in>
+            <p class="proj-kicker">The name</p>
+            <h3 class="proj-h">Six names, put to a vote.</h3>
+            <p>I researched six licensable brand names and presented them through a voting system to shape the identity.</p>
+          </section>
+          <section class="proj-sec" data-shot="1">
+            <p class="proj-kicker">The motion</p>
+            <h3 class="proj-h">A logo that tells the story.</h3>
+            <p>I designed a logo animation in After Effects to strengthen the brand story.</p>
+          </section>
+          <section class="proj-sec" data-shot="2">
+            <p class="proj-kicker">The app</p>
+            <h3 class="proj-h">The mobile UI, designed solo.</h3>
+            <p>As the sole UI designer, I built a Figma mobile prototype, applying responsive and interaction design.</p>
+          </section>
+        </div>
+        <figure class="proj-figure" data-proj-figure>
+          <div class="shot" style="--tint:rgba(208,128,96,0.42)">Image coming · Recreon app</div>
+          <div class="shot" style="--tint:rgba(168,88,52,0.42)">Image coming · Logo animation</div>
+          <div class="shot" style="--tint:rgba(236,196,128,0.42)">Image coming · Mobile prototype</div>
+        </figure>
+      </div>
+    </div>
+  </template>
+
+  <template data-project="itconcepts">
+    <div class="proj-bar" data-proj-in><button class="proj-back glass" type="button" data-proj-back><span aria-hidden="true">←</span> Back</button><span class="proj-crumb">Experience &amp; Projects</span></div>
+    <div class="pop-scroll proj-scroll" data-proj-scroll>
+      <div class="proj-grid">
+        <div class="proj-main">
+          <header class="proj-head">
+            <p class="proj-kicker" data-proj-in>Internship · Spring 2024</p>
+            <h2 class="proj-title" id="project-title" data-proj-title>IT Concepts · UI/UX</h2>
+            <p class="proj-lede" data-proj-in>My first UI/UX role, at IT Concepts Incorporated. Full case study in progress.</p>
+            <dl class="proj-meta" data-proj-in>
+              <div><dt>Role</dt><dd>UI/UX designer intern</dd></div>
+              <div><dt>Where</dt><dd>Vienna, VA</dd></div>
+              <div><dt>When</dt><dd>May – Jun 2024</dd></div>
+              <div><dt>Tools</dt><dd>Figma</dd></div>
+            </dl>
+          </header>
+          <section class="proj-sec" data-shot="0" data-proj-in>
+            <p class="proj-kicker">Interfaces</p>
+            <h3 class="proj-h">Designing for people first.</h3>
+            <p>I collaborated with peers to design user-friendly interfaces.</p>
+          </section>
+          <section class="proj-sec" data-shot="1">
+            <p class="proj-kicker">Foundations</p>
+            <h3 class="proj-h">Figma, from the ground up.</h3>
+            <p>I learned foundational UI skills in Figma through Udemy courses.</p>
+          </section>
+          <section class="proj-sec" data-shot="2">
+            <p class="proj-kicker">Testing</p>
+            <h3 class="proj-h">A usability test that found a security gap.</h3>
+            <p>Usability testing I ran identified a critical admin-access vulnerability.</p>
+          </section>
+        </div>
+        <figure class="proj-figure" data-proj-figure>
+          <div class="shot" style="--tint:rgba(236,196,128,0.42)">Image coming · IT Concepts interfaces</div>
+          <div class="shot" style="--tint:rgba(124,146,150,0.42)">Image coming · Figma studies</div>
+          <div class="shot" style="--tint:rgba(64,78,112,0.42)">Image coming · Usability test</div>
+        </figure>
+      </div>
     </div>
   </template>
 
@@ -832,6 +1191,7 @@ class SeasonsScene {
     void pop.offsetWidth; // commit the closed state so the open transition runs
     pop.dataset.state = 'open';
     if (pop.dataset.variant === 'paper') this.unfoldPaper(pop, origin);
+    if (page === 'experience') this.xpInit(pop);
     pop.querySelector('[data-popup-close]')?.focus({ preventScroll: true });
   }
   // ORIGAMI UNFOLD (Resume) — Web Animations on transform/opacity only. Folded state = the keyframes' first
@@ -873,6 +1233,8 @@ class SeasonsScene {
       pop.removeEventListener('transitionend', onEnd); clearTimeout(this.popupTimer);
       pop.dataset.state = 'closed'; pop.querySelector('[data-popup-content]').replaceChildren();
       this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null; delete pop.dataset.variant;
+      this.xpRO?.disconnect(); this.xpRO = null; this.xpAnims?.forEach(a => a.cancel()); this.xpAnims = null;
+      this.xpProject = null; this.xpBusy = false; pop.setAttribute('aria-labelledby', 'popup-title');
       delete el.querySelector('[data-scene-nav]')?.dataset.held; // focus is back on the nav, so :focus-within keeps it shown
     };
     const onEnd = e => { if (e.target === pop && e.propertyName === 'opacity') finish(); };
@@ -883,12 +1245,169 @@ class SeasonsScene {
   // keep Tab inside the open dialog
   trapFocus(e) {
     const pop = this.rootRef.current?.querySelector('[data-popup]'); if (!pop) return;
-    const f = [...pop.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(n => n.offsetParent !== null);
+    const f = [...pop.querySelectorAll('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])')].filter(n => n.offsetParent !== null && !n.closest('[inert]'));
     if (!f.length) return;
     const first = f[0], last = f[f.length - 1];
     if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     else if (!pop.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  }
+  // ======================================================================
+  // EXPERIENCE — list view + project view stacked in the panel (see the experience template).
+  // xpLayout sizes both from the panel; xpSync moves the names with the images (the image nearest the
+  // middle lights its name); projSync swaps the sticky figure to the image of the section being read.
+  // openProject / closeProject morph between the views (FLIP, transform + opacity only): the name grows
+  // into the page title and the image keeps its place on the right while everything else fades.
+  // ======================================================================
+  XP_MOVE = 'cubic-bezier(0.32, 0.72, 0, 1)'; // the morph: quick to leave, long soft landing
+  xpProject = null; xpBusy = false;
+  xpInit(pop) {
+    const xp = pop.querySelector('[data-xp]'); if (!xp) return;
+    const list = xp.querySelector('[data-xp-scroll]');
+    list.addEventListener('scroll', () => this.xpSync(xp), { passive: true });
+    // keyboard: a focused name brings its image to the middle
+    xp.querySelector('[data-xp-names]').addEventListener('focusin', e => {
+      const b = e.target.closest('.xp-name'); if (!b || !b.matches(':focus-visible')) return;
+      const items = [...xp.querySelectorAll('.xp-item')], i = [...xp.querySelectorAll('.xp-name')].indexOf(b);
+      list.scrollTo({ top: items[i].offsetTop - items[0].offsetTop, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    });
+    this.xpRO = new ResizeObserver(() => { this.xpLayout(xp); this.xpSync(xp); });
+    this.xpRO.observe(xp);
+    this.xpLayout(xp); this.xpSync(xp);
+  }
+  xpLayout(xp) {
+    const list = xp.querySelector('[data-xp-scroll]'), proj = xp.querySelector('[data-proj-scroll]');
+    const narrow = matchMedia('(max-width: 720px)').matches, cs = getComputedStyle(list);
+    const lh = list.clientHeight, w = list.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const gap = parseFloat(getComputedStyle(xp.querySelector('.xp-grid')).columnGap) || 32;
+    let sw, sh;
+    if (narrow) { sw = w; sh = Math.min(lh * 0.62, w * 1.05); }
+    else { sh = Math.min(lh * 0.82, (w - gap) * 0.46 / 0.8); sw = sh * 0.8; } // 4:5 images, at most 46% of the width
+    const ph = proj ? proj.clientHeight : lh;
+    const set = (k, v) => xp.style.setProperty(k, Math.round(v) + 'px');
+    set('--list-h', lh); set('--proj-h', ph); set('--shot-w', sw); set('--shot-h', sh);
+    set('--row-h', Math.max(56, Math.min(84, lh / 6.5)));
+    set('--fig-top', narrow ? 0 : Math.max(0, (ph - sh) / 2));
+    set('--fig-h', Math.min(ph * 0.36, w * 0.66));
+  }
+  xpSync(xp) {
+    const list = xp.querySelector('[data-xp-scroll]'), ol = xp.querySelector('[data-xp-names]');
+    const items = xp.querySelectorAll('.xp-item'), names = xp.querySelectorAll('.xp-name');
+    if (!items.length || !ol.offsetParent) return; // phones: no names column
+    const S = items.length > 1 ? items[1].offsetTop - items[0].offsetTop : 1;
+    const f = Math.max(0, Math.min(items.length - 1, list.scrollTop / S)), rh = ol.firstElementChild.offsetHeight;
+    ol.style.transform = `translate3d(0, ${(list.clientHeight / 2 - (f + 0.5) * rh).toFixed(1)}px, 0)`;
+    names.forEach((b, i) => {
+      const d = Math.abs(i - f);
+      b.style.setProperty('--o', (1 - Math.min(1, d) * 0.62).toFixed(3));
+      b.querySelector('.xp-name__meta').style.setProperty('--m', Math.max(0, 1 - d * 2).toFixed(3));
+      if (Math.round(f) === i) b.setAttribute('aria-current', 'true'); else b.removeAttribute('aria-current');
+    });
+  }
+  projSync(pv) {
+    const sc = pv.querySelector('[data-proj-scroll]'); if (!sc) return;
+    const shots = pv.querySelectorAll('[data-proj-figure] > .shot'), line = sc.getBoundingClientRect().top + sc.clientHeight * 0.55;
+    let k = 0;
+    pv.querySelectorAll('.proj-sec[data-shot]').forEach(s => { if (s.getBoundingClientRect().top <= line) k = +s.dataset.shot; });
+    shots.forEach((n, i) => n.toggleAttribute('data-on', i === k));
+  }
+  // the list's visible copies of a project's name (names column on desktop, caption on phones) and image
+  xpParts(lv, id) {
+    const vis = n => n.getClientRects().length > 0;
+    const btn = [...lv.querySelectorAll(`button[data-open-project="${id}"]`)].find(vis);
+    return { btn, title: btn?.querySelector('[data-xp-title]'), shot: lv.querySelector(`[data-xp-shot][data-open-project="${id}"]`) };
+  }
+  flip(from, to, scale) { // transform that puts `to` exactly over `from`
+    const sx = scale ? scale[0] : from.width / to.width, sy = scale ? scale[1] : from.height / to.height;
+    return `translate(${from.left - to.left}px, ${from.top - to.top}px) scale(${sx}, ${sy})`;
+  }
+  openProject(id) {
+    const pop = this.rootRef.current?.querySelector('[data-popup]'), xp = pop?.querySelector('[data-xp]');
+    const tpl = this.rootRef.current?.querySelector(`template[data-project="${id}"]`);
+    if (!xp || !tpl || this.xpProject || this.xpBusy) return;
+    const lv = xp.querySelector('[data-xp-view="list"]'), pv = xp.querySelector('[data-xp-view="project"]');
+    const src = this.xpParts(lv, id); if (!src.title || !src.shot) return;
+    const a = src.title.getBoundingClientRect(), s1 = src.shot.getBoundingClientRect(), fa = parseFloat(getComputedStyle(src.title).fontSize);
+    pv.replaceChildren(tpl.content.cloneNode(true));
+    pv.querySelector('[data-proj-figure] > .shot')?.setAttribute('data-on', '');
+    pv.querySelector('[data-proj-scroll]').addEventListener('scroll', () => this.projSync(pv), { passive: true });
+    delete pv.dataset.hidden; pv.inert = false; lv.inert = true;
+    this.xpLayout(xp);
+    this.xpProject = id; xp.dataset.view = 'project';
+    pop.setAttribute('aria-labelledby', 'project-title');
+    const title = pv.querySelector('[data-proj-title]'), fig = pv.querySelector('[data-proj-figure]');
+    const b = title.getBoundingClientRect(), s2 = fig.getBoundingClientRect(), fb = parseFloat(getComputedStyle(title).fontSize);
+    pv.querySelector('[data-proj-back]').focus({ preventScroll: true });
+    const OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
+    let anims;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      anims = [lv.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: 'ease', fill: 'forwards' }),
+               pv.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: 'ease' })];
+    } else {
+      src.title.style.visibility = src.shot.style.visibility = 'hidden';
+      anims = [
+        lv.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease', fill: 'forwards' }),
+        title.animate([{ transform: this.flip(a, b, [fa / fb, fa / fb]) }, { transform: 'none' }], { duration: 560, easing: this.XP_MOVE }),
+        fig.animate([{ transform: this.flip(s1, s2) }, { transform: 'none' }], { duration: 560, easing: this.XP_MOVE }),
+        ...[...pv.querySelectorAll('[data-proj-in]')].map((n, i) => n.animate(
+          [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
+          { duration: 380, delay: 220 + Math.min(i, 6) * 45, easing: OUT, fill: 'backwards' })),
+      ];
+    }
+    this.xpRun(anims, () => {
+      lv.dataset.hidden = ''; anims[0].cancel();
+      src.title.style.visibility = src.shot.style.visibility = '';
+    });
+  }
+  closeProject() {
+    const pop = this.rootRef.current?.querySelector('[data-popup]'), xp = pop?.querySelector('[data-xp]');
+    if (!xp || !this.xpProject || this.xpBusy) return;
+    const id = this.xpProject, lv = xp.querySelector('[data-xp-view="list"]'), pv = xp.querySelector('[data-xp-view="project"]');
+    const title = pv.querySelector('[data-proj-title]'), fig = pv.querySelector('[data-proj-figure]');
+    const b = title.getBoundingClientRect(), s2 = fig.getBoundingClientRect(), fb = parseFloat(getComputedStyle(title).fontSize);
+    const sc = pv.querySelector('[data-proj-scroll]').getBoundingClientRect(), titleOnScreen = b.bottom > sc.top + 8 && b.top < sc.bottom;
+    delete lv.dataset.hidden; lv.inert = false; pv.inert = true;
+    // bring this project's image back to the middle of the list before measuring where things land
+    const list = lv.querySelector('[data-xp-scroll]'), items = [...lv.querySelectorAll('.xp-item')];
+    const item = items.find(n => n.querySelector(`[data-open-project="${id}"]`));
+    list.style.scrollSnapType = 'none'; list.scrollTop = item.offsetTop - items[0].offsetTop; list.style.scrollSnapType = '';
+    this.xpSync(xp);
+    const dst = this.xpParts(lv, id);
+    const a = dst.title.getBoundingClientRect(), s1 = dst.shot.getBoundingClientRect(), fa = parseFloat(getComputedStyle(dst.title).fontSize);
+    this.xpProject = null; xp.dataset.view = 'list';
+    pop.setAttribute('aria-labelledby', 'popup-title');
+    dst.btn.focus({ preventScroll: true });
+    const OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
+    let anims;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      anims = [pv.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: 'ease', fill: 'forwards' }),
+               lv.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: 'ease' })];
+    } else {
+      title.style.visibility = fig.style.visibility = 'hidden';
+      dst.shot.style.transformOrigin = '0 0';
+      const others = [lv.querySelector('.pop-head'), ...lv.querySelectorAll('.xp-item, .xp-names li')]
+        .filter(n => !n.contains(dst.shot) && !n.contains(dst.btn));
+      if (dst.btn.classList.contains('xp-name')) others.push(dst.btn.querySelector('.xp-name__meta'));
+      anims = [
+        pv.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease', fill: 'forwards' }),
+        titleOnScreen
+          ? dst.title.animate([{ transform: this.flip(b, a, [fb / fa, fb / fa]) }, { transform: 'none' }], { duration: 480, easing: this.XP_MOVE })
+          : dst.title.animate([{ opacity: 0, transform: 'translateY(-10px)' }, { opacity: 1, transform: 'none' }], { duration: 360, delay: 120, easing: OUT, fill: 'backwards' }),
+        dst.shot.animate([{ transform: this.flip(s2, s1) }, { transform: 'none' }], { duration: 480, easing: this.XP_MOVE }),
+        ...others.map(n => n.animate([{ opacity: 0, offset: 0 }], { duration: 320, delay: 140, easing: OUT, fill: 'backwards' })),
+      ];
+    }
+    this.xpRun(anims, () => {
+      pv.dataset.hidden = ''; pv.replaceChildren(); anims[0].cancel();
+      dst.shot.style.transformOrigin = '';
+    });
+  }
+  xpRun(anims, done) {
+    this.xpBusy = true; this.xpAnims = anims;
+    Promise.all(anims.map(x => x.finished)).catch(() => {}).then(() => {
+      if (this.xpAnims !== anims) return; // the pop-up closed meanwhile
+      this.xpBusy = false; this.xpAnims = null; done();
+    });
   }
   // ======================================================================
   // HOVER LABEL POSITION — centred 22px below the cursor, flips above near the bottom edge,
@@ -1357,7 +1876,7 @@ class SeasonsScene {
     this.onWheel = e => { e.preventDefault(); const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; this.target += d * (e.deltaMode === 1 ? 30 : 1) * speed(); this.lastInput = performance.now(); };
     this.onKey = e => {
       if ((e.key === ' ' || e.key === 'Enter') && e.target.closest?.('button, a')) return; // let focused controls activate
-      if (this.pgOpen) { if (e.key === 'Escape') { e.preventDefault(); this.closePopup(); } else if (e.key === 'Tab') this.trapFocus(e); return; }
+      if (this.pgOpen) { if (e.key === 'Escape') { e.preventDefault(); if (this.xpProject) this.closeProject(); else this.closePopup(); } else if (e.key === 'Tab') this.trapFocus(e); return; }
       if (['ArrowDown','ArrowRight','PageDown',' '].includes(e.key)) { this.target = Math.round(this.target) + 1; }
       else if (['ArrowUp','ArrowLeft','PageUp'].includes(e.key)) { this.target = Math.round(this.target) - 1; } else return;
       e.preventDefault(); this.lastInput = 0;
@@ -1406,6 +1925,8 @@ class SeasonsScene {
     pop.addEventListener('click', e => {
       e.stopPropagation();
       if (e.target.closest('a[href="#"]')) e.preventDefault(); // placeholder links: no navigation until real URLs are added
+      if (e.target.closest('[data-proj-back]')) { this.closeProject(); return; }
+      const proj = e.target.closest('[data-open-project]'); if (proj) { this.openProject(proj.dataset.openProject); return; }
       if (e.target === pop || e.target.hasAttribute?.('data-backdrop') || e.target.closest('[data-popup-close]')) this.closePopup();
     });
     el.addEventListener('click', this.onClick);

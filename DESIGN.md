@@ -50,6 +50,23 @@ typography:
     fontWeight: 600
     lineHeight: 1
     letterSpacing: "0.08em"
+  display:
+    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
+    fontSize: "clamp(26px, 3vw, 40px)"
+    fontWeight: 500
+    lineHeight: 1.1
+    letterSpacing: "-0.01em"
+  heading:
+    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
+    fontSize: "clamp(20px, 2.2vw, 28px)"
+    fontWeight: 500
+    lineHeight: 1.2
+    letterSpacing: "-0.01em"
+  body-long:
+    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.7
 rounded:
   glass: "9px"
   thumb: "6px"
@@ -170,11 +187,14 @@ Placeholder thumbnail tints (sage, sand, terracotta, rust, slate, dusk at 0.42 a
 - **Body small** (400, 12px, 1.45–1.5): card captions, list-row descriptions and fact lists, capped at 70ch. Dates use tabular numerals.
 - **Label** (500, 11px, 0.08em, uppercase): glass buttons and section chips.
 - **Label small** (600, 10px, 0.08em, uppercase): the cursor-following hover label, and placeholder image labels.
+- **Display** (500, 26–40px fluid, 1.1, −0.01em, sentence case): a project title on a case-study page. One per page.
+- **Heading** (500, 20–28px fluid, 1.2–1.25, −0.01em, sentence case): the names in the Experience list and each case-study section's headline, capped at 22ch.
+- **Body long** (400, 15px, 1.6–1.7): case-study paragraphs and the lede, capped at 44ch, short paragraphs with 1.3em between them.
 
 ### Named Rules
 **The One Face Rule.** Everything is set in IBM Plex Mono. Hierarchy comes from size, case and tracking, never from a second family.
 
-**The Annotation Rule.** Headings, titles and labels are uppercase with 0.06–0.08em tracking. Body copy is sentence case with no tracking.
+**The Annotation Rule.** Headings, titles and labels are uppercase with 0.06–0.08em tracking. Body copy is sentence case with no tracking. The exception is reading type: Display and Heading (the Experience list and case studies) are sentence case with slight negative tracking, because they are read, not scanned. Their kickers and meta labels stay uppercase.
 
 ## Layout
 
@@ -217,6 +237,16 @@ One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, p
 *The one place the page itself leaves the glass.* The tree opens the resume as the actual PDF page, set on white paper with a soft paper shadow and no glass. It is sized to fit the screen with no scrolling: the page height is the screen height less 128px, or narrower on small screens. Open PDF and Download glass buttons sit left of the close button, and clicking the page opens the PDF.
 - **Unfold:** the page is cut along one vertical fold and two horizontal folds into 2 × 3 panels. A folded packet (paper-back side out) flies out of the tree and grows to full size over 420ms (expo ease-out). The right half swings open about the vertical fold over 520ms, then the top flaps and then the bottom flaps open, 460ms each, all on an in-out cubic curve. Folding faces darken slightly and clear as they open, and the shadow lands last. The whole sequence runs about 1.5s and animates transform and opacity only.
 - **Close:** the shell's 220ms fade. **Reduced motion:** no unfold; the flat page fades in.
+
+### Project List (Experience)
+*Names that travel with their pictures.* The boat's page splits into the list's names (left, Heading type) and a column of 4:5 project images (right, up to 46% of the panel). The image column scrolls and snaps each image to the middle. The names column stays put and slides so the name of the centred image sits level with it at full ink, its meta line (label type) showing, while the other names drop to 38% ink. The movement is tied directly to the scroll position, so there is no easing to lag behind the finger. Hover or focus lifts a name to full ink. Hovering an image lifts it 3px with the Lifted shadow. Clicking a name or an image opens that project. On phones (720px and below) it becomes one column of images, each with its name underneath.
+
+### Case Study (signature)
+*The name becomes the page.* A project opens inside the same panel. A frost Back button and the "Experience & Projects" crumb sit top-left, the close button top-right. Below them the story (left) scrolls past a sticky figure (right) that is exactly the list image's size and position. The story is a kicker, the Display title, a lede, a hairline-topped meta grid (Scope, Client, Year…), then generous sections, each made of a kicker, a Heading headline and two or three short Body long paragraphs. The figure cross-fades (450ms, settling from 1.03 scale) to the image of the section crossing the middle of the scroller. On phones the figure sticks to the top on paper-back so the story scrolls under it.
+- **Open:** the clicked name grows into the title, and the image glides into the figure's place, over 560ms on `cubic-bezier(0.32, 0.72, 0, 1)` (FLIP, transform only). The list fades out over 200ms, and the kicker, lede, meta and first section rise 10px and fade in over 380ms, from 220ms, 45ms apart.
+- **Back:** Back or Escape scrolls the list to the project, then the title shrinks back into its name (or, if it is scrolled away, the name fades in) and the figure glides back into the list image over 480ms, while the page fades out over 200ms and the rest of the list fades back in. Focus returns to the project's name.
+- **Reduced motion:** a 150ms cross-fade between the views; no movement.
+- **Images:** every image is a labelled placeholder until real ones arrive. Each project's first figure image is the same picture as its list image, so the morph stays seamless.
 
 ### Buttons
 - **Shape:** gently curved (9px), 44px tall, 16px side padding.

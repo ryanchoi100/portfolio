@@ -290,6 +290,22 @@
       "description": "Keyboard sections menu: frost chips revealed on focus.",
       "html": "<nav class=\"ds-nav\"><button class=\"ds-chip\">About Me</button><button class=\"ds-chip\">Resume</button><button class=\"ds-chip\">Experience &amp; Projects</button><button class=\"ds-chip\">Playground</button></nav>",
       "css": ".ds-nav{display:flex;flex-wrap:wrap;gap:6px;font-family:'IBM Plex Mono',ui-monospace,monospace}.ds-chip{min-height:32px;padding:0 12px;border-radius:9px;background:rgba(255,255,255,0.62);-webkit-backdrop-filter:blur(10px) saturate(1.4);backdrop-filter:blur(10px) saturate(1.4);border:1px solid rgba(255,255,255,0.6);box-shadow:0 4px 14px rgba(20,28,38,0.10),inset 0 1px 0 rgba(255,255,255,0.35);color:#141c24;font:inherit;font-size:11px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background-color 200ms ease}.ds-chip:focus-visible{outline:2px solid #141c24;outline-offset:0;background:rgba(255,255,255,0.8)}"
+    },
+    {
+      "name": "Project List",
+      "kind": "custom",
+      "refersTo": "project-list",
+      "description": "Experience list: large sentence-case names on the left slide in step with 4:5 project images on the right; the centred image's name is lit with its meta line. Click a name or image to open the case study.",
+      "html": "<ol class=\"ds-xp\"><li class=\"on\">BCAN · Grant Tracker<small>Design lead · 2026</small></li><li>Sagetopia · Brand Identity</li><li>Rainfall · Team Lead</li></ol>",
+      "css": ".ds-xp{list-style:none;margin:0;padding:0;font-family:'IBM Plex Mono',ui-monospace,monospace;color:#141c24}.ds-xp li{font-size:24px;font-weight:500;letter-spacing:-0.01em;line-height:1.15;padding:10px 0;opacity:.38}.ds-xp li.on{opacity:1}.ds-xp small{display:block;margin-top:8px;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:rgba(20,28,38,.72)}"
+    },
+    {
+      "name": "Case Study",
+      "kind": "custom",
+      "refersTo": "case-study",
+      "description": "Project page inside the pop-up: Back button top-left, Display title, lede, meta grid, then spaced sections (kicker, Heading headline, short paragraphs) beside a sticky figure that swaps image per section. Opens by morphing the list name into the title.",
+      "html": "<article class=\"ds-cs\"><p class=\"k\">The challenge</p><h3>Built for people who rely on what feels familiar.</h3><p>BCAN's grant tracker and cashflow page are used by an elderly audience.</p></article>",
+      "css": ".ds-cs{max-width:44ch;font-family:'IBM Plex Mono',ui-monospace,monospace;color:#141c24}.ds-cs .k{margin:0;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:rgba(20,28,38,.72)}.ds-cs h3{margin:16px 0 28px;font-size:24px;font-weight:500;line-height:1.25;letter-spacing:-0.01em}.ds-cs p:not(.k){margin:0;font-size:15px;line-height:1.7}"
     }
   ],
   "narrative": {
