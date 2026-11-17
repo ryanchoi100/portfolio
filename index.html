@@ -16,8 +16,9 @@
    ====================================================================== */
 :root {
   /* colour — names and values as in DESIGN.md frontmatter */
-  --lake-ink: #141c24;                        /* all text, icons, focus outlines */
-  --lake-ink-muted: rgba(20, 28, 38, 0.72);   /* secondary metadata (dates) */
+  --lake-ink: #2f353c;                        /* titles, highlighted words, icons, focus outlines: a soft charcoal, never pure black */
+  --lake-ink-soft: #42484e;                   /* reading paragraphs */
+  --lake-ink-muted: #555b61;                  /* grey: intros, ledes, kickers, meta; the words worth noticing are lifted back to ink with .hl */
   --hairline: rgba(20, 28, 38, 0.10);         /* 1px row dividers */
   --frost: rgba(255, 255, 255, 0.62);         /* standard glass: label, panel, close, buttons, chips */
   --frost-dense: rgba(255, 255, 255, 0.74);   /* glass on glass: cards, hovered rows */
@@ -376,6 +377,11 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   .pg-card:hover .pg-card__body { scale: none; }
   .pg-tint, .pg-now { transition-duration: 150ms; }
 }
+/* Grey sets the tone and ink picks out what matters: intros and ledes are grey with their key words in ink (.hl);
+   reading paragraphs and facts use the softer ink */
+.pop-head p, .proj-lede { color: var(--lake-ink-muted); }
+.hl { color: var(--lake-ink); }
+.pop-prose p, .proj-sec > p:not(.proj-kicker), .pop-row__body, .pop-points, .pop-facts dd, .proj-meta dd { color: var(--lake-ink-soft); }
 /* Titles and reading headlines: the sans at 600. Annotation (uppercase labels, buttons, kickers, meta, the hover
    label and image placeholders): the original mono. */
 .xp-name__title, .proj-title, .proj-h { font-weight: 600; }
@@ -587,15 +593,15 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   <template data-popup-page="about">
     <header class="pop-head" data-reveal>
       <h2 id="popup-title">About Me</h2>
-      <p>UI/UX and brand designer studying Computer Science and Design at Northeastern University.</p>
+      <p><span class="hl">UI/UX and brand designer</span> studying Computer Science and Design at <span class="hl">Northeastern University</span>.</p>
     </header>
     <div class="pop-scroll">
       <div class="pop-about">
         <div class="pop-thumb pop-portrait" data-reveal>Portrait</div>
         <div>
           <section class="pop-section pop-prose" data-reveal>
-            <p>I’m Ryan Choi, a UI/UX and brand designer studying Computer Science and Design at Northeastern University in Boston. My work runs from naming, logos and ADA-compliant colour palettes to Figma prototypes, usability testing and design systems.</p>
-            <p>Most recently I led UI/UX design for a grant-tracking platform with the Boston Climate Action Network, built two company identities as a design intern at Sagetopia, and studied typography and graphic design at the Basel School of Design.</p>
+            <p>I’m <span class="hl">Ryan Choi</span>, a UI/UX and brand designer studying Computer Science and Design at Northeastern University in Boston. My work runs from naming, logos and ADA-compliant colour palettes to Figma prototypes, usability testing and design systems.</p>
+            <p>Most recently I led UI/UX design for a grant-tracking platform with the <span class="hl">Boston Climate Action Network</span>, built two company identities as a design intern at <span class="hl">Sagetopia</span>, and studied typography and graphic design at the <span class="hl">Basel School of Design</span>.</p>
           </section>
           <section class="pop-section" data-reveal>
             <h3>Quick facts</h3>
@@ -712,7 +718,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
           <header class="proj-head">
             <p class="proj-kicker" data-proj-in>Case study · Spring 2026</p>
             <h2 class="proj-title" id="project-title" data-proj-title>BCAN · Grant Tracker</h2>
-            <p class="proj-lede" data-proj-in>Redesigning a grant tracker and cashflow page so an elderly audience can use them with confidence.</p>
+            <p class="proj-lede" data-proj-in>Redesigning a <span class="hl">grant tracker and cashflow page</span> so an <span class="hl">elderly audience</span> can use them with confidence.</p>
             <dl class="proj-meta" data-proj-in>
               <div><dt>Scope</dt><dd>Accessibility for elderly users</dd></div>
               <div><dt>Client</dt><dd>Boston Climate Action Network</dd></div>
@@ -794,7 +800,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
           <header class="proj-head">
             <p class="proj-kicker" data-proj-in>Internship · Summer 2025</p>
             <h2 class="proj-title" id="project-title" data-proj-title>Sagetopia · Brand Identity</h2>
-            <p class="proj-lede" data-proj-in>Building company identities, from the name to the logo. Full case study in progress.</p>
+            <p class="proj-lede" data-proj-in>Building <span class="hl">company identities</span>, from the name to the logo. Full case study in progress.</p>
             <dl class="proj-meta" data-proj-in>
               <div><dt>Role</dt><dd>Design intern</dd></div>
               <div><dt>Where</dt><dd>Leesburg, VA</dd></div>
@@ -835,7 +841,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
           <header class="proj-head">
             <p class="proj-kicker" data-proj-in>Project · Summer 2025</p>
             <h2 class="proj-title" id="project-title" data-proj-title>Rainfall · Team Lead</h2>
-            <p class="proj-lede" data-proj-in>Leading a small design team from wireframes to a brand. Full case study in progress.</p>
+            <p class="proj-lede" data-proj-in>Leading a <span class="hl">small design team</span> from wireframes to a brand. Full case study in progress.</p>
             <dl class="proj-meta" data-proj-in>
               <div><dt>Role</dt><dd>Design lead</dd></div>
               <div><dt>When</dt><dd>Jun – Sep 2025</dd></div>
@@ -876,7 +882,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
           <header class="proj-head">
             <p class="proj-kicker" data-proj-in>Project · Summer 2025</p>
             <h2 class="proj-title" id="project-title" data-proj-title>Recreon · Brand &amp; App</h2>
-            <p class="proj-lede" data-proj-in>A brand name, a moving logo and a mobile app. Full case study in progress.</p>
+            <p class="proj-lede" data-proj-in>A <span class="hl">brand name</span>, a <span class="hl">moving logo</span> and a <span class="hl">mobile app</span>. Full case study in progress.</p>
             <dl class="proj-meta" data-proj-in>
               <div><dt>Role</dt><dd>Design lead</dd></div>
               <div><dt>When</dt><dd>Jun – Sep 2025</dd></div>
@@ -916,7 +922,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
           <header class="proj-head">
             <p class="proj-kicker" data-proj-in>Internship · Spring 2024</p>
             <h2 class="proj-title" id="project-title" data-proj-title>IT Concepts · UI/UX</h2>
-            <p class="proj-lede" data-proj-in>My first UI/UX role, at IT Concepts Incorporated. Full case study in progress.</p>
+            <p class="proj-lede" data-proj-in>My first UI/UX role, at <span class="hl">IT Concepts Incorporated</span>. Full case study in progress.</p>
             <dl class="proj-meta" data-proj-in>
               <div><dt>Role</dt><dd>UI/UX designer intern</dd></div>
               <div><dt>Where</dt><dd>Vienna, VA</dd></div>

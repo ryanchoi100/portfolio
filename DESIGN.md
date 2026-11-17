@@ -2,8 +2,9 @@
 name: Seasons Portfolio
 description: A product designer's portfolio entered through a painted lake that turns through the four seasons.
 colors:
-  lake-ink: "#141c24"
-  lake-ink-muted: "rgba(20, 28, 38, 0.72)"
+  lake-ink: "#2f353c"
+  lake-ink-soft: "#42484e"
+  lake-ink-muted: "#555b61"
   hairline: "rgba(20, 28, 38, 0.10)"
   frost: "rgba(255, 255, 255, 0.62)"
   frost-dense: "rgba(255, 255, 255, 0.74)"
@@ -155,8 +156,11 @@ A near-monochrome system of cool ink on white frost, lit only by a white lamplig
 - **Lamplight** (`lamplight`): a white glow (`rgba(255, 255, 255, 0.6)`, exposed as `--glow-rgb: 255, 255, 255`) that reads like light caught in liquid glass. It is the same in every season. It is used only as a state response: the glow ring on hovered buttons, rows and cards, the Lifted halo, the Playground tile's rim light and the garden's hover glow. Never shown at rest. Text selection does not use it (white would vanish on the frost); selection is a 16% ink tint, `rgba(20, 28, 38, 0.16)`.
 
 ### Neutral
-- **Lake Ink** (`lake-ink`): all text, icons, focus outlines and the tint of every shadow. Cool, deep blue-black from the lake's darkest water.
-- **Lake Ink, muted** (`lake-ink-muted`): secondary metadata such as dates and years in list rows. Use it sparingly; most text is full ink.
+- **Lake Ink** (`lake-ink`): a soft charcoal, never pure black. Used for titles, headlines, labels, highlighted words, icons and focus outlines. Shadows keep their own deeper tint, `rgba(20, 28, 38, …)`.
+- **Lake Ink, soft** (`lake-ink-soft`): reading paragraphs, list descriptions and fact values. A step lighter than ink so long text sits calmly.
+- **Lake Ink, muted** (`lake-ink-muted`): the grey. It carries intros, ledes, kickers, meta lines and dates.
+
+**The Grey Highlight Rule.** Grey (4.5:1 or better on the lightest panel) sets the tone, and ink picks out what matters. In an intro or lede, the sentence is grey and its key words (a role, a client, a project) are lifted back to ink with `.hl`. Use one to three highlights per line, never a whole sentence, and never pure black.
 - **Hairline** (`hairline`): 1px dividers between list rows.
 - **Frost** (`frost`): the standard glass fill for the hover label, pop-up panel, close button, glass buttons and section chips.
 - **Frost, dense** (`frost-dense`): glass sitting on glass. List rows on hover use it so they separate from the panel beneath.
