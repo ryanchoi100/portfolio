@@ -1504,7 +1504,7 @@ class SeasonsScene {
   //   playFrame  one rAF loop while the page is open: eases p toward its target (snapping to a card once
   //              input stops), lays the cards out on the diagonal (tilt d×9°, smaller and fainter with
   //              distance), eases the fluid-glass displacement on the hovered card and updates the caption.
-  //   playOpen / playClose  lay the centred card into the pop-up panel one side first (top-left leads, bottom-right follows; a slight right tilt and a liquid rim on the way,
+  //   playOpen / playClose  lay the centred card into the pop-up panel one side first (opening: picked up by the right side; closing: put back by the left; a slight right tilt and a liquid rim on the way,
   //              ease in-out) and back (a slight left tilt). Reduced motion: a 200ms fade instead.
   // ======================================================================
   PLAY_EASE = 'cubic-bezier(0.65, 0, 0.35, 1)'; // in-out cubic: the card leaves gently and lands gently
@@ -1653,16 +1653,17 @@ class SeasonsScene {
     } else {
       card.style.visibility = 'hidden';
       const E = this.PLAY_EASE, R = getComputedStyle(body).borderRadius;
-      // One side leads and the other follows, as if the tile is laid into the panel: the top-left edges
-      // travel first, the bottom-right edges trail 160ms behind and arrive last. Transform-wise the tile
-      // drifts down the diagonal with a slight right tilt, and the liquid-glass rim ripples on the way.
+      // Picked up by its right side: the right edge leads, the top and bottom follow and the left edge
+      // trails 160ms behind. On the way the tile turns about 5° to face left (its right side lifted toward
+      // the viewer, rotateY −5° in perspective) with a slight clockwise slant, and the liquid rim ripples.
       anims = [
-        full.animate([{ left: b.left, top: b.top, easing: E }, { left: '0px', top: '0px' }], { duration: 960, fill: 'backwards' }),
-        full.animate([{ right: b.right, bottom: b.bottom, easing: E }, { right: '0px', bottom: '0px' }], { duration: 1040, delay: 160, fill: 'backwards' }),
+        full.animate([{ right: b.right, easing: E }, { right: '0px' }], { duration: 960, fill: 'backwards' }),
+        full.animate([{ top: b.top, bottom: b.bottom, easing: E }, { top: '0px', bottom: '0px' }], { duration: 1000, delay: 80, fill: 'backwards' }),
+        full.animate([{ left: b.left, easing: E }, { left: '0px' }], { duration: 1040, delay: 160, fill: 'backwards' }),
         full.animate([
-          { transform: `translate(0px, 0px) rotate(${b.r}deg)`, borderRadius: R, easing: E },
-          { offset: 0.5, transform: `translate(${(g.sx * 0.1).toFixed(1)}px, ${(g.sy * 0.1).toFixed(1)}px) rotate(4deg)`, easing: E },
-          { transform: 'translate(0px, 0px) rotate(0deg)', borderRadius: '0px' },
+          { transform: `perspective(1400px) translate(0px, 0px) rotateY(0deg) rotate(${b.r}deg)`, borderRadius: R, easing: E },
+          { offset: 0.5, transform: `perspective(1400px) translate(${(g.sx * 0.1).toFixed(1)}px, ${(g.sy * 0.1).toFixed(1)}px) rotateY(-5deg) rotate(3deg)`, easing: E },
+          { transform: 'perspective(1400px) translate(0px, 0px) rotateY(0deg) rotate(0deg)', borderRadius: '0px' },
         ], { duration: 1200, fill: 'backwards' }),
         ...chrome.map((n, j) => n.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
           { duration: 400, delay: 1000 + j * 70, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' })),
@@ -1688,13 +1689,15 @@ class SeasonsScene {
       const E = this.PLAY_EASE, R = getComputedStyle(card.querySelector('.pg-card__body')).borderRadius;
       anims = [
         ...chrome.map(n => n.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease', fill: 'forwards' })),
-        // the reverse: the bottom-right edges lift first and the top-left edges follow 160ms later
-        full.animate([{ right: '0px', bottom: '0px', easing: E }, { right: b.right, bottom: b.bottom }], { duration: 960, delay: 80, fill: 'forwards' }),
-        full.animate([{ left: '0px', top: '0px', easing: E }, { left: b.left, top: b.top }], { duration: 1040, delay: 240, fill: 'forwards' }),
+        // the mirror: put back by its left side. The left edge leads, the top and bottom follow and the right
+        // edge trails; the tile turns about 5° to face right (rotateY +5°) with a slight anticlockwise slant
+        full.animate([{ left: '0px', easing: E }, { left: b.left }], { duration: 960, delay: 80, fill: 'forwards' }),
+        full.animate([{ top: '0px', bottom: '0px', easing: E }, { top: b.top, bottom: b.bottom }], { duration: 1000, delay: 160, fill: 'forwards' }),
+        full.animate([{ right: '0px', easing: E }, { right: b.right }], { duration: 1040, delay: 240, fill: 'forwards' }),
         full.animate([
-          { transform: 'translate(0px, 0px) rotate(0deg)', borderRadius: '0px', easing: E },
-          { offset: 0.5, transform: `translate(${(-g.sx * 0.1).toFixed(1)}px, ${(-g.sy * 0.1).toFixed(1)}px) rotate(-4deg)`, easing: E },
-          { transform: `translate(0px, 0px) rotate(${b.r}deg)`, borderRadius: R },
+          { transform: 'perspective(1400px) translate(0px, 0px) rotateY(0deg) rotate(0deg)', borderRadius: '0px', easing: E },
+          { offset: 0.5, transform: `perspective(1400px) translate(${(-g.sx * 0.1).toFixed(1)}px, ${(-g.sy * 0.1).toFixed(1)}px) rotateY(5deg) rotate(-3deg)`, easing: E },
+          { transform: `perspective(1400px) translate(0px, 0px) rotateY(0deg) rotate(${b.r}deg)`, borderRadius: R },
         ], { duration: 1200, delay: 80, fill: 'forwards' }),
       ];
     }
