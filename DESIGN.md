@@ -17,13 +17,13 @@ colors:
   paper-back-shade: "#ebe6de"
 typography:
   headline:
-    fontFamily: "Source Serif 4, Georgia, serif"
+    fontFamily: "Source Sans 3, system-ui, sans-serif"
     fontSize: "30px"
-    fontWeight: 500
+    fontWeight: 600
     lineHeight: 1.1
     letterSpacing: "-0.01em"
   title:
-    fontFamily: "Source Sans 3, system-ui, sans-serif"
+    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
     fontSize: "13px"
     fontWeight: 500
     lineHeight: 1.45
@@ -39,27 +39,27 @@ typography:
     fontWeight: 400
     lineHeight: 1.45
   label:
-    fontFamily: "Source Sans 3, system-ui, sans-serif"
+    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
     fontSize: "11px"
     fontWeight: 500
     lineHeight: 1
     letterSpacing: "0.08em"
   label-small:
-    fontFamily: "Source Sans 3, system-ui, sans-serif"
+    fontFamily: "IBM Plex Mono, ui-monospace, monospace"
     fontSize: "11px"
     fontWeight: 600
     lineHeight: 1
     letterSpacing: "0.08em"
   display:
-    fontFamily: "Source Serif 4, Georgia, serif"
+    fontFamily: "Source Sans 3, system-ui, sans-serif"
     fontSize: "clamp(26px, 3vw, 40px)"
-    fontWeight: 500
+    fontWeight: 600
     lineHeight: 1.1
     letterSpacing: "-0.01em"
   heading:
-    fontFamily: "Source Serif 4, Georgia, serif"
+    fontFamily: "Source Sans 3, system-ui, sans-serif"
     fontSize: "clamp(20px, 2.2vw, 28px)"
-    fontWeight: 500
+    fontWeight: 600
     lineHeight: 1.2
     letterSpacing: "-0.01em"
   body-long:
@@ -136,13 +136,13 @@ components:
 
 The artwork is the system. A painted lake (house, tree, boat, garden, water) fills the viewport and turns Spring → Summer → Autumn → Winter as the visitor scrolls. Every piece of interface is a seasonal guest in that painting. It arrives when called, sits on frosted glass so the season stays visible through it, and leaves without a trace. Nothing in the UI is opaque, and nothing competes with the paint for colour.
 
-Against the soft brushwork, the interface is a **crisp counterpoint**. Two faces from the resume's family: a humanist sans for everything you read and click, and its companion serif for titles, plus small uppercase labels with wide tracking, hairline edges and exact 9px corners. That precision reads like a designer's annotations on a painting: quiet, never decorative. The only light the UI adds is lamplight, a white glow like light caught in liquid glass, the same in every season. It appears only when something is touched.
+Against the soft brushwork, the interface is a **crisp counterpoint**. Two faces: a humanist sans for everything you read, and the original monospace for small annotation, plus small uppercase labels with wide tracking, hairline edges and exact 9px corners. That precision reads like a designer's annotations on a painting: quiet, never decorative. The only light the UI adds is lamplight, a white glow like light caught in liquid glass, the same in every season. It appears only when something is touched.
 
 Density is low. Glass panels float above the scene on soft ambient shadows, and the scene behind them is blurred and dimmed just enough to read over. Motion follows the same rule: arrivals decelerate confidently, exits are quick and calm, and only transform and opacity move.
 
 **Key Characteristics:**
 - Translucent frosted glass for every surface; the season always shows through.
-- Two typefaces (Source Sans 3 and Source Serif 4); the serif only for titles and headlines.
+- Two typefaces: Source Sans 3 for reading, IBM Plex Mono for uppercase annotation.
 - Ink-on-frost colour; the white lamplight glow is the only accent, and it only answers interaction.
 - Floating depth: soft ambient shadow at rest, lift and glow on hover.
 - Calm, exact motion: expo ease-out arrivals, short in-out exits, no bounce.
@@ -175,25 +175,25 @@ Placeholder thumbnail tints (sage, sand, terracotta, rust, slate, dusk at 0.42 a
 
 ## Typography
 
-**Display Font:** Source Serif 4 (with Georgia, serif): pop-up headlines, the Interfaces names, case-study titles and headlines, and Playground titles.
-**Body Font:** Source Sans 3 (with system-ui, sans-serif): everything else, including body copy, labels, buttons and meta.
-**Label Font:** the same sans, set uppercase and tracked.
+**Display Font:** Source Sans 3 at 600 (with system-ui, sans-serif): pop-up headlines, the Interfaces names, case-study titles and headlines, and Playground titles.
+**Body Font:** Source Sans 3 (with system-ui, sans-serif): body copy and the lede.
+**Label Font:** IBM Plex Mono (with ui-monospace, monospace), the site's original face: small uppercase annotation such as labels, buttons, kickers, meta lines, the hover label, section chips and image placeholders.
 
-**Character:** The resume is set in Myriad, which needs an Adobe Fonts licence to embed on the web. Source Sans 3 is Adobe's open-source humanist sans in the same spirit, so the site reads like the resume. Source Serif 4, its companion, gives titles a calm editorial voice against the painting. Sans weights 400, 500 and 600 and serif weights 400, 500 and 600 are loaded from Google Fonts. To use Myriad itself, swap `--font-sans` for an Adobe Fonts kit.
+**Character:** A clean humanist sans for everything you read, standing in for the resume's Myriad (which needs an Adobe Fonts licence to embed); Source Sans 3 is Adobe's open-source sans in the same spirit. Against it, the original technical monospace annotates, like a designer's notes on a painting. Both are loaded at 400, 500 and 600 from Google Fonts.
 
 ### Hierarchy
-- **Headline** (serif 500, 30px, 1.1, −0.01em, sentence case): the pop-up title. One per pop-up.
-- **Title** (sans 500, 13px, 1.45, 0.06em, uppercase): section headings inside a pop-up and list-row titles.
+- **Headline** (sans 600, 30px, 1.1, −0.01em, sentence case): the pop-up title. One per pop-up.
+- **Title** (mono 500, 13px, 1.45, 0.06em, uppercase): section headings inside a pop-up and list-row titles.
 - **Body** (sans 400, 15px, 1.5–1.6): the pop-up intro line and prose paragraphs, capped at 56–62ch.
 - **Body small** (sans 400, 13px, 1.45–1.5): list-row descriptions, fact lists and the case-study meta, capped at 70ch. Dates use tabular numerals.
-- **Label** (sans 500, 11px, 0.08em, uppercase): glass buttons, section chips, kickers and meta lines.
-- **Label small** (sans 600, 11px, 0.08em, uppercase): the cursor-following hover label.
-- **Display** (serif 500, 26–40px fluid, 1.1, −0.01em, sentence case): a project title on a case-study page. One per page.
-- **Heading** (serif 500, 20–28px fluid, 1.2–1.25, −0.01em, sentence case): the names in the Interfaces list, each case-study section's headline, and Playground titles. Capped at 22ch.
+- **Label** (mono 500, 11px, 0.08em, uppercase): glass buttons, section chips, kickers and meta lines.
+- **Label small** (mono 600, 11px, 0.08em, uppercase): the cursor-following hover label.
+- **Display** (sans 600, 26–40px fluid, 1.1, −0.01em, sentence case): a project title on a case-study page. One per page.
+- **Heading** (sans 600, 20–28px fluid, 1.2–1.25, −0.01em, sentence case): the names in the Interfaces list, each case-study section's headline, and Playground titles. Capped at 22ch.
 - **Body long** (sans 400, 17px, 1.6–1.7): case-study paragraphs and the lede, capped at 44ch, short paragraphs with 1.3em between them.
 
 ### Named Rules
-**The Two Faces Rule.** Source Serif 4 is only for titles and headlines (Headline, Display, Heading). Everything else is Source Sans 3. No third family.
+**The Two Faces Rule.** Source Sans 3 is for titles, headlines and reading text; IBM Plex Mono is only for the small uppercase annotation (labels, buttons, kickers, meta, chips, placeholders). No third family.
 
 **The Annotation Rule.** Sans titles and labels are uppercase with 0.06–0.08em tracking. Body copy is sentence case with no tracking. The exception is reading type: Display and Heading (the Interfaces list and case studies) are sentence case with slight negative tracking, because they are read, not scanned. Their kickers and meta labels stay uppercase.
 
@@ -261,7 +261,7 @@ One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, p
 - **Scroll (endless loop):** each of the three lanes is a small carousel seen from the front. The wheel (either axis) or a drag turns them, odd lanes along the front to the right and even lanes to the left, eased in. Each lane's tiles circle round, passing in front of (larger, on top) and behind (smaller, underneath) each other, and the lanes overlap as they turn. Every tile is visible at all times in one compact cluster in the middle of the panel; nothing travels to an edge or reappears from the other side. When input stops, the carousels stay where they are.
 - **Open a tile:** the other tiles scatter outward around the landscape card and its caption and shrink to 84%, both easing in gently (about two seconds to settle, never abrupt). Scattered tiles stay at least a tile's width inside the panel's border. While a card is open the whole field floats with the mouse, smoothed slowly: nearer tiles move up to about 44px and tilt a few degrees toward the pointer.
 - **Hover (fluid glass, the only liquid effect):** the tile rises over its neighbours. It scales to 1.08 with the Lifted shadow, a white rim light follows the pointer, and the `#pg-liquid` filter ripples its edge. Pointer devices only; off under reduced motion.
-- **Focus (click a tile):** the tile flies from where it is to the centre and opens out into a landscape 3:2 card (about half the panel's width, 28px corners, a deep shadow) over 760ms on the expo ease-out. The field scatters around it (see Open a tile). The panel takes on a soft wash of the tile's colour. Below the card a centred caption rises in (from 260ms, 60ms apart): the kind and placeholder status (label, 0.16em tracking), the title (serif, 28–44px) and a short descriptor.
+- **Focus (click a tile):** the tile flies from where it is to the centre and opens out into a landscape 3:2 card (about half the panel's width, 28px corners, a deep shadow) over 760ms on the expo ease-out. The field scatters around it (see Open a tile). The panel takes on a soft wash of the tile's colour. Below the card a centred caption rises in (from 260ms, 60ms apart): the kind and placeholder status (label, 0.16em tracking), the title (sans 600, 28–44px) and a short descriptor.
 - **Swap / release:** clicking another tile flies the new one in while the old card shrinks back into its tile, which is still moving with its row (620ms, in-out cubic). Escape, or a click on empty space, releases the card and lets the field close back in.
 - **Keyboard:** the field takes focus (outlined chip). Arrow keys step through the six logos, focusing the nearest copy of each, and Escape releases.
 - **Reduced motion:** no idle sway, bob or depth drift; the card and caption fade in place.
