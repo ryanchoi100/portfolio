@@ -1504,8 +1504,8 @@ class SeasonsScene {
   //   playFrame  one rAF loop while the page is open: eases p toward its target (snapping to a card once
   //              input stops), lays the cards out on the diagonal (tilt d×9°, smaller and fainter with
   //              distance), eases the fluid-glass displacement on the hovered card and updates the caption.
-  //   playOpen / playClose  swing the centred card out to fill the pop-up panel (tilting right on the way, ease
-  //              in-out) and back (tilting left). Reduced motion: a 200ms fade instead.
+  //   playOpen / playClose  swing the centred card out to fill the pop-up panel (a slight right tilt and a turn in
+  //              perspective on the way, ease in-out) and back (a slight left tilt, turned the other way). Reduced motion: a 200ms fade instead.
   // ======================================================================
   PLAY_EASE = 'cubic-bezier(0.65, 0, 0.35, 1)'; // in-out cubic: the card leaves gently and lands gently
   playInit(pop) {
@@ -1641,12 +1641,13 @@ class SeasonsScene {
       const E = this.PLAY_EASE, R = getComputedStyle(body).borderRadius;
       anims = [
         full.animate([
-          { left: b.left, top: b.top, width: b.width, height: b.height, transform: `translate(0px, 0px) rotate(${b.r}deg)`, borderRadius: R, easing: E },
-          { offset: 0.5, transform: `translate(${(g.sx * 0.12).toFixed(1)}px, ${(g.sy * 0.12).toFixed(1)}px) rotate(6deg)`, easing: E }, // swings out along the diagonal, tilted to the right
-          { left: '0px', top: '0px', width: b.P.width + 'px', height: b.P.height + 'px', transform: 'translate(0px, 0px) rotate(0deg)', borderRadius: '0px' },
-        ], { duration: 820, fill: 'backwards' }),
+          { left: b.left, top: b.top, width: b.width, height: b.height, transform: `perspective(1400px) translate(0px, 0px) rotateX(0deg) rotateY(0deg) rotate(${b.r}deg)`, borderRadius: R, easing: E },
+          // halfway: drifts down the diagonal, barely tilted right (2.5°), turned away in perspective
+          { offset: 0.5, transform: `perspective(1400px) translate(${(g.sx * 0.1).toFixed(1)}px, ${(g.sy * 0.1).toFixed(1)}px) rotateX(7deg) rotateY(-14deg) rotate(2.5deg)`, easing: E },
+          { left: '0px', top: '0px', width: b.P.width + 'px', height: b.P.height + 'px', transform: 'perspective(1400px) translate(0px, 0px) rotateX(0deg) rotateY(0deg) rotate(0deg)', borderRadius: '0px' },
+        ], { duration: 1100, fill: 'backwards' }),
         ...chrome.map((n, j) => n.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
-          { duration: 360, delay: 640 + j * 60, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' })),
+          { duration: 400, delay: 860 + j * 70, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' })),
       ];
     }
     g.busy = true;
@@ -1667,12 +1668,13 @@ class SeasonsScene {
     } else {
       const E = this.PLAY_EASE, R = getComputedStyle(card.querySelector('.pg-card__body')).borderRadius;
       anims = [
-        ...chrome.map(n => n.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 160, easing: 'ease', fill: 'forwards' })),
+        ...chrome.map(n => n.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease', fill: 'forwards' })),
         full.animate([
-          { left: '0px', top: '0px', width: b.P.width + 'px', height: b.P.height + 'px', transform: 'translate(0px, 0px) rotate(0deg)', borderRadius: '0px', easing: E },
-          { offset: 0.5, transform: `translate(${(-g.sx * 0.12).toFixed(1)}px, ${(-g.sy * 0.12).toFixed(1)}px) rotate(-6deg)`, easing: E }, // swings back up the diagonal, tilted to the left
-          { left: b.left, top: b.top, width: b.width, height: b.height, transform: `translate(0px, 0px) rotate(${b.r}deg)`, borderRadius: R },
-        ], { duration: 760, delay: 80, fill: 'forwards' }),
+          { left: '0px', top: '0px', width: b.P.width + 'px', height: b.P.height + 'px', transform: 'perspective(1400px) translate(0px, 0px) rotateX(0deg) rotateY(0deg) rotate(0deg)', borderRadius: '0px', easing: E },
+          // halfway: drifts back up the diagonal, barely tilted left (−2.5°), turned the other way in perspective
+          { offset: 0.5, transform: `perspective(1400px) translate(${(-g.sx * 0.1).toFixed(1)}px, ${(-g.sy * 0.1).toFixed(1)}px) rotateX(-7deg) rotateY(14deg) rotate(-2.5deg)`, easing: E },
+          { left: b.left, top: b.top, width: b.width, height: b.height, transform: `perspective(1400px) translate(0px, 0px) rotateX(0deg) rotateY(0deg) rotate(${b.r}deg)`, borderRadius: R },
+        ], { duration: 1000, delay: 80, fill: 'forwards' }),
       ];
     }
     g.busy = true;
