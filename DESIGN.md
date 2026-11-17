@@ -234,7 +234,7 @@ One gently curved corner (`rounded.glass`, 9px) on every glass surface: label, p
 - Closes on ×, scrim click or Escape. Focus is trapped inside while open and returns to the trigger on close.
 
 ### Resume Paper (signature)
-*The one place the page itself leaves the glass.* The tree opens the resume as the actual PDF page, set on white paper with a soft paper shadow and no glass. It is sized to fit the screen with no scrolling: the page height is the screen height less 128px, or narrower on small screens. Open PDF and Download glass buttons sit left of the close button, and clicking the page opens the PDF.
+*The one place the page itself leaves the glass.* The tree opens the resume as the actual PDF page, set on white paper with a soft paper shadow and no glass. It is sized to fit the screen with no scrolling: the page height is 90% of the screen, leaving the same 5vh margin above and below as the glass panel, or narrower on small screens. Open PDF and Download glass buttons sit left of the close button, and clicking the page opens the PDF.
 - **Unfold:** the page is cut along one vertical fold and two horizontal folds into 2 × 3 panels. A folded packet (paper-back side out) flies out of the tree and grows to full size over 420ms (expo ease-out). The right half swings open about the vertical fold over 520ms, then the top flaps and then the bottom flaps open, 460ms each, all on an in-out cubic curve. Folding faces darken slightly and clear as they open, and the shadow lands last. The whole sequence runs about 1.5s and animates transform and opacity only.
 - **Close:** the shell's 220ms fade. **Reduced motion:** no unfold; the flat page fades in.
 

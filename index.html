@@ -189,7 +189,9 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   transform: none; transition: none;
 }
 .paper-stage {
-  --paper-h: min(calc(100vh - 128px), calc((100vw - 32px) * 792 / 612));
+  /* 5vh top/bottom margin like the glass panel; where the page would run under the top-right buttons
+     (narrow desktop windows) it drops below them instead; phones are limited by width */
+  --paper-h: min(calc(100vh - 2 * max(12px, 5vh)), calc((100vw - 32px) * 792 / 612), max(calc(100vh - 128px), calc((100vw - 600px) * 792 / 612)));
   position: absolute; inset: 0; display: grid; place-items: center; perspective: 2000px;
 }
 .paper-actions { position: absolute; top: 12px; right: 68px; z-index: 2; display: flex; gap: 8px; }
