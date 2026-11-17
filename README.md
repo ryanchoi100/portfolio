@@ -49,7 +49,7 @@ Painted once per season into a canvas (`paintGarden`) — same footprint in all 
 
 ## Hover label
 Follows the cursor, centred 22 px below, flips above near the bottom, clamped 6 px from edges, eased 0.35/frame.
-Glass tokens (reused by the pop-up): bg `rgba(255,255,255,0.62)`, `backdrop-filter: blur(10px) saturate(1.4)`, border `1px solid rgba(255,255,255,0.6)`, radius 9px, shadow `0 4px 14px rgba(20,28,38,.10), inset 0 1px 0 rgba(255,255,255,.35)`, ink `#141c24`, IBM Plex Mono 600 10px uppercase, letter-spacing .08em. Fade .25 s, scale .94 → 1.
+Glass tokens (reused by the pop-up): bg `rgba(255,255,255,0.62)`, `backdrop-filter: blur(10px) saturate(1.4)`, border `1px solid rgba(255,255,255,0.6)`, radius 9px, shadow `0 4px 14px rgba(20,28,38,.10), inset 0 1px 0 rgba(255,255,255,.35)`, ink `#141c24`, Source Sans 3 600 11px uppercase, letter-spacing .08em. Fade .25 s, scale .94 → 1.
 
 ## Playground pop-up
 - Same glass pop-up shell as the other pages (panel about 80vw x 90vh). Inside, logos and logo animations sit on a diagonal track that loops endlessly; the wheel, a drag or the arrow keys move it. Hovering a tile ripples its edges like liquid glass (SVG filter `#pg-liquid`), and clicking the centred tile swings it out to fill the pop-up, tilted right, while Back or Escape swings it back, tilted left. See DESIGN.md, Playground.
@@ -59,4 +59,4 @@ Glass tokens (reused by the pop-up): bg `rgba(255,255,255,0.62)`, `backdrop-filt
 ## TODO for the real build
 - Click destinations for About Me / Resume / Experience.
 - Real Playground logos and logo animations.
-- Fonts: only IBM Plex Mono 400/500 are loaded; the label's 600 is synthesised by the browser. Load 600 if you want true semibold.
+- Fonts: Source Sans 3 (standing in for the resume's Myriad) and Source Serif 4 for titles, 400/500/600, from Google Fonts. Swap `--font-sans` for an Adobe Fonts kit to use Myriad itself.
