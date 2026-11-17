@@ -49,7 +49,7 @@ Painted once per season into a canvas (`paintGarden`) — same footprint in all 
 
 ## Hover label
 Follows the cursor, centred 22 px below, flips above near the bottom, clamped 6 px from edges, eased 0.35/frame.
-Glass tokens (reused by the pop-up): bg `rgba(255,255,255,0.62)`, `backdrop-filter: blur(10px) saturate(1.4)`, border `1px solid rgba(255,255,255,0.6)`, radius 9px, shadow `0 4px 14px rgba(20,28,38,.10), inset 0 1px 0 rgba(255,255,255,.35)`, ink `#141c24`, IBM Plex Mono 600 11px uppercase, letter-spacing .08em. Fade .25 s, scale .94 → 1.
+Glass tokens (reused by the pop-up): bg `rgba(255,255,255,0.62)`, `backdrop-filter: blur(10px) saturate(1.4)`, border `1px solid rgba(255,255,255,0.6)`, radius 9px, shadow `0 4px 14px rgba(20,28,38,.10), inset 0 1px 0 rgba(255,255,255,.35)`, ink `#141c24`, Source Sans 3 600 11px uppercase, letter-spacing .08em. Fade .25 s, scale .94 → 1.
 
 ## Playground pop-up
 - Same glass pop-up shell as the other pages (panel about 80vw x 90vh). Inside is an "assembly": a tight cluster of 8 rounded-square logo tiles at different depths in the middle of the panel, nearly still at rest; scrolling or dragging turns each lane like a small carousel (odd lanes right, even lanes left), tiles circling in front of and behind each other in an endless loop while all of them stay visible in a compact central cluster; clicking a tile flies it to the centre as a landscape card while the others scatter, shrink a little and float with the mouse and the title rises in below; another click swaps it, and Escape lets it go. See DESIGN.md, Playground.
@@ -59,4 +59,4 @@ Glass tokens (reused by the pop-up): bg `rgba(255,255,255,0.62)`, `backdrop-filt
 ## TODO for the real build
 - Click destinations for About Me / Resume / Experience.
 - Real Playground logos and logo animations.
-- Fonts: Source Sans 3 (standing in for the resume's Myriad) for titles and text, and IBM Plex Mono (the original face) for uppercase labels, 400/500/600, from Google Fonts. Swap `--font-sans` for an Adobe Fonts kit to use Myriad itself.
+- Fonts: Garamond italic (EB Garamond) for titles and Source Sans 3 for text and labels, from Google Fonts. To use Adobe Garamond Pro and Myriad Pro, add an Adobe Fonts kit link in `<head>` (a comment marks the spot); the font stacks already name them first.

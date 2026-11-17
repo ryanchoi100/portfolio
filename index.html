@@ -7,7 +7,9 @@
 <title>Seasons</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;1,400;1,500;1,600&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<!-- Adobe Fonts: to use Adobe Garamond Pro and Myriad Pro, add the web project's kit link here, e.g.
+     <link rel="stylesheet" href="https://use.typekit.net/XXXXXXX.css">. The font stacks below already name them first. -->
 <style>html,body{margin:0;height:100%;overflow:hidden;background:var(--night-water);color:var(--lake-ink);overscroll-behavior:none}a{color:var(--lake-ink)}a:hover{color:var(--lake-ink)}</style>
 <style>
 /* ======================================================================
@@ -34,11 +36,12 @@
   --paper-back: #f7f4ef;                      /* back of the folded sheet */
   --paper-back-shade: #ebe6de;
   /* type */
-  /* Sans: Source Sans 3, Adobe's open-source humanist sans, standing in for Myriad (the resume's face, which
-     needs an Adobe Fonts licence to embed): titles and reading text. Mono: IBM Plex Mono, the site's original
-     face: the small uppercase annotation labels, buttons, kickers and meta. */
-  --font-sans: 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  /* Serif: Garamond italic for titles, headlines and the grey intro lines. Adobe Garamond Pro when an Adobe Fonts
+     kit is linked, otherwise EB Garamond (Google Fonts). Sans: its partner, Myriad Pro (the resume's face, also
+     Adobe's) when the kit is linked, otherwise Source Sans 3, Adobe's open-source humanist sans: body text,
+     labels, buttons, kickers and meta. */
+  --font-serif: 'adobe-garamond-pro', 'EB Garamond', Garamond, Georgia, serif;
+  --font-sans: 'myriad-pro', 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* shape */
   --radius-glass: 9px;
   --radius-thumb: 6px;
@@ -382,11 +385,19 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 .pop-head p, .proj-lede { color: var(--lake-ink-muted); }
 .hl { color: var(--lake-ink); }
 .pop-prose p, .proj-sec > p:not(.proj-kicker), .pop-row__body, .pop-points, .pop-facts dd, .proj-meta dd { color: var(--lake-ink-soft); }
-/* Titles and reading headlines: the sans at 600. Annotation (uppercase labels, buttons, kickers, meta, the hover
-   label and image placeholders): the original mono. */
-.xp-name__title, .proj-title, .proj-h { font-weight: 600; }
-.pop-thumb, .pop-section h3, .pop-row__title, .pop-facts dt, .pop-button, .shot, .xp-name__meta, .proj-back, .proj-crumb,
-.proj-kicker, .proj-meta dt, .pg-cap__kicker, .pg-kicker, .pg-now__meta, .scene-nav__item, .popup__close { font-family: var(--font-mono); }
+/* Garamond italic: titles, headlines, the Interfaces names and the grey intro / lede lines. Garamond sets smaller
+   than the sans at the same size, so these step up. Everything else (body, labels, buttons) is the sans. */
+.pop-head h2, .pg-cap__title, .pg-now__title, .xp-name__title, .proj-title, .proj-h, .pop-head p, .proj-lede {
+  font-family: var(--font-serif); font-style: italic; font-weight: 500; letter-spacing: 0;
+}
+.pop-head h2 { font-size: 36px; }
+.pop-head p { font-size: 19px; line-height: 1.4; }
+.proj-lede { font-size: 21px; line-height: 1.45; }
+.proj-title { font-size: clamp(32px, 3.6vw, 50px); }
+.proj-h { font-size: clamp(24px, 2.6vw, 34px); line-height: 1.2; }
+.xp-name__title { font-size: clamp(24px, 2.3vw, 32px); }
+.pg-cap__title { font-size: clamp(32px, 3.6vw, 52px); }
+.pg-now__title { font-size: clamp(24px, 2.2vw, 30px); }
 
 /* Keyboard access to the scene objects: invisible until a key-user tabs into it, then shown as glass chips */
 .scene-nav { position: absolute; top: 12px; left: 12px; z-index: 15; display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--font-sans); }
@@ -543,7 +554,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   
   <!-- Hover label: follows cursor (moveTip), text/visibility set in updateHover. Glass from the shared .glass tokens. -->
   <div data-tip="" style="position:absolute;left:0;top:0;pointer-events:none;opacity:0;transform:translate3d(-999px,-999px,0);transition:opacity .25s ease;will-change:transform,opacity;z-index:10">
-    <div data-tip-inner="" class="glass" style="display:flex;align-items:center;gap:6px;padding:5px 10px;font-family:var(--font-mono);font-size:11px;line-height:1;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;transform:scale(0.94);transform-origin:50% 0;transition:transform .25s cubic-bezier(.2,.8,.2,1)">
+    <div data-tip-inner="" class="glass" style="display:flex;align-items:center;gap:6px;padding:5px 10px;font-family:var(--font-sans);font-size:11px;line-height:1;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;transform:scale(0.94);transform-origin:50% 0;transition:transform .25s cubic-bezier(.2,.8,.2,1)">
       <span data-tip-label="">Resume</span>
       <span style="display:block;line-height:1;letter-spacing:0;transform:translateY(-0.5px)">→</span>
     </div>
