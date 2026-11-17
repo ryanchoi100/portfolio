@@ -235,9 +235,21 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 /* list: names (left) travel with the images (right); the centred image's name is lit */
 .popup[data-page="experience"] .popup__panel { overflow: hidden; }   /* the list bleeds to the panel's edges; clip it to the rounded glass */
 .xp-view[data-xp-view="list"] { margin-block: calc(-1 * var(--panel-pad)); }
-.xp-scroll { margin-top: 0; scroll-snap-type: y proximity; }
+.xp-scroll {
+  margin-top: 0; scroll-snap-type: y proximity; scrollbar-width: none;
+  /* images appear out of the glass instead of being cut by its edges (a mask reads only alpha, so any opaque colour works) */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 14%, var(--lake-ink) 86%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 14%, var(--lake-ink) 86%, transparent);
+}
+.xp-scroll::-webkit-scrollbar { display: none; }
 .xp-grid { display: grid; grid-template-columns: minmax(0, 1fr) var(--shot-w, 40%); gap: var(--xp-gap); }
-.xp-names-wrap { position: sticky; top: 0; align-self: start; height: var(--list-h, 100%); overflow: hidden; }
+/* the names take the middle three quarters of the height and fade out at both ends */
+.xp-names-wrap {
+  position: sticky; top: calc(var(--list-h, 0px) * 0.125); align-self: start; margin-top: calc(var(--list-h, 0px) * 0.125);
+  height: calc(var(--list-h, 100%) * 0.75); overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 22%, var(--lake-ink) 78%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 22%, var(--lake-ink) 78%, transparent);
+}
 .xp-names { list-style: none; margin: 0; padding: 0 0 0 4px; }
 .xp-names li { height: var(--row-h, 64px); }
 .xp-name, .xp-cap {
@@ -245,9 +257,10 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   box-sizing: border-box; width: 100%; height: 100%; padding: 0; border: 0; border-radius: var(--radius-thumb);
   background: none; font: inherit; color: inherit; text-align: left; cursor: pointer;
 }
-.xp-name { opacity: max(var(--o, 1), var(--hov, 0)); }
+/* name and meta on one baseline, centred in the row; the meta gives way (ellipsis) when space runs out */
+.xp-name { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; align-content: center; column-gap: 28px; opacity: max(var(--o, 1), var(--hov, 0)); }
 .xp-name__title {
-  display: block; max-width: 100%; font-size: clamp(20px, 2.1vw, 28px); font-weight: 500; line-height: 1.15; letter-spacing: -0.01em;
+  display: block; max-width: 100%; font-size: clamp(20px, 1.9vw, 26px); font-weight: 500; line-height: 1.15; letter-spacing: -0.01em;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; transform-origin: 0 0;
 }
 .xp-name__meta {
@@ -258,7 +271,8 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 .xp-shots { display: flex; flex-direction: column; gap: var(--xp-gap); padding-block: calc((var(--list-h, 0px) - var(--shot-h, 0px)) / 2); }
 .xp-shot {
   width: var(--shot-w); height: var(--shot-h); scroll-snap-align: center; cursor: pointer;
-  transition: transform 250ms var(--ease-out), box-shadow 250ms var(--ease-hover);
+  scale: var(--s, 1);   /* set per frame by xpSync: images away from the middle sit slightly smaller */
+  transition: translate 250ms var(--ease-out), box-shadow 250ms var(--ease-hover);
 }
 .xp-cap { display: none; }
 
@@ -330,7 +344,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   a.pop-row:hover { background: var(--frost-dense); border-color: var(--frost-edge); box-shadow: var(--shadow-lamplit); }
   a.pop-row:hover .pop-row__go { transform: translateX(3px); }
   .xp-name:hover { --hov: 1; }
-  .xp-shot:hover { transform: translateY(-3px); box-shadow: var(--shadow-lifted); }
+  .xp-shot:hover { translate: 0 -3px; box-shadow: var(--shadow-lifted); }
   .proj-back:hover { background: var(--frost-lit); box-shadow: var(--shadow-lamplit); }
   .proj-back:hover > span { transform: translateX(-3px); }
 }
@@ -346,7 +360,8 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   .pop-card:hover .pop-card__surface, .pop-row:hover .pop-row__go { transform: none; }
   .popup__close:active, .pop-button:active { transform: none; }
   .xp-shot, .proj-back > span { transition-property: box-shadow; }
-  .xp-shot:hover, .proj-back:hover > span, .proj-back:active { transform: none; }
+  .xp-shot:hover { translate: none; }
+  .proj-back:hover > span, .proj-back:active { transform: none; }
   .proj-figure > .shot { transform: none; transition: opacity 150ms ease; }
 }
 </style>
@@ -584,11 +599,11 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
           <div class="xp-grid">
             <div class="xp-names-wrap">
               <ol class="xp-names" data-xp-names>
-                <li><button class="xp-name" type="button" data-open-project="bcan"><span class="xp-name__title" data-xp-title>BCAN · Grant Tracker</span><span class="xp-name__meta">Boston Climate Action Network · Design lead · 2026</span></button></li>
-                <li><button class="xp-name" type="button" data-open-project="sagetopia"><span class="xp-name__title" data-xp-title>Sagetopia · Brand Identity</span><span class="xp-name__meta">Design intern · 2025</span></button></li>
-                <li><button class="xp-name" type="button" data-open-project="rainfall"><span class="xp-name__title" data-xp-title>Rainfall · Team Lead</span><span class="xp-name__meta">Design lead · 2025</span></button></li>
-                <li><button class="xp-name" type="button" data-open-project="recreon"><span class="xp-name__title" data-xp-title>Recreon · Brand &amp; App</span><span class="xp-name__meta">Design lead · 2025</span></button></li>
-                <li><button class="xp-name" type="button" data-open-project="itconcepts"><span class="xp-name__title" data-xp-title>IT Concepts · UI/UX</span><span class="xp-name__meta">UI/UX designer intern · 2024</span></button></li>
+                <li><button class="xp-name" type="button" data-open-project="bcan"><span class="xp-name__title" data-xp-title>BCAN · Grant Tracker</span><span class="xp-name__meta">UX · Accessibility · 2026</span></button></li>
+                <li><button class="xp-name" type="button" data-open-project="sagetopia"><span class="xp-name__title" data-xp-title>Sagetopia · Brand Identity</span><span class="xp-name__meta">Brand · Logos · 2025</span></button></li>
+                <li><button class="xp-name" type="button" data-open-project="rainfall"><span class="xp-name__title" data-xp-title>Rainfall · Team Lead</span><span class="xp-name__meta">UX · Brand · 2025</span></button></li>
+                <li><button class="xp-name" type="button" data-open-project="recreon"><span class="xp-name__title" data-xp-title>Recreon · Brand &amp; App</span><span class="xp-name__meta">Brand · Mobile UI · 2025</span></button></li>
+                <li><button class="xp-name" type="button" data-open-project="itconcepts"><span class="xp-name__title" data-xp-title>IT Concepts · UI/UX</span><span class="xp-name__meta">UI/UX · Testing · 2024</span></button></li>
               </ol>
             </div>
             <div class="xp-shots">
@@ -1323,7 +1338,7 @@ class SeasonsScene {
     const gap = parseFloat(getComputedStyle(xp.querySelector('.xp-grid')).columnGap) || 32;
     let sw, sh;
     if (narrow) { sw = w; sh = Math.min(lh * 0.62, w * 1.05); }
-    else { sh = Math.min(lh * 0.82, (w - gap) * 0.46 / 0.8); sw = sh * 0.8; } // 4:5 images, at most 46% of the width
+    else { sh = Math.min(lh * 0.68, (w - gap) * 0.42 / 0.8); sw = sh * 0.8; } // 4:5 images: about two thirds of the height, at most 42% of the width
     const ph = proj ? proj.clientHeight : lh;
     const set = (k, v) => xp.style.setProperty(k, Math.round(v) + 'px');
     set('--list-h', lh); set('--proj-h', ph); set('--shot-w', sw); set('--shot-h', sh);
@@ -1338,7 +1353,8 @@ class SeasonsScene {
     const S = this.xpStride(xp);
     const f = Math.max(0, Math.min(items.length - 1, list.scrollTop / S)), rh = ol.firstElementChild.offsetHeight;
     const cur = this.xpN + (Math.round(f) % this.xpN); // aria-current always marks the original, not a copy
-    ol.style.transform = `translate3d(0, ${(list.clientHeight / 2 - (f + 0.5) * rh).toFixed(1)}px, 0)`;
+    ol.style.transform = `translate3d(0, ${(ol.parentElement.clientHeight / 2 - (f + 0.5) * rh).toFixed(1)}px, 0)`;
+    items.forEach((it, i) => it.firstElementChild.style.setProperty('--s', (1 - Math.min(1, Math.abs(i - f)) * 0.07).toFixed(4)));
     names.forEach((b, i) => {
       const d = Math.abs(i - f);
       b.style.setProperty('--o', (1 - Math.min(1, d) * 0.62).toFixed(3));
