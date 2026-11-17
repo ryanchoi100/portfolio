@@ -52,7 +52,7 @@ Follows the cursor, centred 22 px below, flips above near the bottom, clamped 6 
 Glass tokens (reused by the pop-up): bg `rgba(255,255,255,0.62)`, `backdrop-filter: blur(10px) saturate(1.4)`, border `1px solid rgba(255,255,255,0.6)`, radius 9px, shadow `0 4px 14px rgba(20,28,38,.10), inset 0 1px 0 rgba(255,255,255,.35)`, ink `#141c24`, Source Sans 3 600 11px uppercase, letter-spacing .08em. Fade .25 s, scale .94 → 1.
 
 ## Playground pop-up
-- Same glass pop-up shell as the other pages (panel about 80vw x 90vh). Inside is an "assembly" of rounded-square logo tiles in overlapping rows that drift on their own (odd rows right, even rows left); scrolling or dragging pushes them further. Clicking a tile flies it to the centre as a landscape card while the field parts around it and the title rises in below; another click swaps it, and Escape lets it go. See DESIGN.md, Playground.
+- Same glass pop-up shell as the other pages (panel about 80vw x 90vh). Inside is an "assembly": a cluster of 22 rounded-square logo tiles floating at different depths in the middle of the panel, drifting on their own (odd lanes right, even lanes left) with their own speeds, bob and changing layering; scrolling or dragging pushes them further. Clicking a tile flies it to the centre as a landscape card while the field parts around it and the title rises in below; another click swaps it, and Escape lets it go. See DESIGN.md, Playground.
 - While open, the overlay stops wheel/pointer/click propagation and arrow keys are ignored by the scene, so the season never changes.
 - Six placeholder tiles: put an `<img>` or `<video>` inside an entry's `.pg-card__media` in `[data-pg-src]` (see the comment above the playground template).
 
