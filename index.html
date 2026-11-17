@@ -316,65 +316,73 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   .proj-sec { min-height: 0; padding-top: 56px; }
 }
 /* ======================================================================
-   PLAYGROUND — an endless grid of logo tiles, edge to edge, panned in any direction (playFrame recycles a
-   pool of tiles just big enough to cover the panel and positions them each frame). Hover = the tile lifts
-   over its neighbours (scale 1.08, rounded, Lifted shadow) as fluid glass: the #pg-liquid SVG filter ripples
-   its rim while a white rim light follows the pointer.
-   .pg-full is the full view (fills the pop-up panel); playOpen / playClose swing it in and out.
+   PLAYGROUND — "assembly": rows of rounded-square logo tiles that overlap and drift on their own, the odd
+   rows to the right and the even rows to the left; scrolling or dragging pushes them further the same ways
+   (playFrame positions a recycled pool every frame, wrapping each row so it never ends). Clicking a tile
+   brings it to the centre as a landscape card while the field parts around it, the panel takes on the
+   tile's colour and its title rises in below; clicking another tile swaps them. Hover = fluid glass lift.
    ====================================================================== */
 .popup[data-page="playground"] .popup__panel { overflow: hidden; }
-.pg { position: relative; isolation: isolate; flex: 1; min-height: 0; margin: calc(-1 * var(--panel-pad)); touch-action: none; cursor: grab; outline: none; -webkit-user-select: none; user-select: none; }
-.pg[data-dragging] { cursor: grabbing; }
+.pg { position: relative; isolation: isolate; flex: 1; min-height: 0; margin: calc(-1 * var(--panel-pad)); touch-action: none; outline: none; -webkit-user-select: none; user-select: none; }
+.pg-tint {   /* the focused tile's colour, washed over the panel */
+  position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 700ms var(--ease-out);
+  background: radial-gradient(75% 70% at 50% 44%, var(--sel, transparent), transparent 78%), radial-gradient(55% 50% at 50% 44%, var(--sel, transparent), transparent 80%);
+}
+.pg[data-focus] .pg-tint { opacity: 1; }
 .pg-track {
   position: absolute; inset: 0;
-  -webkit-mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 9%, var(--lake-ink) 91%, transparent), linear-gradient(to right, transparent, var(--lake-ink) 6%, var(--lake-ink) 94%, transparent);
+  -webkit-mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 8%, var(--lake-ink) 92%, transparent), linear-gradient(to right, transparent, var(--lake-ink) 5%, var(--lake-ink) 95%, transparent);
   -webkit-mask-composite: source-in;
-  mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 9%, var(--lake-ink) 91%, transparent), linear-gradient(to right, transparent, var(--lake-ink) 6%, var(--lake-ink) 94%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, var(--lake-ink) 8%, var(--lake-ink) 92%, transparent), linear-gradient(to right, transparent, var(--lake-ink) 5%, var(--lake-ink) 95%, transparent);
   mask-composite: intersect;
 }
 .pg-card {
-  position: absolute; left: 0; top: 0; width: var(--pg-s, 220px); height: var(--pg-s, 220px); padding: 0; border: 0; background: none;
-  cursor: pointer; will-change: transform;
+  position: absolute; left: 0; top: 0; width: var(--pg-s, 160px); height: var(--pg-s, 160px); padding: 0; border: 0; background: none;
+  border-radius: var(--radius-tile, 30px); cursor: pointer; will-change: transform;
 }
-.pg-card:hover, .pg-card[data-kbd] { z-index: 10; }   /* the lifted tile overlaps its neighbours */
-.pg-card[data-kbd] .pg-card__body { outline: 2px solid var(--lake-ink); outline-offset: 2px; }
+.pg-card:hover { z-index: 400 !important; }   /* the lifted tile rides over its neighbours */
 .pg-card__body {
-  position: absolute; inset: 0; display: block; border-radius: 0; background: var(--paper-back);   /* solid tile under the media */
-  transition: scale 380ms var(--ease-out), border-radius 380ms var(--ease-out), box-shadow 380ms var(--ease-out);
+  position: absolute; inset: 0; display: block; border-radius: inherit; background: var(--paper-back);   /* solid tile under the media */
+  box-shadow: 0 10px 24px rgba(20, 28, 38, 0.22), 0 2px 6px rgba(20, 28, 38, 0.12);
+  transition: scale 380ms var(--ease-out), box-shadow 380ms var(--ease-out);
 }
 .pg-card__media { position: absolute; inset: 0; border-radius: inherit; }
-.pg-card__media > img, .pg-card__media > video, .pg-full__media > img, .pg-full__media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.pg-card__media > img, .pg-card__media > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .pg-card__shine {
   position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0;
   background: radial-gradient(55% 45% at var(--mx, 50%) var(--my, 30%), rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 70%);
   box-shadow: inset 0 0 0 1.5px rgba(var(--glow-rgb), 0.85), inset 0 0 28px rgba(var(--glow-rgb), 0.4);
   transition: opacity 350ms var(--ease-out);
 }
-.pg-now { position: absolute; left: var(--panel-pad); bottom: var(--panel-pad); z-index: 200; display: flex; flex-direction: column; gap: 8px; max-width: 46%; padding: 14px 16px; box-sizing: border-box; pointer-events: none; }
+/* the focused card (landscape) and its caption */
+.pg-stage { position: absolute; z-index: 500; overflow: hidden; border-radius: var(--radius-stage, 28px); background: var(--paper-back); box-shadow: 0 30px 60px rgba(20, 28, 38, 0.32), 0 6px 16px rgba(20, 28, 38, 0.16); will-change: left, top, width, height; }
+.pg-stage .pg-card__media { border-radius: 0; font-size: 13px; }
+.pg-cap { position: absolute; z-index: 500; left: 50%; display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(90%, 560px); text-align: center; transform: translateX(-50%); pointer-events: none; }
+.pg-cap[hidden] { display: none; }
+.pg-cap p { margin: 0; }
+.pg-cap__kicker { font-size: 11px; font-weight: 600; line-height: 1; letter-spacing: 0.16em; text-transform: uppercase; color: var(--lake-ink-muted); }
+.pg-cap__title { font-family: var(--font-serif); font-size: clamp(28px, 3vw, 44px); font-weight: 500; line-height: 1.1; letter-spacing: -0.01em; }
+.pg-cap__sub { font-size: 15px; letter-spacing: 0.04em; color: var(--lake-ink-muted); }
+/* idle caption chip */
+.pg-now { position: absolute; left: var(--panel-pad); bottom: var(--panel-pad); z-index: 600; display: flex; flex-direction: column; gap: 8px; max-width: 46%; padding: 14px 16px; box-sizing: border-box; pointer-events: none; transition: opacity 300ms ease; }
+.pg[data-focus] .pg-now { opacity: 0; }
 @media (max-width: 720px) { .pg-now { max-width: calc(100% - 2 * var(--panel-pad)); } }
 .pg-now p, .pg-kicker { margin: 0; }
 .pg-kicker { font-size: 11px; font-weight: 500; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lake-ink-muted); }
-.pg-now__title { font-size: clamp(20px, 1.9vw, 26px); font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
-.pg-now__meta { font-size: 11px; font-weight: 500; line-height: 1; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lake-ink-muted); font-variant-numeric: tabular-nums; }
-
-/* full view: fills the pop-up panel (a child of .popup__panel, which clips it to the glass's rounded corners) */
-.pg-full { position: absolute; z-index: 30; inset: 0; overflow: hidden; background: var(--paper-back); box-shadow: 0 30px 80px rgba(20, 28, 38, 0.35); }
-.pg-full__media { position: absolute; inset: 0; border-radius: 0; font-size: 15px; }
-.pg-full__back { position: absolute; top: 16px; left: 16px; z-index: 2; }
-.pg-full__cap { position: absolute; left: 16px; bottom: 16px; z-index: 2; display: flex; flex-direction: column; gap: 10px; max-width: min(440px, calc(100% - 32px)); padding: 18px 20px; box-sizing: border-box; }
-.pg-full__cap h3 { margin: 0; font-size: clamp(20px, 2.2vw, 28px); font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
-.pg-full__cap p { margin: 0; font-size: 15px; line-height: 1.5; }
+.pg-now__title { font-family: var(--font-serif); font-size: clamp(20px, 1.9vw, 26px); font-weight: 500; line-height: 1.2; letter-spacing: -0.01em; }
+.pg-now__meta { font-size: 11px; font-weight: 500; line-height: 1.4; letter-spacing: 0.08em; text-transform: uppercase; color: var(--lake-ink-muted); }
+.pg:focus-visible .pg-now { outline: 2px solid var(--lake-ink); outline-offset: 2px; }
 @media (hover: hover) and (pointer: fine) {
   .pg-card:hover .pg-card__shine { opacity: 1; }
-  .pg-card:hover .pg-card__body { scale: 1.08; border-radius: var(--radius-media); box-shadow: var(--shadow-lifted); }
+  .pg-card:hover .pg-card__body { scale: 1.08; box-shadow: var(--shadow-lifted); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .pg-card__body { transition: none; }
-  .pg-card__body { transition: border-radius 150ms ease, box-shadow 150ms ease; }
+  .pg-card__body { transition: box-shadow 150ms ease; }
   .pg-card:hover .pg-card__body { scale: none; }
+  .pg-tint, .pg-now { transition-duration: 150ms; }
 }
 /* Serif for titles and reading headlines; everything else is the sans */
-.xp-name__title, .proj-title, .proj-h, .pg-now__title, .pg-full__cap h3 { font-family: var(--font-serif); }
+.xp-name__title, .proj-title, .proj-h { font-family: var(--font-serif); }
 
 /* Keyboard access to the scene objects: invisible until a key-user tabs into it, then shown as glass chips */
 .scene-nav { position: absolute; top: 12px; left: 12px; z-index: 15; display: flex; flex-wrap: wrap; gap: 6px; font-family: var(--font-sans); }
@@ -943,16 +951,17 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
     </div>
   </template>
 
-  <!-- Playground — opened from the garden. An endless grid of logo tiles, edge to edge: the wheel (either axis),
-       a drag or the arrow keys pan it in any direction, and the six logos below repeat across it forever.
-       Hover lifts a tile over its neighbours as fluid glass; clicking a tile picks it up by its right side and
-       lays it across the pop-up (Back / Escape puts it back).
+  <!-- Playground — opened from the garden. "Assembly": rows of rounded-square logo tiles that overlap and drift
+       on their own (odd rows right, even rows left); the wheel or a drag pushes them further the same ways.
+       Clicking a tile brings it to the centre as a landscape card, the field parts around it, the panel takes on
+       its colour and its title rises in below. Clicking another tile swaps them; Escape or a click on empty
+       space lets it go back. Keyboard: the field takes focus; arrow keys step through the logos.
        MEDIA: the six entries in [data-pg-src] are the source for every tile. Each is a labelled placeholder;
        to use real work, put an <img> or <video> inside its .pg-card__media (e.g. <img src="playground/logo-01.svg"
-       alt="…"> or <video src="playground/logo-anim-01.mp4" autoplay muted loop playsinline></video>). The grid
-       and the full view reuse the same media. data-title / data-kind feed the caption. -->
+       alt="…"> or <video src="playground/logo-anim-01.mp4" autoplay muted loop playsinline></video>). The tiles
+       and the focused card reuse the same media. data-title / data-kind feed the caption. -->
   <template data-popup-page="playground">
-    <div class="pg" data-pg tabindex="0" aria-roledescription="grid" aria-label="Playground: logos and logo animations. Arrow keys move around the grid, Enter opens the highlighted logo.">
+    <div class="pg" data-pg tabindex="0" aria-label="Playground: logos and logo animations. Arrow keys step through them, Escape lets one go.">
       <div hidden data-pg-src>
         <div data-title="Logo animation 01" data-kind="Motion" style="--tint:rgba(158,182,160,0.42)"><span class="shot pg-card__media">Logo animation 01 · placeholder</span></div>
         <div data-title="Logo 01" data-kind="Identity" style="--tint:rgba(236,196,128,0.42)"><span class="shot pg-card__media">Logo 01 · placeholder</span></div>
@@ -961,11 +970,17 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
         <div data-title="Logo animation 03" data-kind="Motion" style="--tint:rgba(168,88,52,0.42)"><span class="shot pg-card__media">Logo animation 03 · placeholder</span></div>
         <div data-title="Logo 03" data-kind="Identity" style="--tint:rgba(124,146,150,0.42)"><span class="shot pg-card__media">Logo 03 · placeholder</span></div>
       </div>
+      <div class="pg-tint" aria-hidden="true"></div>
       <div class="pg-track" data-pg-track></div>
+      <div class="pg-cap" data-pg-cap hidden>
+        <p class="pg-cap__kicker" data-pg-cap-kicker></p>
+        <p class="pg-cap__title" data-pg-cap-title aria-live="polite"></p>
+        <p class="pg-cap__sub" data-pg-cap-sub></p>
+      </div>
       <div class="pg-now glass" data-reveal>
         <h2 id="popup-title" class="pg-kicker">Playground</h2>
-        <p class="pg-now__title" data-pg-now-title aria-live="polite">Logo animation 01</p>
-        <p class="pg-now__meta" data-pg-now-meta>Motion · placeholder · 01 / 06</p>
+        <p class="pg-now__title">Logos &amp; motion</p>
+        <p class="pg-now__meta">Six placeholders · click one, scroll to shift the rows</p>
       </div>
     </div>
   </template>
@@ -1498,31 +1513,30 @@ class SeasonsScene {
     });
   }
   // ======================================================================
-  // PLAYGROUND — an endless grid of logo tiles (see the playground template).
-  //   The grid lives in world space: tile (col, row) sits at (col × s, row × s) and shows logo
-  //   ((col + 3 × row) mod n), so neighbours always differ. play.ox / play.oy is the camera; a pool of
-  //   tiles just large enough to cover the panel is recycled every frame (playFrame), so it never ends.
-  //   Input: the wheel (both axes), a drag (with momentum on release) or the arrow keys (one tile).
-  //   playOpen / playClose  match the owner's reference recording: the tile is picked up by its right side
-  //              (right/bottom edges lead, a slight anticlockwise lean, right side turned toward the viewer)
-  //              and put back the same way reversed. Reduced motion: a 200ms fade instead.
+  // PLAYGROUND — "assembly" (see the playground template).
+  //   Rows of tiles drift on their own: odd rows to the right, even rows to the left. The wheel (either axis)
+  //   or a drag adds a push that moves them further the same ways. Each row wraps, so the field never ends;
+  //   a pool of tiles is laid out every frame (playFrame) with a fixed jitter, size and stacking per tile.
+  //   playFocus(tile)  the tile flies to the centre and opens out into a landscape card (expo ease-out),
+  //                    the field parts around it, the panel takes on its colour and its caption rises in.
+  //   playRelease      the card shrinks back into its tile (in-out); playUnfocus = release + reset.
+  //   Reduced motion: no drift, and the card fades in place instead of flying.
   // ======================================================================
-  PLAY_EASE = 'cubic-bezier(0.65, 0, 0.35, 1)'; // in-out cubic: the tile leaves gently and lands gently
+  PLAY_IN = 'cubic-bezier(0.16, 1, 0.3, 1)';      // arrive: expo ease-out
+  PLAY_BACK = 'cubic-bezier(0.65, 0, 0.35, 1)';   // return: in-out cubic
   playInit(pop) {
     const el = pop.querySelector('[data-pg]'); if (!el) return;
-    const src = [...el.querySelectorAll('[data-pg-src] > [data-title]')], n = src.length;
-    const g = this.play = { el, pop, src, n, track: el.querySelector('[data-pg-track]'), tiles: [], ox: 0, oy: 0, tx: 0, ty: 0, vx: 0, vy: 0,
-      disp: 0, dispTarget: 0, hover: null, full: null, busy: false, cap: null };
-    this.playSize(true);
+    const src = [...el.querySelectorAll('[data-pg-src] > [data-title]')];
+    const g = this.play = { el, pop, src, n: src.length, track: el.querySelector('[data-pg-track]'), tiles: [],
+      drift: 0, push: 0, pushT: 0, sel: null, stage: null, hover: null, disp: 0, dispTarget: 0 };
+    this.playSize();
     el.addEventListener('wheel', e => {
-      e.preventDefault(); if (g.full) return;
-      const k = e.deltaMode === 1 ? 30 : 1;
-      g.tx += e.deltaX * k; g.ty += e.deltaY * k; g.vx = g.vy = 0;
+      e.preventDefault();
+      g.pushT += (e.deltaY + e.deltaX) * (e.deltaMode === 1 ? 30 : 1) * 0.9;
     }, { passive: false });
     el.addEventListener('pointerdown', e => {
-      if (g.full || e.button > 0) return;
-      g.drag = { x: e.clientX, y: e.clientY, tx: g.tx, ty: g.ty, lx: e.clientX, ly: e.clientY, lt: performance.now(), moved: false };
-      g.vx = g.vy = 0;
+      if (e.button > 0) return;
+      g.drag = { x: e.clientX, y: e.clientY, p: g.pushT, moved: false };
     });
     el.addEventListener('pointermove', e => {
       const c = e.target.closest?.('.pg-card');
@@ -1530,197 +1544,147 @@ class SeasonsScene {
       const d = g.drag; if (!d) return;
       const dx = e.clientX - d.x, dy = e.clientY - d.y;
       if (!d.moved && Math.hypot(dx, dy) < 6) return;
-      if (!d.moved) { d.moved = true; el.setPointerCapture?.(e.pointerId); el.dataset.dragging = ''; }
-      g.tx = g.ox = d.tx - dx; g.ty = g.oy = d.ty - dy;
-      const now = performance.now(), dt = Math.max(1, now - d.lt);
-      g.vx = -(e.clientX - d.lx) / dt * 16.67; g.vy = -(e.clientY - d.ly) / dt * 16.67; d.lx = e.clientX; d.ly = e.clientY; d.lt = now;
+      if (!d.moved) { d.moved = true; el.setPointerCapture?.(e.pointerId); }
+      g.pushT = d.p + dx - dy; // a swipe up or to the right pushes like scrolling down
     });
-    const endDrag = () => {
-      if (!g.drag) return;
-      g.dragged = g.drag.moved; if (performance.now() - g.drag.lt > 80) g.vx = g.vy = 0; // a held-still release has no fling
-      g.drag = null; delete el.dataset.dragging;
-    };
+    const endDrag = () => { if (g.drag) { g.dragged = g.drag.moved; g.drag = null; } };
     el.addEventListener('pointerup', endDrag); el.addEventListener('pointercancel', endDrag);
     el.addEventListener('click', e => {
-      const c = e.target.closest('.pg-card'); if (!c) return;
       if (g.dragged) { g.dragged = false; return; }
-      this.playOpen(c);
+      const c = e.target.closest('.pg-card');
+      if (c) this.playFocus(c);
+      else if (!e.target.closest('.pg-stage') && g.sel) this.playUnfocus();
     });
-    // keyboard: the grid itself takes focus; arrows move one tile, Enter / Space opens the highlighted (centre) tile
     el.addEventListener('keydown', e => {
-      if (g.full) return;
-      const step = { ArrowRight: [1, 0], ArrowLeft: [-1, 0], ArrowDown: [0, 1], ArrowUp: [0, -1] }[e.key];
-      if (step) { e.preventDefault(); g.tx = Math.round(g.tx / g.s) * g.s + step[0] * g.s; g.ty = Math.round(g.ty / g.s) * g.s + step[1] * g.s; g.vx = g.vy = 0; return; }
-      if ((e.key === 'Enter' || e.key === ' ') && e.target === el) { e.preventDefault(); const c = this.playCentre(); if (c) this.playOpen(c); }
+      const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+      if (step) { e.preventDefault(); const i = g.sel ? +g.sel.dataset.i : (step > 0 ? -1 : 0); this.playFocusLogo(((i + step) % g.n + g.n) % g.n); }
+      else if ((e.key === 'Enter' || e.key === ' ') && e.target === el && !g.sel) { e.preventDefault(); this.playFocusLogo(0); }
     });
-    // caption: the hovered tile, or the centre one
-    el.addEventListener('pointerover', e => { const c = e.target.closest('.pg-card'); if (c && !g.full) this.playCaption(c); });
-    this.playRO = new ResizeObserver(() => this.playSize(false)); this.playRO.observe(el);
+    this.playRO = new ResizeObserver(() => this.playSize()); this.playRO.observe(el);
     const frame = () => { this.playFrame(); g.raf = requestAnimationFrame(frame); };
     frame();
   }
-  // tile size and pool: about five tiles across on desktop, two and a half on phones; the pool covers the panel plus one
-  playSize(first) {
+  playSize() {
     const g = this.play; if (!g) return;
     const W = g.el.clientWidth, H = g.el.clientHeight, narrow = W < 560;
-    const s = Math.round(narrow ? W / 2.4 : Math.max(160, Math.min(260, W / 5.2)));
-    if (first) { g.tx = g.ox = -(W / 2 - s / 2); g.ty = g.oy = -(H / 2 - s / 2); } // world tile (0, 0) starts in the middle
-    else if (g.s) { const k = s / g.s; g.tx *= k; g.ty *= k; g.ox *= k; g.oy *= k; }
-    g.s = s; g.W = W; g.H = H; g.el.style.setProperty('--pg-s', s + 'px');
-    const need = (Math.ceil(W / s) + 1) * (Math.ceil(H / s) + 1);
-    g.cols = Math.ceil(W / s) + 1;
-    while (g.tiles.length < need) {
-      const b = document.createElement('button');
-      b.type = 'button'; b.className = 'pg-card'; b.tabIndex = -1;
-      b.innerHTML = '<span class="pg-card__body"><span class="pg-card__shine" aria-hidden="true"></span></span>';
-      b.addEventListener('pointerenter', () => {
-        if (!matchMedia('(hover: hover) and (pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches || g.full || g.drag?.moved) return;
-        if (g.hover && g.hover !== b) g.hover.querySelector('.pg-card__body').style.filter = '';
-        g.hover = b; g.dispTarget = 20; b.querySelector('.pg-card__body').style.filter = 'url(#pg-liquid)';
+    const s = Math.round(narrow ? W / 3.1 : Math.max(120, Math.min(200, W / 6.5, H / 4.4)));
+    Object.assign(g, { W, H, s, dx: s * 0.94, dy: s * 0.86 });
+    g.rows = Math.ceil(H / g.dy) + 2; g.per = Math.ceil(W / g.dx) + 3;
+    // focused card: landscape 3:2, centred a little high to leave room for the caption
+    g.cw = narrow ? W * 0.84 : Math.min(W * 0.5, H * 0.46 * 1.5); g.ch = g.cw / 1.5;
+    g.cx = W / 2; g.cy = narrow ? H * 0.4 : H * 0.42;
+    g.el.style.setProperty('--pg-s', s + 'px');
+    g.el.style.setProperty('--radius-tile', Math.round(s * 0.2) + 'px');
+    const cap = g.el.querySelector('[data-pg-cap]'); cap.style.top = (g.cy + g.ch / 2 + 22) + 'px';
+    if (g.stage && !g.stage.anim) Object.assign(g.stage.el.style, { left: g.cx - g.cw / 2 + 'px', top: g.cy - g.ch / 2 + 'px', width: g.cw + 'px', height: g.ch + 'px' });
+    const need = g.rows * g.per;
+    if (g.tiles.length === need) return;
+    g.tiles.forEach(t => t.remove()); g.tiles = [];
+    let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647; // fixed, so the layout is stable
+    for (let k = 0; k < need; k++) {
+      const r = Math.floor(k / g.per), j = k % g.per, i = (j + r * 2) % g.n, from = g.src[i];
+      const t = document.createElement('button');
+      t.type = 'button'; t.className = 'pg-card'; t.tabIndex = -1; t.setAttribute('aria-hidden', 'true');
+      t.innerHTML = '<span class="pg-card__body"><span class="pg-card__shine"></span></span>';
+      t.querySelector('.pg-card__body').prepend(from.querySelector('.pg-card__media').cloneNode(true));
+      Object.assign(t.dataset, { i, title: from.dataset.title, kind: from.dataset.kind });
+      t.style.setProperty('--tint', from.style.getPropertyValue('--tint'));
+      Object.assign(t, { _r: r, _j: j, _jx: (rnd() - 0.5) * 0.24 * s, _jy: (rnd() - 0.5) * 0.2 * s, _sc: 0.9 + rnd() * 0.14, _ox: 0, _oy: 0, _x: null });
+      t.style.zIndex = 1 + Math.floor(rnd() * 300);
+      t.addEventListener('pointerenter', () => {
+        if (!matchMedia('(hover: hover) and (pointer: fine)').matches || matchMedia('(prefers-reduced-motion: reduce)').matches || g.drag?.moved) return;
+        if (g.hover && g.hover !== t) g.hover.querySelector('.pg-card__body').style.filter = '';
+        g.hover = t; g.dispTarget = 16; t.querySelector('.pg-card__body').style.filter = 'url(#pg-liquid)';
       });
-      b.addEventListener('pointerleave', () => { if (g.hover === b) g.dispTarget = 0; });
-      g.track.append(b); g.tiles.push(b);
+      t.addEventListener('pointerleave', () => { if (g.hover === t) g.dispTarget = 0; });
+      g.track.append(t); g.tiles.push(t);
     }
-    while (g.tiles.length > need) g.tiles.pop().remove();
-    g.tiles.forEach(t => { t._i = -1; });
   }
   playFrame() {
     const g = this.play; if (!g) return;
     const now = performance.now(), f = Math.min(4, (now - (g.ft || now)) / 16.67 || 1); g.ft = now; // frames elapsed
     const ease = k => 1 - Math.pow(1 - k, f);
-    if (!g.drag) {
-      if (Math.abs(g.vx) + Math.abs(g.vy) > 0.05) { g.tx += g.vx * f; g.ty += g.vy * f; const d = Math.pow(0.93, f); g.vx *= d; g.vy *= d; } // fling
-      g.ox += (g.tx - g.ox) * ease(0.18); g.oy += (g.ty - g.oy) * ease(0.18);
-    }
-    const { s, n, cols } = g, c0 = Math.floor(g.ox / s), r0 = Math.floor(g.oy / s);
-    g.tiles.forEach((t, k) => {
-      const gc = c0 + (k % cols), gr = r0 + Math.floor(k / cols);
-      t.style.transform = `translate3d(${(gc * s - g.ox).toFixed(1)}px, ${(gr * s - g.oy).toFixed(1)}px, 0)`;
-      const i = (((gc + 3 * gr) % n) + n) % n;
-      if (t._i !== i) { // recycled into a new spot: show that spot's logo
-        t._i = i; const from = g.src[i], body = t.querySelector('.pg-card__body');
-        body.querySelector('.pg-card__media')?.remove();
-        body.prepend(from.querySelector('.pg-card__media').cloneNode(true));
-        t.dataset.title = from.dataset.title; t.dataset.kind = from.dataset.kind; t.dataset.i = i;
-        t.style.setProperty('--tint', from.style.getPropertyValue('--tint'));
-        t.setAttribute('aria-label', `Open ${from.dataset.title}`);
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) g.drift += 0.3 * f; // about 18px a second
+    g.push += (g.pushT - g.push) * ease(g.drag ? 0.35 : 0.08);
+    const { s, dx, dy, per, rows, W, H } = g, L = per * dx;
+    const Rx = g.cw / 2 + s * 0.62, Ry = g.ch / 2 + s * 0.62 + 70, Cy = g.cy + 60; // the clearing: the card plus its caption below
+    for (const t of g.tiles) {
+      const dir = t._r % 2 ? 1 : -1;                    // odd rows drift right, even rows left
+      const x = ((((t._j * dx + dir * (g.drift + g.push) + t._jx) % L) + L) % L) - dx * 1.5 + s / 2;
+      const y = (t._r - (rows - 1) / 2) * dy + H / 2 + t._jy;
+      let tx = 0, ty = 0;
+      if (g.sel) {                                       // part around the card: push out to the edge of the clearing
+        const vx = x - g.cx, vy = y - Cy, e = Math.max(0.15, Math.hypot(vx / Rx, vy / Ry));
+        const k = Math.max(0, 1.12 / e - 1) + 0.06; tx = vx * k; ty = vy * k;
       }
-    });
-    // keyboard focus: the tile under the middle of the panel is the highlighted one
-    const kbd = g.el.matches(':focus-visible') ? this.playCentre() : null;
-    g.tiles.forEach(t => t.toggleAttribute('data-kbd', t === kbd));
-    if (!g.full && !g.el.querySelector('.pg-card:hover')) { const c = this.playCentre(); if (c) this.playCaption(c); }
-    // fluid-glass strength (eased in on hover, out on leave, then the filter comes off)
-    if (g.hover) {
+      const wrapped = t._x !== null && Math.abs(x - t._x) > L / 2; t._x = x;
+      if (wrapped) { t._ox = tx; t._oy = ty; } else { t._ox += (tx - t._ox) * ease(0.09); t._oy += (ty - t._oy) * ease(0.09); }
+      t.style.transform = `translate3d(${(x - s / 2 + t._ox).toFixed(1)}px, ${(y - s / 2 + t._oy).toFixed(1)}px, 0) scale(${t._sc.toFixed(3)})`;
+    }
+    if (g.hover) {                                       // fluid-glass strength on the hovered tile
       g.disp += (g.dispTarget - g.disp) * ease(0.12);
       document.querySelector('[data-pg-disp]')?.setAttribute('scale', g.disp.toFixed(2));
       if (g.dispTarget === 0 && g.disp < 0.3) { g.hover.querySelector('.pg-card__body').style.filter = ''; g.hover = null; g.disp = 0; }
     }
   }
-  playCentre() { // the tile under the middle of the panel
-    const g = this.play, gc = Math.floor((g.ox + g.W / 2) / g.s), gr = Math.floor((g.oy + g.H / 2) / g.s);
-    const c0 = Math.floor(g.ox / g.s), r0 = Math.floor(g.oy / g.s);
-    return g.tiles[(gr - r0) * g.cols + (gc - c0)] || null;
+  playRect(tile) { // the tile body's box in the field's coordinates
+    const T = this.play.el.getBoundingClientRect(), r = tile.querySelector('.pg-card__body').getBoundingClientRect();
+    return { left: r.left - T.left + 'px', top: r.top - T.top + 'px', width: r.width + 'px', height: r.height + 'px' };
   }
-  playCaption(c) {
-    const g = this.play, i = +c.dataset.i; if (Number.isNaN(i) || g.cap === i) return;
-    g.cap = i; const pad = v => String(v).padStart(2, '0');
-    g.el.querySelector('[data-pg-now-title]').textContent = c.dataset.title;
-    g.el.querySelector('[data-pg-now-meta]').textContent = `${c.dataset.kind} · placeholder · ${pad(i + 1)} / ${pad(g.n)}`;
+  playFocusLogo(i) { // keyboard: the copy of logo i nearest the centre
+    const g = this.play; let best = null, bd = Infinity;
+    for (const t of g.tiles) { if (+t.dataset.i !== i || t === g.sel) continue; const d = Math.hypot(t._x - g.cx, t._r * g.dy - g.H / 2); if (d < bd) { bd = d; best = t; } }
+    if (best) this.playFocus(best);
   }
-  // the tile's box (as drawn, including the hover lift) in the panel's coordinates
-  playBox(card) {
-    const g = this.play, panel = g.pop.querySelector('[data-popup-panel]'), R = panel.getBoundingClientRect();
-    const r = card.querySelector('.pg-card__body').getBoundingClientRect();
-    const ox = R.left + panel.clientLeft, oy = R.top + panel.clientTop, W = panel.clientWidth, H = panel.clientHeight; // padding-box origin
-    return { left: r.left - ox + 'px', top: r.top - oy + 'px', right: W - (r.right - ox) + 'px', bottom: H - (r.bottom - oy) + 'px', r: 0, P: { width: W, height: H } };
-  }
-  playInert(on) { // while the full view is up, the track and the × underneath it are out of reach
-    const g = this.play; [g.el, g.pop.querySelector('.popup__bar')].forEach(n => { if (n) n.inert = on; });
-  }
-  playOpen(card) {
-    const g = this.play; if (!g || g.full || g.busy || !card) return;
-    const body = card.querySelector('.pg-card__body');
-    if (g.hover) { g.hover.querySelector('.pg-card__body').style.filter = ''; g.hover = null; g.disp = 0; g.dispTarget = 0; }
-    const b = this.playBox(card), full = document.createElement('div');
-    full.className = 'pg-full'; full.setAttribute('role', 'group'); full.setAttribute('aria-labelledby', 'pg-full-title');
-    const media = card.querySelector('.pg-card__media').cloneNode(true);
-    media.className = media.className.replace('pg-card__media', 'pg-full__media'); media.style.setProperty('--tint', getComputedStyle(card).getPropertyValue('--tint'));
-    if (!media.querySelector('img, video')) media.textContent = `${card.dataset.title} · full-view placeholder`;
-    full.append(media);
-    full.insertAdjacentHTML('beforeend', `<button class="proj-back glass pg-full__back" type="button" data-pg-back><span aria-hidden="true">←</span> Back</button><div class="pg-full__cap glass"><h3 id="pg-full-title"></h3><p>${card.dataset.kind} · placeholder. Your work goes here.</p></div>`);
-    full.querySelector('h3').textContent = card.dataset.title;
-    g.pop.querySelector('[data-popup-panel]').append(full); g.full = { el: full, card };
-    this.playInert(true);
-    const chrome = [...full.querySelectorAll('.pg-full__back, .pg-full__cap')];
-    let anims;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      anims = [full.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease' })];
-    } else {
-      card.style.visibility = 'hidden';
-      const E = this.PLAY_EASE, R = getComputedStyle(body).borderRadius;
-      // Matched to the owner's reference recording (about 0.6s): the tile is picked up by its right side.
-      // The right and bottom edges sweep out first; the left and top edges hold back and catch up at the
-      // end. On the way it leans slightly anticlockwise (−4°) while its right side turns toward the viewer
-      // (perspective rotateY −8°), and it keeps its rounded corners until it lands, then squares off.
-      anims = [
-        full.animate([{ right: b.right, bottom: b.bottom, easing: 'cubic-bezier(0.45, 0, 0.2, 1)' }, { right: '0px', bottom: '0px' }], { duration: 540, fill: 'backwards' }),
-        full.animate([{ left: b.left, top: b.top, easing: 'cubic-bezier(0.7, 0, 0.3, 1)' }, { left: '0px', top: '0px' }], { duration: 540, delay: 60, fill: 'backwards' }),
-        full.animate([
-          { transform: `perspective(1000px) rotateY(0deg) rotate(${b.r}deg)`, borderRadius: R, easing: E },
-          { offset: 0.5, transform: 'perspective(1000px) rotateY(-8deg) rotate(-4deg)', easing: E },
-          { offset: 0.8, borderRadius: R },
-          { transform: 'perspective(1000px) rotateY(0deg) rotate(0deg)', borderRadius: '0px' },
-        ], { duration: 600, fill: 'backwards' }),
-        ...chrome.map((n, j) => n.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
-          { duration: 320, delay: 600 + j * 60, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' })),
-      ];
+  playFocus(tile) {
+    const g = this.play; if (!g || g.sel === tile) return;
+    if (g.stage) this.playRelease();
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const from = this.playRect(tile), R0 = getComputedStyle(tile).borderRadius;
+    const el = document.createElement('div'); el.className = 'pg-stage';
+    el.append(tile.querySelector('.pg-card__media').cloneNode(true));
+    el.style.setProperty('--tint', tile.style.getPropertyValue('--tint'));
+    const to = { left: g.cx - g.cw / 2 + 'px', top: g.cy - g.ch / 2 + 'px', width: g.cw + 'px', height: g.ch + 'px' };
+    Object.assign(el.style, to);
+    g.el.append(el);
+    tile.style.visibility = 'hidden'; g.sel = tile; g.stage = { el, tile };
+    g.el.dataset.focus = ''; g.el.style.setProperty('--sel', tile.style.getPropertyValue('--tint'));
+    // caption
+    const cap = g.el.querySelector('[data-pg-cap]'); cap.hidden = false;
+    cap.querySelector('[data-pg-cap-kicker]').textContent = `${tile.dataset.kind} · placeholder`;
+    cap.querySelector('[data-pg-cap-title]').textContent = tile.dataset.title;
+    cap.querySelector('[data-pg-cap-sub]').textContent = tile.dataset.kind === 'Motion' ? 'Logo animation' : 'Logo';
+    cap.getAnimations().forEach(a => a.cancel());
+    if (reduce) {
+      el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease' });
+      cap.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, easing: 'ease' });
+      return;
     }
-    g.busy = g.opening = true; g.closeAfterOpen = false;
-    Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => {
-      if (this.play !== g) return; g.busy = g.opening = false;
-      card.style.visibility = 'hidden';
-      full.querySelector('[data-pg-back]').focus({ preventScroll: true });
-      if (g.closeAfterOpen) this.playClose();
-    });
+    const a = el.animate([{ ...from, borderRadius: R0 }, { ...to, borderRadius: getComputedStyle(el).borderRadius }], { duration: 760, easing: this.PLAY_IN });
+    g.stage.anim = a; a.finished.then(() => { if (g.stage?.el === el) g.stage.anim = null; }).catch(() => {});
+    [...cap.children].forEach((n, j) => n.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }],
+      { duration: 420, delay: 260 + j * 60, easing: this.PLAY_IN, fill: 'backwards' }));
   }
-  playClose() {
-    const g = this.play; if (!g || !g.full) return;
-    if (g.busy) { if (g.opening) g.closeAfterOpen = true; return; } // Back / Escape during the open: close as soon as it lands
-    const { el: full, card } = g.full, b = this.playBox(card);
-    const chrome = [...full.querySelectorAll('.pg-full__back, .pg-full__cap')];
-    let anims;
-    if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      card.style.visibility = '';
-      anims = [full.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease', fill: 'forwards' })];
-    } else {
-      const E = this.PLAY_EASE, R = getComputedStyle(card.querySelector('.pg-card__body')).borderRadius;
-      anims = [
-        ...chrome.map(n => n.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: 'ease', fill: 'forwards' })),
-        // the reverse, as in the recording: the caption fades first, then the tile shrinks back with the right
-        // and bottom edges slightly ahead, leaning a little clockwise (4°) with its right side turning away
-        full.animate([{ right: '0px', bottom: '0px', easing: E }, { right: b.right, bottom: b.bottom }], { duration: 540, delay: 100, fill: 'forwards' }),
-        full.animate([{ left: '0px', top: '0px', easing: E }, { left: b.left, top: b.top }], { duration: 540, delay: 150, fill: 'forwards' }),
-        full.animate([
-          { transform: 'perspective(1000px) rotateY(0deg) rotate(0deg)', borderRadius: '0px', easing: E },
-          { offset: 0.2, borderRadius: R, easing: E },
-          { offset: 0.5, transform: 'perspective(1000px) rotateY(8deg) rotate(4deg)', easing: E },
-          { transform: `perspective(1000px) rotateY(0deg) rotate(${b.r}deg)`, borderRadius: R },
-        ], { duration: 600, delay: 100, fill: 'forwards' }),
-      ];
-    }
-    g.busy = true;
-    Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => {
-      if (this.play !== g) return;
-      card.style.visibility = ''; full.remove(); g.full = null; g.busy = false;
-      this.playInert(false);
-      g.el.focus({ preventScroll: true });
-    });
+  playRelease() { // the focused card shrinks back into its (moving) tile, then the tile shows again
+    const g = this.play, st = g?.stage; if (!st) return;
+    g.stage = null;
+    st.anim?.cancel();
+    const done = () => { st.el.remove(); if (g.sel !== st.tile) st.tile.style.visibility = ''; };
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { st.el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: 'ease', fill: 'forwards' }).finished.then(done, done); return; }
+    const box = { left: st.el.style.left, top: st.el.style.top, width: st.el.style.width, height: st.el.style.height };
+    const to = this.playRect(st.tile), R = getComputedStyle(st.tile).borderRadius;
+    st.el.style.zIndex = 450;
+    st.el.animate([{ ...box, borderRadius: getComputedStyle(st.el).borderRadius }, { ...to, borderRadius: R }], { duration: 620, easing: this.PLAY_BACK, fill: 'forwards' }).finished.then(done, done);
+  }
+  playUnfocus() {
+    const g = this.play; if (!g || !g.sel) return;
+    this.playRelease(); g.sel = null; delete g.el.dataset.focus;
+    const cap = g.el.querySelector('[data-pg-cap]');
+    cap.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease', fill: 'forwards' }).finished.then(() => { if (!g.sel) { cap.hidden = true; cap.getAnimations().forEach(x => x.cancel()); } }, () => {});
   }
   playStop(pop) {
     const g = this.play; if (!g) return;
     cancelAnimationFrame(g.raf); this.playRO?.disconnect(); this.playRO = null;
-    g.full?.el.remove(); this.playInert(false);
     document.querySelector('[data-pg-disp]')?.setAttribute('scale', '0');
     this.play = null;
   }
@@ -2191,7 +2155,7 @@ class SeasonsScene {
     this.onWheel = e => { e.preventDefault(); const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; this.target += d * (e.deltaMode === 1 ? 30 : 1) * speed(); this.lastInput = performance.now(); };
     this.onKey = e => {
       if ((e.key === ' ' || e.key === 'Enter') && e.target.closest?.('button, a')) return; // let focused controls activate
-      if (this.pgOpen) { if (e.key === 'Escape') { e.preventDefault(); if (this.play?.full) this.playClose(); else if (this.xpProject) this.closeProject(); else this.closePopup(); } else if (e.key === 'Tab') this.trapFocus(e); return; }
+      if (this.pgOpen) { if (e.key === 'Escape') { e.preventDefault(); if (this.play?.sel) this.playUnfocus(); else if (this.xpProject) this.closeProject(); else this.closePopup(); } else if (e.key === 'Tab') this.trapFocus(e); return; }
       if (['ArrowDown','ArrowRight','PageDown',' '].includes(e.key)) { this.target = Math.round(this.target) + 1; }
       else if (['ArrowUp','ArrowLeft','PageUp'].includes(e.key)) { this.target = Math.round(this.target) - 1; } else return;
       e.preventDefault(); this.lastInput = 0;
@@ -2241,7 +2205,6 @@ class SeasonsScene {
       e.stopPropagation();
       if (e.target.closest('a[href="#"]')) e.preventDefault(); // placeholder links: no navigation until real URLs are added
       if (e.target.closest('[data-proj-back]')) { this.closeProject(); return; }
-      if (e.target.closest('[data-pg-back]')) { this.playClose(); return; }
       const proj = e.target.closest('[data-open-project]'); if (proj) { this.openProject(proj.dataset.openProject, proj); return; }
       if (e.target === pop || e.target.hasAttribute?.('data-backdrop') || e.target.closest('[data-popup-close]')) this.closePopup();
     });
