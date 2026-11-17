@@ -1504,8 +1504,9 @@ class SeasonsScene {
   //   playFrame  one rAF loop while the page is open: eases p toward its target (snapping to a card once
   //              input stops), lays the cards out on the diagonal (tilt d×9°, smaller and fainter with
   //              distance), eases the fluid-glass displacement on the hovered card and updates the caption.
-  //   playOpen / playClose  lay the centred card into the pop-up panel one side first (opening: picked up by the right side; closing: put back by the left; a slight right tilt and a liquid rim on the way,
-  //              ease in-out) and back (a slight left tilt). Reduced motion: a 200ms fade instead.
+  //   playOpen / playClose  match the owner's reference recording: the card is picked up by its right side
+  //              (right/bottom edges lead, a slight anticlockwise lean, right side turned toward the viewer)
+  //              and put back the same way reversed. Reduced motion: a 200ms fade instead.
   // ======================================================================
   PLAY_EASE = 'cubic-bezier(0.65, 0, 0.35, 1)'; // in-out cubic: the card leaves gently and lands gently
   playInit(pop) {
@@ -1616,19 +1617,6 @@ class SeasonsScene {
     const W = panel.clientWidth, H = panel.clientHeight;
     return { left: cx - w / 2 + 'px', top: cy - h / 2 + 'px', right: W - (cx + w / 2) + 'px', bottom: H - (cy + h / 2) + 'px', r: q.r, P: { width: W, height: H } };
   }
-  // liquid glass while the tile travels: the #pg-liquid rim ripple swells to `peak` mid-way and settles to 0
-  playLiquid(el, delay, dur, peak) {
-    const disp = document.querySelector('[data-pg-disp]'); if (!disp) return;
-    const t0 = performance.now() + delay;
-    el.style.filter = 'url(#pg-liquid)';
-    const step = now => {
-      if (!el.isConnected) return;
-      const t = Math.max(0, Math.min(1, (now - t0) / dur));
-      disp.setAttribute('scale', (peak * Math.sin(Math.PI * t)).toFixed(2));
-      if (t < 1) requestAnimationFrame(step); else { disp.setAttribute('scale', '0'); el.style.filter = ''; }
-    };
-    requestAnimationFrame(step);
-  }
   playInert(on) { // while the full view is up, the track and the × underneath it are out of reach
     const g = this.play; [g.el, g.pop.querySelector('.popup__bar')].forEach(n => { if (n) n.inert = on; });
   }
@@ -1653,23 +1641,23 @@ class SeasonsScene {
     } else {
       card.style.visibility = 'hidden';
       const E = this.PLAY_EASE, R = getComputedStyle(body).borderRadius;
-      // Picked up by its right side: the right edge leads, the top and bottom follow and the left edge
-      // trails 160ms behind. On the way the tile turns about 5° to face left (its right side lifted toward
-      // the viewer, rotateY −5° in perspective) with a slight clockwise slant, and the liquid rim ripples.
+      // Matched to the owner's reference recording (about 0.6s): the tile is picked up by its right side.
+      // The right and bottom edges sweep out first; the left and top edges hold back and catch up at the
+      // end. On the way it leans slightly anticlockwise (−4°) while its right side turns toward the viewer
+      // (perspective rotateY −8°), and it keeps its rounded corners until it lands, then squares off.
       anims = [
-        full.animate([{ right: b.right, easing: E }, { right: '0px' }], { duration: 960, fill: 'backwards' }),
-        full.animate([{ top: b.top, bottom: b.bottom, easing: E }, { top: '0px', bottom: '0px' }], { duration: 1000, delay: 80, fill: 'backwards' }),
-        full.animate([{ left: b.left, easing: E }, { left: '0px' }], { duration: 1040, delay: 160, fill: 'backwards' }),
+        full.animate([{ right: b.right, bottom: b.bottom, easing: 'cubic-bezier(0.45, 0, 0.2, 1)' }, { right: '0px', bottom: '0px' }], { duration: 540, fill: 'backwards' }),
+        full.animate([{ left: b.left, top: b.top, easing: 'cubic-bezier(0.7, 0, 0.3, 1)' }, { left: '0px', top: '0px' }], { duration: 540, delay: 60, fill: 'backwards' }),
         full.animate([
-          { transform: `perspective(1400px) translate(0px, 0px) rotateY(0deg) rotate(${b.r}deg)`, borderRadius: R, easing: E },
-          { offset: 0.5, transform: `perspective(1400px) translate(${(g.sx * 0.1).toFixed(1)}px, ${(g.sy * 0.1).toFixed(1)}px) rotateY(-5deg) rotate(3deg)`, easing: E },
-          { transform: 'perspective(1400px) translate(0px, 0px) rotateY(0deg) rotate(0deg)', borderRadius: '0px' },
-        ], { duration: 1200, fill: 'backwards' }),
+          { transform: `perspective(1000px) rotateY(0deg) rotate(${b.r}deg)`, borderRadius: R, easing: E },
+          { offset: 0.5, transform: 'perspective(1000px) rotateY(-8deg) rotate(-4deg)', easing: E },
+          { offset: 0.8, borderRadius: R },
+          { transform: 'perspective(1000px) rotateY(0deg) rotate(0deg)', borderRadius: '0px' },
+        ], { duration: 600, fill: 'backwards' }),
         ...chrome.map((n, j) => n.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }],
-          { duration: 400, delay: 1000 + j * 70, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' })),
+          { duration: 320, delay: 600 + j * 60, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'backwards' })),
       ];
     }
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) this.playLiquid(full, 0, 1200, 26);
     g.busy = true;
     Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => {
       if (this.play !== g) return; g.busy = false;
@@ -1688,20 +1676,19 @@ class SeasonsScene {
     } else {
       const E = this.PLAY_EASE, R = getComputedStyle(card.querySelector('.pg-card__body')).borderRadius;
       anims = [
-        ...chrome.map(n => n.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200, easing: 'ease', fill: 'forwards' })),
-        // the mirror: put back by its left side. The left edge leads, the top and bottom follow and the right
-        // edge trails; the tile turns about 5° to face right (rotateY +5°) with a slight anticlockwise slant
-        full.animate([{ left: '0px', easing: E }, { left: b.left }], { duration: 960, delay: 80, fill: 'forwards' }),
-        full.animate([{ top: '0px', bottom: '0px', easing: E }, { top: b.top, bottom: b.bottom }], { duration: 1000, delay: 160, fill: 'forwards' }),
-        full.animate([{ right: '0px', easing: E }, { right: b.right }], { duration: 1040, delay: 240, fill: 'forwards' }),
+        ...chrome.map(n => n.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, easing: 'ease', fill: 'forwards' })),
+        // the reverse, as in the recording: the caption fades first, then the tile shrinks back with the right
+        // and bottom edges slightly ahead, leaning a little clockwise (4°) with its right side turning away
+        full.animate([{ right: '0px', bottom: '0px', easing: E }, { right: b.right, bottom: b.bottom }], { duration: 540, delay: 100, fill: 'forwards' }),
+        full.animate([{ left: '0px', top: '0px', easing: E }, { left: b.left, top: b.top }], { duration: 540, delay: 150, fill: 'forwards' }),
         full.animate([
-          { transform: 'perspective(1400px) translate(0px, 0px) rotateY(0deg) rotate(0deg)', borderRadius: '0px', easing: E },
-          { offset: 0.5, transform: `perspective(1400px) translate(${(-g.sx * 0.1).toFixed(1)}px, ${(-g.sy * 0.1).toFixed(1)}px) rotateY(5deg) rotate(-3deg)`, easing: E },
-          { transform: `perspective(1400px) translate(0px, 0px) rotateY(0deg) rotate(${b.r}deg)`, borderRadius: R },
-        ], { duration: 1200, delay: 80, fill: 'forwards' }),
+          { transform: 'perspective(1000px) rotateY(0deg) rotate(0deg)', borderRadius: '0px', easing: E },
+          { offset: 0.2, borderRadius: R, easing: E },
+          { offset: 0.5, transform: 'perspective(1000px) rotateY(8deg) rotate(4deg)', easing: E },
+          { transform: `perspective(1000px) rotateY(0deg) rotate(${b.r}deg)`, borderRadius: R },
+        ], { duration: 600, delay: 100, fill: 'forwards' }),
       ];
     }
-    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) this.playLiquid(full, 80, 1200, 26);
     g.busy = true;
     Promise.all(anims.map(a => a.finished)).catch(() => {}).then(() => {
       if (this.play !== g) return;
