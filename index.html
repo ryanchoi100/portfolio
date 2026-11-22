@@ -192,7 +192,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   /* 5vh top/bottom margin like the glass panel; where the page would run under the top-right buttons
      (narrow desktop windows) it drops below them instead; phones are limited by width */
   --paper-h: min(calc(100vh - 2 * max(12px, 5vh)), calc((100vw - 32px) * 792 / 612), max(calc(100vh - 128px), calc((100vw - 600px) * 792 / 612)));
-  position: absolute; inset: 0; display: grid; place-items: center; perspective: 2000px;
+  position: absolute; inset: 0; display: grid; place-items: center; perspective: 1500px;
 }
 .paper-actions { position: absolute; top: 12px; right: 68px; z-index: 2; display: flex; gap: 8px; }
 .paper {
@@ -208,10 +208,36 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 .tile--top { top: 0; transform-origin: 50% 100%; }
 .tile--mid { top: calc(100% / 3); }
 .tile--bot { top: calc(200% / 3); transform-origin: 50% 0; }
-.tile__front, .tile__back { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
-.tile__front { background-color: var(--paper); background-image: url("resume/resume-page.webp"); background-size: 200% 300%; background-repeat: no-repeat; }
+/* a flap is two strips: the inner one hinges on the fold, the outer one on the flap's middle, so the flap can bend */
+.seg { position: absolute; left: 0; right: 0; height: 50%; transform-style: preserve-3d; }
+.tile--top .seg--in { bottom: 0; }
+.tile--top .seg--out { top: 0; transform-origin: 50% 100%; }
+.tile--bot .seg--in { top: 0; }
+.tile--bot .seg--out { bottom: 0; transform-origin: 50% 0; }
+.tile__front, .tile__back { position: absolute; inset: 0; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.tile__front { background-color: var(--paper); background-image: url("resume/resume-page.webp"); background-repeat: no-repeat; }
 .tile__back { transform: rotateY(180deg); background: linear-gradient(160deg, var(--paper-back), var(--paper-back-shade)); box-shadow: inset 0 0 0 1px rgba(20, 28, 38, 0.06); }
-.tile__shade { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(20, 28, 38, 0.35), rgba(20, 28, 38, 0.1)); opacity: 0; pointer-events: none; }
+/* light that follows the fold angle (opacity set per keyframe): shade as a face tips away, a brief sheen as it comes flat */
+.tile__shade, .tile__sheen, .tile__cast, .half__cast { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.tile__shade { background: rgba(20, 28, 38, 0.42); }
+.tile__sheen { background: linear-gradient(115deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 70%);  }
+/* shadows a lifting flap or half casts onto the paper beneath it */
+.tile__cast--top { background: linear-gradient(to bottom, rgba(20, 28, 38, 0.34), rgba(20, 28, 38, 0) 70%); }
+.tile__cast--bot { background: linear-gradient(to top, rgba(20, 28, 38, 0.34), rgba(20, 28, 38, 0) 70%); }
+.half__cast { background: linear-gradient(to left, rgba(20, 28, 38, 0.3), rgba(20, 28, 38, 0) 75%); }
+/* At rest the page is one seamless image (the six folding pieces leave hairline seams where they meet); the
+   pieces are shown only while data-folding is set by unfoldPaper */
+.paper__flat { position: absolute; inset: 0; background: var(--paper) url("resume/resume-page.webp") 0 0 / 100% 100% no-repeat; }
+.paper:not([data-folding]) .paper__shift { visibility: hidden; }
+.paper[data-folding] .paper__flat { visibility: hidden; }
+/* the creases an unfolded letter keeps: a soft valley and a highlight beside it at each fold */
+.paper__creases {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    linear-gradient(to right, transparent calc(50% - 5px), rgba(20, 28, 38, 0.035) calc(50% - 1px), rgba(20, 28, 38, 0.05) 50%, transparent calc(50% + 3px)),
+    linear-gradient(to bottom, transparent calc(100% / 3 - 5px), rgba(20, 28, 38, 0.03) calc(100% / 3 - 1px), rgba(20, 28, 38, 0.045) calc(100% / 3), transparent calc(100% / 3 + 3px)),
+    linear-gradient(to bottom, transparent calc(200% / 3 - 3px), rgba(20, 28, 38, 0.045) calc(200% / 3), rgba(20, 28, 38, 0.03) calc(200% / 3 + 1px), transparent calc(200% / 3 + 5px));
+}
 /* ======================================================================
    EXPERIENCE — two views stacked in one grid cell of the panel. Sizes come from JS (xpLayout):
    --list-h / --proj-h = the two scrollers' heights, --shot-w / --shot-h = one image size shared by the
@@ -589,7 +615,7 @@ button, input, select, textarea { font-family: inherit; }
   <!-- ==== POP-UP PAGES — content only. Every page: a .pop-head (h2 + intro) then a .pop-scroll body.
        Elements marked data-reveal enter with the shared stagger. Placeholder copy: replace with real text. ==== -->
 
-  <!-- About Me — opened from the house (facts from resume/RyanChoi_Resume.pdf) -->
+  <!-- About Me — opened from the house (facts from resume/RyanChoi_DesignResume.pdf) -->
   <template data-popup-page="about">
     <header class="pop-head" data-reveal>
       <h2 id="popup-title">About Me</h2>
@@ -624,37 +650,39 @@ button, input, select, textarea { font-family: inherit; }
   <template data-popup-page="resume" data-variant="paper">
     <div class="paper-stage" data-backdrop="">
       <div class="paper-actions">
-        <a class="pop-button glass" href="resume/RyanChoi_Resume.pdf" target="_blank" rel="noopener">Open PDF <span aria-hidden="true">↗</span></a>
-        <a class="pop-button glass" href="resume/RyanChoi_Resume.pdf" download="RyanChoi_Resume.pdf">Download <span aria-hidden="true">↓</span></a>
+        <a class="pop-button glass" href="resume/RyanChoi_DesignResume.pdf" target="_blank" rel="noopener">Open PDF <span aria-hidden="true">↗</span></a>
+        <a class="pop-button glass" href="resume/RyanChoi_DesignResume.pdf" download="RyanChoi_DesignResume.pdf">Download <span aria-hidden="true">↓</span></a>
       </div>
-      <a class="paper" data-paper="" href="resume/RyanChoi_Resume.pdf" target="_blank" rel="noopener" aria-label="Ryan Choi’s resume, opens the PDF">
+      <a class="paper" data-paper="" href="resume/RyanChoi_DesignResume.pdf" target="_blank" rel="noopener" aria-label="Ryan Choi’s resume, opens the PDF">
         <div class="paper__shadow" data-paper-shadow=""></div>
         <div class="paper__shift" data-paper-shift="">
           <div class="paper__half paper__half--l" data-half="l">
-            <div class="tile tile--top" data-tile="top"><div class="tile__front" style="background-position:0% 0%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
-            <div class="tile tile--mid" data-tile="mid"><div class="tile__front" style="background-position:0% 50%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
-            <div class="tile tile--bot" data-tile="bot"><div class="tile__front" style="background-position:0% 100%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
+            <div class="tile tile--top" data-tile="top"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:0% 20%;background-size:200% 600%"><div class="tile__shade"></div><div class="half__cast" data-half-cast=""></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="half__cast" data-half-cast=""></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:0% 0%;background-size:200% 600%"><div class="tile__shade"></div><div class="half__cast" data-half-cast=""></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="half__cast" data-half-cast=""></div></div></div></div>
+            <div class="tile tile--mid" data-tile="mid"><div class="tile__front" style="background-position:0% 50%;background-size:200% 300%"><div class="tile__shade"></div><div class="half__cast" data-half-cast=""></div><div class="tile__sheen"></div><div class="tile__cast tile__cast--top" data-cast="top"></div><div class="tile__cast tile__cast--bot" data-cast="bot"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="half__cast" data-half-cast=""></div></div></div>
+            <div class="tile tile--bot" data-tile="bot"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:0% 80%;background-size:200% 600%"><div class="tile__shade"></div><div class="half__cast" data-half-cast=""></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="half__cast" data-half-cast=""></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:0% 100%;background-size:200% 600%"><div class="tile__shade"></div><div class="half__cast" data-half-cast=""></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="half__cast" data-half-cast=""></div></div></div></div>
           </div>
           <div class="paper__half paper__half--r" data-half="r">
-            <div class="tile tile--top" data-tile="top"><div class="tile__front" style="background-position:100% 0%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
-            <div class="tile tile--mid" data-tile="mid"><div class="tile__front" style="background-position:100% 50%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
-            <div class="tile tile--bot" data-tile="bot"><div class="tile__front" style="background-position:100% 100%"><div class="tile__shade"></div></div><div class="tile__back"></div></div>
+            <div class="tile tile--top" data-tile="top"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:100% 20%;background-size:200% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:100% 0%;background-size:200% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div></div>
+            <div class="tile tile--mid" data-tile="mid"><div class="tile__front" style="background-position:100% 50%;background-size:200% 300%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="tile__cast tile__cast--top" data-cast="top"></div><div class="tile__cast tile__cast--bot" data-cast="bot"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div>
+            <div class="tile tile--bot" data-tile="bot"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:100% 80%;background-size:200% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:100% 100%;background-size:200% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div></div>
+            
           </div>
         </div>
+        <div class="paper__flat" aria-hidden="true"><div class="paper__creases"></div></div>
       </a>
       <div class="sr-only">
         <h2 id="popup-title">Resume</h2>
         <p>Ryan Choi, UI/UX &amp; Brand Designer.</p>
         <h3>Experience</h3>
         <ul>
-          <li>Design Intern, Sagetopia, Leesburg, VA, July – August 2025. Worked with the Creative Director and six peers to co-create logos. Built two company identities, from naming to ADA-compliant color palettes to logo design. Enhanced skills in Illustrator, Photoshop, After Effects and Figma through client deliverables.</li>
-          <li>UI/UX Designer Intern, IT Concepts Incorporated, Vienna, VA, May – June 2024. Collaborated with peers to design user-friendly interfaces. Learned foundational UI Figma skills through Udemy online courses. Conducted usability testing to identify a critical admin-access vulnerability.</li>
+          <li>UI and Motion Design Associate, Sagetopia, Leesburg, VA, June – November 2026. Animated logos and vector backgrounds in After Effects for clients. Collaborated with a team of six designers to design engaging and interactive web pages using Webflow, Wix and Squarespace. Created graphic designs like bookmarks and holiday cards using Photoshop and Illustrator.</li>
+          <li>Design Intern, Sagetopia, Leesburg, VA, July – August 2025. Worked with the Creative Director and six peers to co-create logos. Built two company identities, from naming to ADA-compliant color palettes to logo design, demonstrating adaptability and inclusivity. Enhanced skills in Illustrator, Photoshop, After Effects and Figma through client deliverables.</li>
+          <li>UI/UX Designer Intern, IT Concepts Incorporated, Vienna, VA, May – June 2024. Collaborated with peers to design user-friendly interfaces. Learned foundational UI Figma skills through Udemy online courses. Conducted usability testing to identify a critical admin-access vulnerability, exhibiting thoroughness and problem-solving skills.</li>
         </ul>
         <h3>Projects</h3>
         <ul>
-          <li>Boston Climate Action Network, Boston, MA, Design Lead, January – April 2026. Led UI/UX design for a grant tracking platform, improving accessibility and usability for an elderly user audience. Designed and iterated on low- to high-fidelity prototypes with FigJam and Figma. Built a scalable design system using an atomic structure of components.</li>
-          <li>Rainfall, Design Lead, June – September 2025. Led a three-person team in designing low-fidelity wireframes and user testing. Created an eight-week project roadmap and assigned tasks with Trello. Presented three logo concepts to project leads and persuaded them to adopt the final design.</li>
-          <li>Recreon, Design Lead, June – September 2025. Researched and presented six licensable brand names through a voting system. Designed a logo animation with After Effects. Built a Figma mobile UI prototype as the sole UI designer.</li>
+          <li>Blue Hill Observatory, Boston, MA, Design Lead, September – December 2026. Designed through C4C a structured and accessible website that lets users import weather data spreadsheets and view 141 years of records. Built site maps and lo-fi wireframes with FigJam and Claude Design, then designed hi-fi Figma prototypes using an atomic design system. Iterated on designs through biweekly client feedback and GitHub tasks.</li>
+          <li>Boston Climate Action Network, Boston, MA, Design Lead, January – April 2026. Led UI/UX design for a grant tracking platform, improving accessibility and usability for an elderly user audience. Designed and iterated on low- to high-fidelity prototypes based on user testing and stakeholder feedback with FigJam and Figma. Built and organized a scalable design system using an atomic structure of components to support future development.</li>
         </ul>
         <h3>Education</h3>
         <ul>
@@ -662,13 +690,13 @@ button, input, select, textarea { font-family: inherit; }
           <li>Basel School of Design, Basel, Switzerland. Study abroad, May – June 2026. Typography, graphic design.</li>
         </ul>
         <h3>Skills</h3>
-        <p>Design: Figma, Illustrator, Photoshop, InDesign, After Effects, Framer. Technical: Java, Python, JavaScript, Dr. Racket, GitHub, VS Code. Hard and soft: UI/UX design, product design, prototyping, ideation, accessibility design, A/B testing, visual design, design systems, qualitative and quantitative research.</p>
-        <p>Contact: choi.rya@northeastern.edu, ryanchoi.framer.website</p>
+        <p>Design: Figma, Illustrator, After Effects, InDesign, Photoshop, Framer, Webflow, Wix, Squarespace. Technical: Java, Python, JavaScript, Dr. Racket, GitHub, VS Code. Hard and soft: UI/UX design, product design, prototyping, ideation, accessibility design, A/B testing, visual design, design systems, qualitative research.</p>
+        <p>Contact: rjchoi.com, choi.rya@northeastern.edu</p>
       </div>
     </div>
   </template>
 
-  <!-- Interfaces (internally the "experience" page) — opened from the boat (the snowman in winter); content from resume/RyanChoi_Resume.pdf.
+  <!-- Interfaces (internally the "experience" page) — opened from the boat (the snowman in winter); content from resume/RyanChoi_DesignResume.pdf.
        Two stacked views share the panel: the list (names on the left travel with the images on the right) and one
        project page at a time, cloned from <template data-project="id">. openProject() / closeProject() morph
        between them (the name becomes the title, the image keeps its place on the right).
@@ -1272,33 +1300,83 @@ class SeasonsScene {
     if (page === 'playground') this.playInit(pop);
     pop.querySelector('[data-popup-close]')?.focus({ preventScroll: true });
   }
-  // ORIGAMI UNFOLD (Resume) — Web Animations on transform/opacity only. Folded state = the keyframes' first
-  // frame (held with fill:'backwards' through each delay); the resting CSS state is the open page.
-  //   0–420ms    the folded packet (left half × middle third, shifted to the centre) flies out of the tree
-  //   340–860ms  the right half swings open about the vertical fold while the page re-centres
-  //   780–1240ms the top flaps open · 940–1400ms the bottom flaps open · 1150–1550ms the shadow lands
+  // ORIGAMI UNFOLD (Resume) — Web Animations on transform/opacity only. The folded state is each animation's first
+  // keyframe (held with fill:'both' through its delay); the resting CSS state is the open, flat page.
+  // The page is a letter folded in thirds and then in half. It unfolds like paper:
+  //   0–480ms     the folded packet flies out of the tree
+  //   380–1080ms  the right half swings open about the vertical fold, casting a shadow on the left half
+  //   900–1600ms  the top flaps open · 1060–1760ms the bottom flaps open
+  //   Each fold opens a little past flat and settles back (paper springs). Each flap is two strips: the outer
+  //   strip trails the inner one and then catches up, so the flap bends as it moves instead of swinging stiff.
+  //   Faces darken as they tip away and catch a brief sheen as they come flat; lifting flaps cast shadows on
+  //   the paper beneath. The whole page is seen tilted back while it opens (like a letter on a desk) and
+  //   settles flat facing the viewer by 1900ms. The page shadow lands last (1500–1950ms).
   // Reduced motion: no unfold; the shell's 150ms fade shows the page flat.
   unfoldPaper(pop, origin) {
     const paper = pop.querySelector('[data-paper]'); if (!paper) return;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const r = paper.getBoundingClientRect();
     const fx = origin ? origin.x - (r.left + r.width / 2) : 0, fy = origin ? origin.y - (r.top + r.height / 2) : 0;
-    const OUT = 'cubic-bezier(0.16, 1, 0.3, 1)', FOLD = 'cubic-bezier(0.645, 0.045, 0.355, 1)'; // arrive: expo-out · fold on screen: in-out cubic
+    const OUT = 'cubic-bezier(0.16, 1, 0.3, 1)', FOLD = 'cubic-bezier(0.55, 0.05, 0.3, 1)', LIN = 'linear';
     const q = sel => [...paper.querySelectorAll(sel)];
-    const run = (els, frames, delay, duration, easing) => els.map(n => n.animate(frames, { delay, duration, easing, fill: 'both' }));
-    const shade = (els, delay, duration) => run(els.map(t => t.querySelector('.tile__shade')), [{ opacity: 0.9 }, { opacity: 0 }], delay, duration, FOLD);
-    const right = paper.querySelector('[data-half="r"]');
-    this.paperAnims = [
-      ...run([paper], [{ transform: `translate(${fx}px, ${fy}px) scale(0.25)`, opacity: 0 }, { transform: 'none', opacity: 1 }], 0, 420, OUT),
-      ...run([paper.querySelector('[data-paper-shift]')], [{ transform: 'translateX(25%)' }, { transform: 'none' }], 340, 520, FOLD),
-      ...run([right], [{ transform: 'rotateY(-179deg)' }, { transform: 'none' }], 340, 520, FOLD),
-      ...shade(q('[data-half="r"] [data-tile="mid"]'), 340, 520),
-      ...run(q('[data-tile="top"]'), [{ transform: 'rotateX(-179deg)' }, { transform: 'none' }], 780, 460, FOLD),
-      ...shade(q('[data-tile="top"]'), 780, 460),
-      ...run(q('[data-tile="bot"]'), [{ transform: 'rotateX(179deg)' }, { transform: 'none' }], 940, 460, FOLD),
-      ...shade(q('[data-tile="bot"]'), 940, 460),
-      ...run([paper.querySelector('[data-paper-shadow]')], [{ opacity: 0 }, { opacity: 1 }], 1150, 400, OUT), // the shadow lands with the last flap
+    const run = (els, frames, delay, duration, easing = LIN) => els.filter(Boolean).map(n => n.animate(frames, { delay, duration, easing, fill: 'both' }));
+    const op = (...v) => v.map(([offset, opacity]) => ({ offset, opacity }));
+    // a fold that opens past flat and springs back; ax = 'X' | 'Y', from = folded angle
+    const fold = (ax, from) => [
+      { offset: 0, transform: `rotate${ax}(${from}deg)`, easing: FOLD },
+      { offset: 0.8, transform: `rotate${ax}(${-Math.sign(from) * 7}deg)`, easing: 'ease-in-out' },
+      { offset: 0.91, transform: `rotate${ax}(${Math.sign(from) * 2}deg)`, easing: 'ease-in-out' },
+      { offset: 1, transform: `rotate${ax}(0deg)` },
     ];
+    // the outer strip of a flap: lies flat on the fold while closed, trails behind as it opens, then whips through
+    const bend = (sign) => [
+      { offset: 0, transform: 'rotateX(0deg)' },
+      { offset: 0.12, transform: `rotateX(${sign * 6}deg)`, easing: 'ease-out' },
+      { offset: 0.45, transform: `rotateX(${sign * 34}deg)`, easing: 'ease-in-out' },
+      { offset: 0.74, transform: `rotateX(${-sign * 12}deg)`, easing: 'ease-in-out' },
+      { offset: 0.9, transform: `rotateX(${sign * 3}deg)`, easing: 'ease-in-out' },
+      { offset: 1, transform: 'rotateX(0deg)' },
+    ];
+    // shading for a face whose fold opens over the given window: dark while tipped away, clear when flat
+    const shadeOpen = op([0, 0.75], [0.35, 0.6], [0.65, 0.15], [0.85, 0], [1, 0]);
+    const sheen = op([0, 0], [0.62, 0], [0.78, 1], [1, 0]);
+    const cast = op([0, 0], [0.18, 1], [0.6, 0.55], [0.85, 0], [1, 0]);
+    const parts = (sel, kind) => q(sel).map(n => n.querySelector(kind));
+    const H = [380, 700], T = [900, 700], B = [1060, 700];
+    paper.dataset.folding = '';
+    const anims = this.paperAnims = [
+      // fly out of the tree
+      ...run([paper], [{ transform: `translate(${fx}px, ${fy}px) scale(0.25)`, opacity: 0 }, { transform: 'none', opacity: 1 }], 0, 480, OUT),
+      // right half over the left: swings open about the vertical fold while the page re-centres
+      ...run([paper.querySelector('[data-paper-shift]')], [{ transform: 'translateX(25%)' }, { transform: 'none' }], H[0], H[1] * 0.85, FOLD),
+      ...run([paper.querySelector('[data-half="r"]')], fold('Y', -179), ...H),
+      ...run(q('[data-half="r"] [data-tile="mid"] .tile__front > .tile__shade, [data-half="r"] .seg > .tile__front > .tile__shade'), shadeOpen, ...H),
+      ...run(q('[data-half="r"] [data-tile="mid"] .tile__sheen, [data-half="r"] .seg--in .tile__sheen'), sheen, ...H),
+      ...run(q('[data-half-cast]'), cast, ...H),
+      // top flaps (both halves), bending as they go, casting a shadow on the middle third
+      ...run(q('[data-tile="top"]'), fold('X', -179), ...T),
+      ...run(q('[data-tile="top"] [data-seg="out"]'), bend(-1), ...T),
+      ...run(parts('[data-tile="top"] .seg > .tile__front', '.tile__shade'), shadeOpen, ...T),
+      ...run(parts('[data-tile="top"] .seg > .tile__front', '.tile__sheen'), sheen, ...T),
+      ...run(q('[data-cast="top"]'), cast, ...T),
+      // bottom flaps
+      ...run(q('[data-tile="bot"]'), fold('X', 179), ...B),
+      ...run(q('[data-tile="bot"] [data-seg="out"]'), bend(1), ...B),
+      ...run(parts('[data-tile="bot"] .seg > .tile__front', '.tile__shade'), shadeOpen, ...B),
+      ...run(parts('[data-tile="bot"] .seg > .tile__front', '.tile__sheen'), sheen, ...B),
+      ...run(q('[data-cast="bot"]'), cast, ...B),
+      // seen at an angle while it opens, like a letter unfolded on a desk; it settles flat to face the viewer
+      paper.animate([
+        { transform: 'rotateX(0deg) rotateZ(0deg)', offset: 0 },
+        { transform: 'rotateX(24deg) rotateZ(-2.5deg)', offset: 0.22, easing: 'ease-in-out' },
+        { transform: 'rotateX(16deg) rotateZ(-1.5deg)', offset: 0.6, easing: 'cubic-bezier(0.45, 0, 0.2, 1)' },
+        { transform: 'rotateX(0deg) rotateZ(0deg)', offset: 1 },
+      ], { duration: 1900, fill: 'both', composite: 'add' }),
+      // the page shadow lands last
+      ...run([paper.querySelector('[data-paper-shadow]')], [{ opacity: 0 }, { opacity: 1 }], 1500, 450, OUT),
+    ];
+    // once every fold has landed, swap the pieces for the seamless page (also if the pop-up closes mid-unfold)
+    Promise.all(anims.map(x => x.finished)).catch(() => {}).then(() => { if (this.paperAnims === anims || !paper.isConnected) delete paper.dataset.folding; });
   }
   closePopup() {
     const el = this.rootRef.current, pop = el?.querySelector('[data-popup]'); if (!pop || !this.pgOpen) return;
