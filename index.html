@@ -225,19 +225,11 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 .tile__cast--top { background: linear-gradient(to bottom, rgba(20, 28, 38, 0.34), rgba(20, 28, 38, 0) 70%); }
 .tile__cast--bot { background: linear-gradient(to top, rgba(20, 28, 38, 0.34), rgba(20, 28, 38, 0) 70%); }
 .half__cast { background: linear-gradient(to left, rgba(20, 28, 38, 0.3), rgba(20, 28, 38, 0) 75%); }
-/* At rest the page is one seamless image (the six folding pieces leave hairline seams where they meet); the
-   pieces are shown only while data-folding is set by unfoldPaper */
+/* At rest the page is one seamless image (the six folding pieces leave hairline seams where they meet), clean with no
+   creases; the pieces are shown only while data-folding is set by unfoldPaper */
 .paper__flat { position: absolute; inset: 0; background: var(--paper) url("resume/resume-page-2026-11.webp") 0 0 / 100% 100% no-repeat; }
 .paper:not([data-folding]) .paper__shift { visibility: hidden; }
 .paper[data-folding] .paper__flat { visibility: hidden; }
-/* the creases an unfolded letter keeps: a soft valley and a highlight beside it at each fold */
-.paper__creases {
-  position: absolute; inset: 0; pointer-events: none;
-  background:
-    linear-gradient(to right, transparent calc(50% - 5px), rgba(20, 28, 38, 0.035) calc(50% - 1px), rgba(20, 28, 38, 0.05) 50%, transparent calc(50% + 3px)),
-    linear-gradient(to bottom, transparent calc(100% / 3 - 5px), rgba(20, 28, 38, 0.03) calc(100% / 3 - 1px), rgba(20, 28, 38, 0.045) calc(100% / 3), transparent calc(100% / 3 + 3px)),
-    linear-gradient(to bottom, transparent calc(200% / 3 - 3px), rgba(20, 28, 38, 0.045) calc(200% / 3), rgba(20, 28, 38, 0.03) calc(200% / 3 + 1px), transparent calc(200% / 3 + 5px));
-}
 /* ======================================================================
    EXPERIENCE — two views stacked in one grid cell of the panel. Sizes come from JS (xpLayout):
    --list-h / --proj-h = the two scrollers' heights, --shot-w / --shot-h = one image size shared by the
@@ -670,7 +662,7 @@ button, input, select, textarea { font-family: inherit; }
             
           </div>
         </div>
-        <div class="paper__flat" aria-hidden="true"><div class="paper__creases"></div></div>
+        <div class="paper__flat" aria-hidden="true"></div>
       </a>
       <div class="sr-only">
         <h2 id="popup-title">Resume</h2>
