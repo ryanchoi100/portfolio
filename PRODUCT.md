@@ -20,7 +20,7 @@ The personal portfolio of **Ryan Choi, UI/UX & Brand Designer** (per the resume;
 
 The portfolio is entered through a painted lake landscape that cycles Spring → Summer → Autumn → Winter as the visitor scrolls, and the objects in the scene are the navigation. A designer's portfolio you explore rather than read.
 
-Professional positioning comes from the resume: UI/UX and brand design across internships (Sagetopia, IT Concepts) and design-lead projects (Boston Climate Action Network, Rainfall, Recreon), with strengths in prototyping, accessibility, design systems and brand identity. Anything beyond the resume is still open; do not invent it.
+Professional positioning comes from the resume: UI/UX, brand and motion design across roles at Sagetopia (design intern, then UI and motion design associate) and IT Concepts, and design-lead projects (Blue Hill Observatory through Code4Community, Boston Climate Action Network), with strengths in prototyping, accessibility, design systems and brand identity. Anything beyond the resume is still open; do not invent it.
 
 ## Operating Context
 
@@ -38,7 +38,7 @@ Professional positioning comes from the resume: UI/UX and brand design across in
 - The Resume pop-up shows the PDF page itself (origami unfold), sized to fit a desktop screen without scrolling, with Open PDF and Download.
 - Deploy: GitHub Pages from `main`; a custom domain is planned for later.
 - Undecided:
-  - the remaining case studies: BCAN has a full draft written from the owner's own text; Sagetopia, Rainfall, Recreon and IT Concepts have short pages built only from the resume, marked "Full case study in progress"
+  - the remaining case studies: BCAN has a full draft written from the owner's own text; Blue Hill Observatory, Sagetopia (motion and web, 2026), Sagetopia (brand identity, 2025) and IT Concepts have short pages built only from the resume, marked "Full case study in progress". Rainfall and Recreon were removed to match the November 2026 resume (they remain in git history)
   - whether a Contact page or mailbox is added later (explicitly not now)
 
 ## Brand Commitments
