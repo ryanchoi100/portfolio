@@ -49,7 +49,7 @@ Professional positioning comes from the resume: UI/UX, brand and motion design a
 ## Evidence on Hand
 
 - Artwork: `seasons/` (four seasons × plate, tree, reflection, lights).
-- Resume: `resume/RyanChoi_DesignResume.pdf` (the design resume, updated November 2026; one page; also rendered to `resume/resume-page.webp` for the unfold). It is the source for About Me and Interfaces. It includes a phone number and email, so it is public once deployed.
+- Resume: `resume/RyanChoi_DesignResume.pdf` (the design resume, updated November 2026; one page; also rendered to `resume/resume-page-2026-11.webp` for the unfold). It is the source for About Me and Interfaces. It includes a phone number and email, so it is public once deployed.
 - BCAN case-study text: supplied by the owner (scope, client, year, industry, context, approach, outcome); it is the source for the BCAN page.
 - Still missing: a portrait photo, full case studies for the other four projects, all project imagery (every image is a labelled placeholder) and Playground content (six placeholder tiles for logos and logo animations). There are no metrics, client quotes or testimonials beyond the resume. Future work must not fabricate any of them.
 
