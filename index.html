@@ -1268,8 +1268,8 @@ class SeasonsScene {
   // CRUMPLED-PAPER UNFOLD (Resume). The page is a mesh of COLS × ROWS cells, each split into two triangles that
   // share their vertices, so the sheet never tears. Each vertex has two positions: crumpled (wrapped round a lumpy
   // ball, every vertex nudged at random so it looks hand-crushed) and flat (its place on the page). Each frame eases
-  // every vertex from one to the other, the middle of the sheet first and the edges last, while the ball spins open
-  // and wrinkles ripple through and fade. The mesh is painted onto one canvas, back to front, each triangle a slice
+  // every vertex from one to the other, the middle of the sheet first and the edges last, while wrinkles ripple through and fade
+  // (the ball opens in place; it does not turn). The mesh is painted onto one canvas, back to front, each triangle a slice
   // of the resume image mapped onto its crumpled position (or the back of the sheet when it faces away), shaded by
   // how it faces the light. One canvas keeps this cheap; hundreds of 3D DOM layers would not be.
   //   0–320ms     the ball flies out of the tree
