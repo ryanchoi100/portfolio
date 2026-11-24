@@ -201,33 +201,19 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 }
 .paper__shadow { position: absolute; inset: 0; border-radius: var(--radius-paper); box-shadow: 0 18px 48px rgba(20, 28, 38, 0.28), 0 3px 10px rgba(20, 28, 38, 0.16); }
 .paper__shift { position: absolute; inset: 0; transform-style: preserve-3d; }
-.pcol { position: absolute; top: 0; bottom: 0; width: 25%; transform-style: preserve-3d; }
-.pcol--0 { left: 0; transform-origin: 100% 50%; }       /* left gate: hinges on its right edge */
-.pcol--1 { left: 25%; }                                 /* the base the packet folds onto */
-.pcol--2 { left: 50%; transform-origin: 0 50%; }        /* the centre fold */
-.pcol--3 { left: 100%; width: 100%; transform-origin: 0 50%; }   /* right gate, carried by column 2 */
-.tile { position: absolute; left: 0; right: 0; height: calc(100% / 3); transform-style: preserve-3d; }
-.tile--top { top: 0; transform-origin: 50% 100%; }
-.tile--mid { top: calc(100% / 3); }
-.tile--bot { top: calc(200% / 3); transform-origin: 50% 0; }
-/* a flap is two strips: the inner one hinges on the fold, the outer one on the flap's middle, so the flap can bend */
-.seg { position: absolute; left: 0; right: 0; height: 50%; transform-style: preserve-3d; }
-.tile--top .seg--in { bottom: 0; }
-.tile--top .seg--out { top: 0; transform-origin: 50% 100%; }
-.tile--bot .seg--in { top: 0; }
-.tile--bot .seg--out { bottom: 0; transform-origin: 50% 0; }
-.tile__front, .tile__back { position: absolute; inset: 0; overflow: hidden; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
-.tile__front { background-color: var(--paper); background-image: url("resume/resume-page-2026-11.webp"); background-repeat: no-repeat; }
-.tile__back { transform: rotateY(180deg); background: linear-gradient(160deg, var(--paper-back), var(--paper-back-shade)); box-shadow: inset 0 0 0 1px rgba(20, 28, 38, 0.06); }
-/* light that follows the fold angle (opacity set per keyframe): shade as a face tips away, a brief sheen as it comes flat */
-.tile__shade, .tile__sheen, .tile__cast, .col__cast { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
-.tile__shade { background: rgba(20, 28, 38, 0.42); }
-.tile__sheen { background: linear-gradient(115deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.4) 50%, rgba(255, 255, 255, 0) 70%);  }
-/* shadows a lifting flap or half casts onto the paper beneath it */
-.tile__cast--top { background: linear-gradient(to bottom, rgba(20, 28, 38, 0.34), rgba(20, 28, 38, 0) 70%); }
-.tile__cast--bot { background: linear-gradient(to top, rgba(20, 28, 38, 0.34), rgba(20, 28, 38, 0) 70%); }
-.col__cast--r { background: linear-gradient(to left, rgba(20, 28, 38, 0.3), rgba(20, 28, 38, 0) 75%); }
-.col__cast--l { background: linear-gradient(to right, rgba(20, 28, 38, 0.3), rgba(20, 28, 38, 0) 75%); }
+.phalf { position: absolute; top: 0; bottom: 0; width: 50%; transform-style: preserve-3d; }
+.phalf--l { left: 0; }
+.phalf--r { left: 50%; transform-origin: 0 50%; }          /* the centre fold */
+/* every piece fills its half; its faces are clipped to the piece's shape (a pentagon base, triangle corners and
+   their folded-back tips), so pieces can hinge on diagonal fold lines */
+.ppiece { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
+.pf { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.pf--front { background-color: var(--paper); background-image: url("resume/resume-page-2026-11.webp"); background-repeat: no-repeat; }
+.ppiece--corner { inset: auto; }                       /* corner pieces are sized to their own triangle's square */
+.pf--back { transform: rotateY(180deg); background: linear-gradient(160deg, var(--paper-back), var(--paper-back-shade)); }
+.pf__shade, .pf__sheen { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.pf__shade { background: rgba(20, 28, 38, 0.42); }
+.pf__sheen { background: linear-gradient(115deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0) 70%); }
 /* At rest the page is one seamless image (the six folding pieces leave hairline seams where they meet), clean with no
    creases; the pieces are shown only while data-folding is set by unfoldPaper */
 .paper__flat { position: absolute; inset: 0; background: var(--paper) url("resume/resume-page-2026-11.webp") 0 0 / 100% 100% no-repeat; }
@@ -653,10 +639,15 @@ button, input, select, textarea { font-family: inherit; }
       <a class="paper" data-paper="" href="resume/RyanChoi_DesignResume.pdf" target="_blank" rel="noopener" aria-label="Ryan Choi’s resume, opens the PDF">
         <div class="paper__shadow" data-paper-shadow=""></div>
         <div class="paper__shift" data-paper-shift="">
-          <div class="pcol pcol--0" data-col="0"><div class="tile tile--top" data-tile="top"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:0% 20%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:0% 0%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div></div><div class="tile tile--mid" data-tile="mid"><div class="tile__front" style="background-position:0% 50%;background-size:400% 300%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="tile__cast tile__cast--top" data-cast="top"></div><div class="tile__cast tile__cast--bot" data-cast="bot"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div><div class="tile tile--bot" data-tile="bot"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:0% 80%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:0% 100%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div></div></div>
-          <div class="pcol pcol--1" data-col="1"><div class="tile tile--top" data-tile="top"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:33.3333% 20%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="col__cast col__cast--l" data-col-cast="l"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="col__cast col__cast--l" data-col-cast="l"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:33.3333% 0%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="col__cast col__cast--l" data-col-cast="l"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="col__cast col__cast--l" data-col-cast="l"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div></div></div><div class="tile tile--mid" data-tile="mid"><div class="tile__front" style="background-position:33.3333% 50%;background-size:400% 300%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="col__cast col__cast--l" data-col-cast="l"></div><div class="col__cast col__cast--r" data-col-cast="r"></div><div class="tile__cast tile__cast--top" data-cast="top"></div><div class="tile__cast tile__cast--bot" data-cast="bot"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="col__cast col__cast--l" data-col-cast="l"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div></div><div class="tile tile--bot" data-tile="bot"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:33.3333% 80%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="col__cast col__cast--l" data-col-cast="l"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="col__cast col__cast--l" data-col-cast="l"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:33.3333% 100%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="col__cast col__cast--l" data-col-cast="l"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="col__cast col__cast--l" data-col-cast="l"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div></div></div></div>
-          <div class="pcol pcol--2" data-col="2"><div class="tile tile--top" data-tile="top"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:66.6667% 20%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:66.6667% 0%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div></div></div><div class="tile tile--mid" data-tile="mid"><div class="tile__front" style="background-position:66.6667% 50%;background-size:400% 300%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="col__cast col__cast--r" data-col-cast="r"></div><div class="tile__cast tile__cast--top" data-cast="top"></div><div class="tile__cast tile__cast--bot" data-cast="bot"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div></div><div class="tile tile--bot" data-tile="bot"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:66.6667% 80%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:66.6667% 100%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div><div class="tile__back"><div class="tile__shade"></div><div class="col__cast col__cast--r" data-col-cast="r"></div></div></div></div>
-            <div class="pcol pcol--3" data-col="3"><div class="tile tile--top" data-tile="top"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:100% 20%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:100% 0%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div></div><div class="tile tile--mid" data-tile="mid"><div class="tile__front" style="background-position:100% 50%;background-size:400% 300%"><div class="tile__shade"></div><div class="tile__sheen"></div><div class="tile__cast tile__cast--top" data-cast="top"></div><div class="tile__cast tile__cast--bot" data-cast="bot"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div><div class="tile tile--bot" data-tile="bot"><div class="seg seg--in" data-seg="in"><div class="tile__front" style="background-position:100% 80%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div><div class="seg seg--out" data-seg="out"><div class="tile__front" style="background-position:100% 100%;background-size:400% 600%"><div class="tile__shade"></div><div class="tile__sheen"></div></div><div class="tile__back"><div class="tile__shade"></div></div></div></div></div>
+          <div class="phalf phalf--l" data-half="l">
+            <div class="ppiece" data-base=""><div class="pf pf--front" style="clip-path:polygon(100% 0%, 100% 100%, 0% 61.36%, 0% 38.64%);background-size:200% 100%;background-position:0% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(0% 0%, 0% 100%, 100% 61.36%, 100% 38.64%)"></div></div>
+            <div class="ppiece ppiece--corner" data-flap="top" data-ax="-1,1" style="left:0%;top:0%;width:100%;height:38.64%;transform-origin:100% 0%"><div class="pf pf--front" style="clip-path:polygon(100% 0%, 0% 100%, 0% 50%, 50% 0%);background-size:200% 258.8%;background-position:0% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(0% 0%, 100% 100%, 100% 50%, 50% 0%)"></div><div class="ppiece ppiece--corner" data-tip="" style="left:0%;top:0%;width:50%;height:50%;transform-origin:100% 0%"><div class="pf pf--front" style="clip-path:polygon(0% 0%, 100% 0%, 0% 100%);background-size:400% 517.6%;background-position:0% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(100% 0%, 0% 0%, 100% 100%)"></div></div></div>
+            <div class="ppiece ppiece--corner" data-flap="bot" data-ax="-1,-1" style="left:0%;top:61.36%;width:100%;height:38.64%;transform-origin:100% 100%"><div class="pf pf--front" style="clip-path:polygon(100% 100%, 0% 0%, 0% 50%, 50% 100%);background-size:200% 258.8%;background-position:0% 100%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(0% 100%, 100% 0%, 100% 50%, 50% 100%)"></div><div class="ppiece ppiece--corner" data-tip="" style="left:0%;top:50%;width:50%;height:50%;transform-origin:100% 100%"><div class="pf pf--front" style="clip-path:polygon(0% 100%, 100% 100%, 0% 0%);background-size:400% 517.6%;background-position:0% 100%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(100% 100%, 0% 100%, 100% 0%)"></div></div></div>
+          </div>
+          <div class="phalf phalf--r" data-half="r">
+            <div class="ppiece" data-base=""><div class="pf pf--front" style="clip-path:polygon(0% 0%, 100% 38.64%, 100% 61.36%, 0% 100%);background-size:200% 100%;background-position:100% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(100% 0%, 0% 38.64%, 0% 61.36%, 100% 100%)"></div></div>
+            <div class="ppiece ppiece--corner" data-flap="top" data-ax="1,1" style="left:0%;top:0%;width:100%;height:38.64%;transform-origin:0% 0%"><div class="pf pf--front" style="clip-path:polygon(0% 0%, 100% 100%, 100% 50%, 50% 0%);background-size:200% 258.8%;background-position:100% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(100% 0%, 0% 100%, 0% 50%, 50% 0%)"></div><div class="ppiece ppiece--corner" data-tip="" style="left:50%;top:0%;width:50%;height:50%;transform-origin:0% 0%"><div class="pf pf--front" style="clip-path:polygon(100% 0%, 0% 0%, 100% 100%);background-size:400% 517.6%;background-position:100% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(0% 0%, 100% 0%, 0% 100%)"></div></div></div>
+            <div class="ppiece ppiece--corner" data-flap="bot" data-ax="1,-1" style="left:0%;top:61.36%;width:100%;height:38.64%;transform-origin:0% 100%"><div class="pf pf--front" style="clip-path:polygon(0% 100%, 100% 0%, 100% 50%, 50% 100%);background-size:200% 258.8%;background-position:100% 100%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(100% 100%, 0% 0%, 0% 50%, 50% 100%)"></div><div class="ppiece ppiece--corner" data-tip="" style="left:50%;top:50%;width:50%;height:50%;transform-origin:0% 100%"><div class="pf pf--front" style="clip-path:polygon(100% 100%, 0% 100%, 100% 0%);background-size:400% 517.6%;background-position:100% 100%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(0% 100%, 100% 100%, 0% 0%)"></div></div></div>
           </div>
         </div>
         <div class="paper__flat" aria-hidden="true"></div>
@@ -1294,91 +1285,64 @@ class SeasonsScene {
     if (page === 'playground') this.playInit(pop);
     pop.querySelector('[data-popup-close]')?.focus({ preventScroll: true });
   }
-  // ORIGAMI UNFOLD (Resume) — Web Animations on transform/opacity only, seen flat (no tilt). The folded state is
-  // each animation's first keyframe (held with fill:'both' through its delay); the resting CSS state is the open page.
-  // The page is folded in quarters across (a centre fold plus two gate folds) and in thirds down, so it starts as a
-  // packet one twelfth of its size. It opens in this order:
-  //   0–480ms      the packet flies out of the tree
-  //   340–940ms    the centre fold: columns 3–4 swing open to the right while the page re-centres
-  //   800–1380ms   the left gate (column 1) swings out · 900–1480ms the right gate (column 4) follows
-  //   1260ms on    the top flaps ripple open column by column, left to right, 70ms apart
-  //   1400ms on    the bottom flaps ripple open right to left, 70ms apart
-  //   Every fold opens a little past flat and springs back. Each flap is two strips: the outer one trails, then
-  //   catches up, so the flap bends like paper. Faces darken as they tip away and catch a sheen as they come flat;
-  //   lifting columns and flaps cast soft shadows on the paper beneath. The page shadow lands last, then the
-  //   pieces swap for one seamless page (no seams, no creases).
+  // ORIGAMI UNFOLD (Resume) — Web Animations on transform/opacity only, seen flat. The folded state is each
+  // animation's first keyframe (held with fill:'both' through its delay); the resting CSS state is the open page.
+  // Folded like real paper with diagonal folds: the page is folded in half, each of its four corners is folded in
+  // along a 45° line (like the nose of a paper plane), and each corner's tip is folded back once more. It opens:
+  //   0–360ms    the folded packet flies out of the tree
+  //   220–600ms  the centre fold opens while the page re-centres
+  //   480–820ms  the top corner triangles flip open about their diagonals · 560–900ms the bottom ones
+  //   their tips flick open just after (from 640ms and 720ms)
+  //   Every fold opens a little past flat and springs back; faces darken as they tip away and catch a sheen as
+  //   they come flat. The page shadow lands last (about 1.1s in all), then the pieces swap for the seamless page.
   // Reduced motion: no unfold; the shell's 150ms fade shows the page flat.
+  PAPER_SIGN = { 'l-top': 1, 'l-bot': 1, 'r-top': 1, 'r-bot': 1, tip: 1 };                  // which way each piece folds over
   unfoldPaper(pop, origin) {
     const paper = pop.querySelector('[data-paper]'); if (!paper) return;
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const r = paper.getBoundingClientRect();
     const fx = origin ? origin.x - (r.left + r.width / 2) : 0, fy = origin ? origin.y - (r.top + r.height / 2) : 0;
-    const OUT = 'cubic-bezier(0.16, 1, 0.3, 1)', FOLD = 'cubic-bezier(0.55, 0.05, 0.3, 1)', LIN = 'linear';
-    const q = sel => [...paper.querySelectorAll(sel)];
+    const OUT = 'cubic-bezier(0.16, 1, 0.3, 1)', FOLD = 'cubic-bezier(0.5, 0, 0.25, 1)', LIN = 'linear';
     const run = (els, frames, delay, duration, easing = LIN) => els.filter(Boolean).map(n => n.animate(frames, { delay, duration, easing, fill: 'both' }));
     const op = (...v) => v.map(([offset, opacity]) => ({ offset, opacity }));
-    // a fold that opens past flat and springs back; ax = 'X' | 'Y', from = folded angle
-    const fold = (ax, from) => [
-      { offset: 0, transform: `rotate${ax}(${from}deg)`, easing: FOLD },
-      { offset: 0.8, transform: `rotate${ax}(${-Math.sign(from) * 6}deg)`, easing: 'ease-in-out' },
-      { offset: 0.91, transform: `rotate${ax}(${Math.sign(from) * 2}deg)`, easing: 'ease-in-out' },
-      { offset: 1, transform: `rotate${ax}(0deg)` },
+    // a fold about an axis that opens past flat and springs back
+    const fold = (rot, from) => [
+      { offset: 0, transform: rot(from), easing: FOLD },
+      { offset: 0.78, transform: rot(-Math.sign(from) * 6), easing: 'ease-in-out' },
+      { offset: 0.9, transform: rot(Math.sign(from) * 2), easing: 'ease-in-out' },
+      { offset: 1, transform: rot(0) },
     ];
-    // the outer strip of a flap: flat while closed, trails behind as it opens, then whips through and settles
-    const bend = (sign) => [
-      { offset: 0, transform: 'rotateX(0deg)' },
-      { offset: 0.12, transform: `rotateX(${sign * 6}deg)`, easing: 'ease-out' },
-      { offset: 0.45, transform: `rotateX(${sign * 34}deg)`, easing: 'ease-in-out' },
-      { offset: 0.74, transform: `rotateX(${-sign * 12}deg)`, easing: 'ease-in-out' },
-      { offset: 0.9, transform: `rotateX(${sign * 3}deg)`, easing: 'ease-in-out' },
-      { offset: 1, transform: 'rotateX(0deg)' },
-    ];
-    const shadeOpen = op([0, 0.75], [0.35, 0.6], [0.65, 0.15], [0.85, 0], [1, 0]);
-    const sheen = op([0, 0], [0.62, 0], [0.78, 1], [1, 0]);
-    const cast = op([0, 0], [0.18, 1], [0.6, 0.55], [0.85, 0], [1, 0]);
-    const col = k => paper.querySelector(`[data-col="${k}"]`);
-    const own = (k, sel) => q(`[data-col="${k}"] > ${sel}`);                  // a column's own tiles, not the nested gate's
-    const faces = (k, kind) => [...own(k, '[data-tile="mid"] > .tile__front'), ...own(k, '.tile .seg > .tile__front')].map(n => n.querySelector(kind));
-    const C = [340, 600], L = [800, 580], R = [900, 580], RIP = 70, FL = 620;
+    const about = ([x, y]) => a => `rotate3d(${x}, ${y}, 0, ${a}deg)`;
+    const shadeOpen = op([0, 0.7], [0.35, 0.55], [0.65, 0.12], [0.85, 0], [1, 0]);
+    const sheen = op([0, 0], [0.6, 0], [0.78, 1], [1, 0]);
+    const faceOf = (piece, kind) => piece.querySelector(`:scope > .pf--front > ${kind}`);
+    const half = side => paper.querySelector(`[data-half="${side}"]`);
+    const S = this.PAPER_SIGN;
+    const corner = (side, name, at, dur) => {
+      const flap = half(side).querySelector(`[data-flap="${name}"]`), tip = flap.querySelector('[data-tip]'), key = `${side}-${name}`;
+      const rot = about(flap.dataset.ax.split(',').map(Number));
+      return [
+        ...run([flap], fold(rot, S[key] * 179), at, dur),
+        ...run([faceOf(flap, '.pf__shade')], shadeOpen, at, dur),
+        ...run([faceOf(flap, '.pf__sheen')], sheen, at, dur),
+        ...run([tip], fold(rot, -S[key] * S.tip * 178), at + 160, dur - 40),
+        ...run([faceOf(tip, '.pf__shade')], shadeOpen, at + 160, dur - 40),
+        ...run([faceOf(tip, '.pf__sheen')], sheen, at + 160, dur - 40),
+      ];
+    };
     paper.dataset.folding = '';
     const anims = this.paperAnims = [
-      // fly out of the tree, flat
-      ...run([paper], [{ transform: `translate(${fx}px, ${fy}px) scale(0.25)`, opacity: 0 }, { transform: 'none', opacity: 1 }], 0, 480, OUT),
-      // the packet sits on column 2 (25–50%); the page re-centres as the centre fold opens
-      ...run([paper.querySelector('[data-paper-shift]')], [{ transform: 'translateX(12.5%)' }, { transform: 'none' }], C[0], C[1] * 0.9, FOLD),
-      // centre fold: columns 3–4 (the right gate still folded inside) swing open about the middle
-      ...run([col(2)], fold('Y', -179), ...C),
-      ...run([...faces(2, '.tile__shade'), ...faces(3, '.tile__shade')], shadeOpen, ...C),
-      ...run(faces(2, '.tile__sheen'), sheen, ...C),
-      ...run(q('[data-col="1"] [data-col-cast="r"]'), cast, ...C),
-      // the gates: the left quarter swings out, then the right quarter
-      ...run([col(0)], fold('Y', 178), ...L),
-      ...run(faces(0, '.tile__shade'), shadeOpen, ...L),
-      ...run(faces(0, '.tile__sheen'), sheen, ...L),
-      ...run(q('[data-col="1"] [data-col-cast="l"]'), cast, ...L),
-      ...run([col(3)], fold('Y', -178), ...R),
-      ...run(faces(3, '.tile__sheen'), sheen, ...R),
-      ...run(q('[data-col="2"] > .tile [data-col-cast="r"]'), cast, ...R),
-      // top flaps ripple open left to right; bottom flaps ripple back right to left
-      ...[0, 1, 2, 3].flatMap(k => {
-        const t = 1260 + k * RIP, b = 1400 + (3 - k) * RIP;
-        return [
-          ...run(own(k, '[data-tile="top"]'), fold('X', -179), t, FL),
-          ...run(own(k, '[data-tile="top"] [data-seg="out"]'), bend(-1), t, FL),
-          ...run(own(k, '[data-tile="top"] .seg > .tile__front').map(n => n.querySelector('.tile__shade')), shadeOpen, t, FL),
-          ...run(own(k, '[data-tile="top"] .seg > .tile__front').map(n => n.querySelector('.tile__sheen')), sheen, t, FL),
-          ...run(own(k, '[data-tile="mid"] [data-cast="top"]'), cast, t, FL),
-          ...run(own(k, '[data-tile="bot"]'), fold('X', 179), b, FL),
-          ...run(own(k, '[data-tile="bot"] [data-seg="out"]'), bend(1), b, FL),
-          ...run(own(k, '[data-tile="bot"] .seg > .tile__front').map(n => n.querySelector('.tile__shade')), shadeOpen, b, FL),
-          ...run(own(k, '[data-tile="bot"] .seg > .tile__front').map(n => n.querySelector('.tile__sheen')), sheen, b, FL),
-          ...run(own(k, '[data-tile="mid"] [data-cast="bot"]'), cast, b, FL),
-        ];
-      }),
-      // the page shadow lands last
-      ...run([paper.querySelector('[data-paper-shadow]')], [{ opacity: 0 }, { opacity: 1 }], 1900, 450, OUT),
+      ...run([paper], [{ transform: `translate(${fx}px, ${fy}px) scale(0.25)`, opacity: 0 }, { transform: 'none', opacity: 1 }], 0, 360, OUT),
+      // the packet is the left half (0–50%); the page re-centres as the centre fold opens
+      ...run([paper.querySelector('[data-paper-shift]')], [{ transform: 'translateX(25%)' }, { transform: 'none' }], 220, 340, FOLD),
+      ...run([half('r')], fold(a => `rotateY(${a}deg)`, -179), 220, 380),
+      ...run([faceOf(half('r').querySelector('[data-base]'), '.pf__shade')], shadeOpen, 220, 380),
+      ...run([faceOf(half('r').querySelector('[data-base]'), '.pf__sheen')], sheen, 220, 380),
+      // the corner triangles, then their tips; top corners lead, left a beat before right
+      ...corner('l', 'top', 480, 340), ...corner('r', 'top', 520, 340),
+      ...corner('l', 'bot', 560, 340), ...corner('r', 'bot', 600, 340),
+      ...run([paper.querySelector('[data-paper-shadow]')], [{ opacity: 0 }, { opacity: 1 }], 820, 320, OUT),
     ];
-    // once every fold has landed, swap the pieces for the seamless page (also if the pop-up closes mid-unfold)
     Promise.all(anims.map(x => x.finished)).catch(() => {}).then(() => { if (this.paperAnims === anims || !paper.isConnected) delete paper.dataset.folding; });
   }
   closePopup() {
