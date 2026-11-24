@@ -1320,11 +1320,9 @@ class SeasonsScene {
       if (!paper.isConnected) return;
       const now = performance.now();   // one clock for start and frames (rAF timestamps can use another base)
       const g = Math.min(1, Math.max(0, (now - t0 - START) / DUR));
-      const spin = (1 - ease(Math.min(1, g * 1.4))) * 2.4, cs = Math.cos(spin), sn = Math.sin(spin); // the ball turns as it opens
       V.forEach((p, k) => {
         const e = ease(Math.min(1, Math.max(0, (g - p.delay) / SPAN)));
-        const bx = p.ball[0] - W / 2, bz = p.ball[2];
-        const ballX = W / 2 + bx * cs + bz * sn, ballZ = -bx * sn + bz * cs;
+        const ballX = p.ball[0], ballZ = p.ball[2];       // the ball opens in place, without turning
         const wr = Math.sin(Math.PI * e) * (1 - e * 0.6);   // wrinkles swell mid-way and fade as it flattens
         const x = ballX + (p.flat[0] - ballX) * e + p.wx * cw * 0.25 * wr;
         const y = p.ball[1] + (p.flat[1] - p.ball[1]) * e + p.wy * ch * 0.25 * wr;
