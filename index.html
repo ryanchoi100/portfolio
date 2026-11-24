@@ -200,20 +200,10 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   transform-style: preserve-3d; cursor: zoom-in; outline-offset: 4px;
 }
 .paper__shadow { position: absolute; inset: 0; border-radius: var(--radius-paper); box-shadow: 0 18px 48px rgba(20, 28, 38, 0.28), 0 3px 10px rgba(20, 28, 38, 0.16); }
-.paper__shift { position: absolute; inset: 0; transform-style: preserve-3d; }
-.phalf { position: absolute; top: 0; bottom: 0; width: 50%; transform-style: preserve-3d; }
-.phalf--l { left: 0; }
-.phalf--r { left: 50%; transform-origin: 0 50%; }          /* the centre fold */
-/* every piece fills its half; its faces are clipped to the piece's shape (a pentagon base, triangle corners and
-   their folded-back tips), so pieces can hinge on diagonal fold lines */
-.ppiece { position: absolute; inset: 0; transform-style: preserve-3d; pointer-events: none; }
-.pf { position: absolute; inset: 0; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
-.pf--front { background-color: var(--paper); background-image: url("resume/resume-page-2026-11.webp"); background-repeat: no-repeat; }
-.ppiece--corner { inset: auto; }                       /* corner pieces are sized to their own triangle's square */
-.pf--back { transform: rotateY(180deg); background: linear-gradient(160deg, var(--paper-back), var(--paper-back-shade)); }
-.pf__shade, .pf__sheen { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
-.pf__shade { background: rgba(20, 28, 38, 0.42); }
-.pf__sheen { background: linear-gradient(115deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, 0.45) 50%, rgba(255, 255, 255, 0) 70%); }
+.paper__shift { position: absolute; inset: 0; }
+/* Crumpled-paper unfold (unfoldPaper): one canvas, a little larger than the page, that the crumpled mesh is
+   painted onto each frame; it sits where the page will be and is removed once the page lies flat */
+.paper__canvas { position: absolute; left: -15%; top: -15%; width: 130%; height: 130%; pointer-events: none; }
 /* At rest the page is one seamless image (the six folding pieces leave hairline seams where they meet), clean with no
    creases; the pieces are shown only while data-folding is set by unfoldPaper */
 .paper__flat { position: absolute; inset: 0; background: var(--paper) url("resume/resume-page-2026-11.webp") 0 0 / 100% 100% no-repeat; }
@@ -639,16 +629,6 @@ button, input, select, textarea { font-family: inherit; }
       <a class="paper" data-paper="" href="resume/RyanChoi_DesignResume.pdf" target="_blank" rel="noopener" aria-label="Ryan Choi’s resume, opens the PDF">
         <div class="paper__shadow" data-paper-shadow=""></div>
         <div class="paper__shift" data-paper-shift="">
-          <div class="phalf phalf--l" data-half="l">
-            <div class="ppiece" data-base=""><div class="pf pf--front" style="clip-path:polygon(100% 0%, 100% 100%, 0% 61.36%, 0% 38.64%);background-size:200% 100%;background-position:0% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(0% 0%, 0% 100%, 100% 61.36%, 100% 38.64%)"></div></div>
-            <div class="ppiece ppiece--corner" data-flap="top" data-ax="-1,1" style="left:0%;top:0%;width:100%;height:38.64%;transform-origin:100% 0%"><div class="pf pf--front" style="clip-path:polygon(100% 0%, 0% 100%, 0% 50%, 50% 0%);background-size:200% 258.8%;background-position:0% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(0% 0%, 100% 100%, 100% 50%, 50% 0%)"></div><div class="ppiece ppiece--corner" data-tip="" style="left:0%;top:0%;width:50%;height:50%;transform-origin:100% 0%"><div class="pf pf--front" style="clip-path:polygon(0% 0%, 100% 0%, 0% 100%);background-size:400% 517.6%;background-position:0% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(100% 0%, 0% 0%, 100% 100%)"></div></div></div>
-            <div class="ppiece ppiece--corner" data-flap="bot" data-ax="-1,-1" style="left:0%;top:61.36%;width:100%;height:38.64%;transform-origin:100% 100%"><div class="pf pf--front" style="clip-path:polygon(100% 100%, 0% 0%, 0% 50%, 50% 100%);background-size:200% 258.8%;background-position:0% 100%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(0% 100%, 100% 0%, 100% 50%, 50% 100%)"></div><div class="ppiece ppiece--corner" data-tip="" style="left:0%;top:50%;width:50%;height:50%;transform-origin:100% 100%"><div class="pf pf--front" style="clip-path:polygon(0% 100%, 100% 100%, 0% 0%);background-size:400% 517.6%;background-position:0% 100%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(100% 100%, 0% 100%, 100% 0%)"></div></div></div>
-          </div>
-          <div class="phalf phalf--r" data-half="r">
-            <div class="ppiece" data-base=""><div class="pf pf--front" style="clip-path:polygon(0% 0%, 100% 38.64%, 100% 61.36%, 0% 100%);background-size:200% 100%;background-position:100% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(100% 0%, 0% 38.64%, 0% 61.36%, 100% 100%)"></div></div>
-            <div class="ppiece ppiece--corner" data-flap="top" data-ax="1,1" style="left:0%;top:0%;width:100%;height:38.64%;transform-origin:0% 0%"><div class="pf pf--front" style="clip-path:polygon(0% 0%, 100% 100%, 100% 50%, 50% 0%);background-size:200% 258.8%;background-position:100% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(100% 0%, 0% 100%, 0% 50%, 50% 0%)"></div><div class="ppiece ppiece--corner" data-tip="" style="left:50%;top:0%;width:50%;height:50%;transform-origin:0% 0%"><div class="pf pf--front" style="clip-path:polygon(100% 0%, 0% 0%, 100% 100%);background-size:400% 517.6%;background-position:100% 0%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(0% 0%, 100% 0%, 0% 100%)"></div></div></div>
-            <div class="ppiece ppiece--corner" data-flap="bot" data-ax="1,-1" style="left:0%;top:61.36%;width:100%;height:38.64%;transform-origin:0% 100%"><div class="pf pf--front" style="clip-path:polygon(0% 100%, 100% 0%, 100% 50%, 50% 100%);background-size:200% 258.8%;background-position:100% 100%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(100% 100%, 0% 0%, 0% 50%, 50% 100%)"></div><div class="ppiece ppiece--corner" data-tip="" style="left:50%;top:50%;width:50%;height:50%;transform-origin:0% 100%"><div class="pf pf--front" style="clip-path:polygon(100% 100%, 0% 100%, 100% 0%);background-size:400% 517.6%;background-position:100% 100%"><div class="pf__shade"></div><div class="pf__sheen"></div></div><div class="pf pf--back" style="clip-path:polygon(0% 100%, 100% 100%, 0% 0%)"></div></div></div>
-          </div>
         </div>
         <div class="paper__flat" aria-hidden="true"></div>
       </a>
@@ -1271,7 +1251,7 @@ class SeasonsScene {
     content.querySelectorAll('[data-reveal]').forEach((n, i) => n.style.setProperty('--i', i));
     pop.dataset.page = page;
     if (tpl.dataset.variant) pop.dataset.variant = tpl.dataset.variant; else delete pop.dataset.variant;
-    this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null;
+    this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null; cancelAnimationFrame(this.paperRaf);
     pop.dataset.state = 'closed';
     // transform-origin = the clicked point, clamped into the panel (panel is centred; offset* ignore its scale)
     const pr = pop.getBoundingClientRect(), w = panel.offsetWidth, h = panel.offsetHeight;
@@ -1285,65 +1265,117 @@ class SeasonsScene {
     if (page === 'playground') this.playInit(pop);
     pop.querySelector('[data-popup-close]')?.focus({ preventScroll: true });
   }
-  // ORIGAMI UNFOLD (Resume) — Web Animations on transform/opacity only, seen flat. The folded state is each
-  // animation's first keyframe (held with fill:'both' through its delay); the resting CSS state is the open page.
-  // Folded like real paper with diagonal folds: the page is folded in half, each of its four corners is folded in
-  // along a 45° line (like the nose of a paper plane), and each corner's tip is folded back once more. It opens:
-  //   0–360ms    the folded packet flies out of the tree
-  //   220–600ms  the centre fold opens while the page re-centres
-  //   480–820ms  the top corner triangles flip open about their diagonals · 560–900ms the bottom ones
-  //   their tips flick open just after (from 640ms and 720ms)
-  //   Every fold opens a little past flat and springs back; faces darken as they tip away and catch a sheen as
-  //   they come flat. The page shadow lands last (about 1.1s in all), then the pieces swap for the seamless page.
+  // CRUMPLED-PAPER UNFOLD (Resume). The page is a mesh of COLS × ROWS cells, each split into two triangles that
+  // share their vertices, so the sheet never tears. Each vertex has two positions: crumpled (wrapped round a lumpy
+  // ball, every vertex nudged at random so it looks hand-crushed) and flat (its place on the page). Each frame eases
+  // every vertex from one to the other, the middle of the sheet first and the edges last, while the ball spins open
+  // and wrinkles ripple through and fade. The mesh is painted onto one canvas, back to front, each triangle a slice
+  // of the resume image mapped onto its crumpled position (or the back of the sheet when it faces away), shaded by
+  // how it faces the light. One canvas keeps this cheap; hundreds of 3D DOM layers would not be.
+  //   0–320ms     the ball flies out of the tree
+  //   180–1250ms  it opens out flat (about 1.25s in all), then the page shadow lands
+  // When it is flat the canvas is removed and the seamless page image shows (no seams, no creases).
   // Reduced motion: no unfold; the shell's 150ms fade shows the page flat.
-  PAPER_SIGN = { 'l-top': 1, 'l-bot': 1, 'r-top': 1, 'r-bot': 1, tip: 1 };                  // which way each piece folds over
   unfoldPaper(pop, origin) {
     const paper = pop.querySelector('[data-paper]'); if (!paper) return;
+    cancelAnimationFrame(this.paperRaf);
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const img = this.paperImg || (this.paperImg = Object.assign(new Image(), { src: getComputedStyle(paper.querySelector('.paper__flat')).backgroundImage.slice(5, -2) }));
+    const shift = paper.querySelector('[data-paper-shift]'), W = paper.offsetWidth, H = paper.offsetHeight;
+    const COLS = 9, ROWS = 12, cw = W / COLS, ch = H / ROWS;
+    let seed = 20261124; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647; // same crumple every time
+    const R = Math.min(W, H) * 0.17, V = [];
+    for (let j = 0; j <= ROWS; j++) for (let i = 0; i <= COLS; i++) {
+      const u = i / COLS, v = j / ROWS, th = (u - 0.5) * Math.PI * 1.7, ph = (v - 0.5) * Math.PI * 0.95;
+      const lump = 1 + (rnd() - 0.5) * 0.7;
+      const ball = [W / 2 + R * lump * Math.sin(th) * Math.cos(ph) + (rnd() - 0.5) * R * 0.45,
+                    H / 2 + R * lump * Math.sin(ph) * 1.05 + (rnd() - 0.5) * R * 0.45,
+                    R * lump * Math.cos(th) * Math.cos(ph) + (rnd() - 0.5) * R * 0.55];
+      const d = Math.hypot(u - 0.5, (v - 0.5) * 1.1);
+      V.push({ flat: [i * cw, j * ch], ball, delay: d * 0.36 + rnd() * 0.07, wz: rnd() - 0.5, wx: rnd() - 0.5, wy: rnd() - 0.5 });
+    }
+    const vid = (i, j) => j * (COLS + 1) + i, T = [];
+    for (let j = 0; j < ROWS; j++) for (let i = 0; i < COLS; i++) {
+      T.push([vid(i, j), vid(i + 1, j), vid(i, j + 1)], [vid(i + 1, j), vid(i + 1, j + 1), vid(i, j + 1)]);
+    }
+    // the canvas: 15% margin round the page so the opening ball and its wrinkles never clip
+    const cv = document.createElement('canvas'); cv.className = 'paper__canvas'; cv.setAttribute('aria-hidden', 'true');
+    const dpr = Math.min(2, devicePixelRatio || 1), MX = W * 0.15, MY = H * 0.15;
+    cv.width = Math.round((W + 2 * MX) * dpr); cv.height = Math.round((H + 2 * MY) * dpr);
+    shift.replaceChildren(cv);
+    const ctx = cv.getContext('2d');
     const r = paper.getBoundingClientRect();
     const fx = origin ? origin.x - (r.left + r.width / 2) : 0, fy = origin ? origin.y - (r.top + r.height / 2) : 0;
-    const OUT = 'cubic-bezier(0.16, 1, 0.3, 1)', FOLD = 'cubic-bezier(0.5, 0, 0.25, 1)', LIN = 'linear';
-    const run = (els, frames, delay, duration, easing = LIN) => els.filter(Boolean).map(n => n.animate(frames, { delay, duration, easing, fill: 'both' }));
-    const op = (...v) => v.map(([offset, opacity]) => ({ offset, opacity }));
-    // a fold about an axis that opens past flat and springs back
-    const fold = (rot, from) => [
-      { offset: 0, transform: rot(from), easing: FOLD },
-      { offset: 0.78, transform: rot(-Math.sign(from) * 6), easing: 'ease-in-out' },
-      { offset: 0.9, transform: rot(Math.sign(from) * 2), easing: 'ease-in-out' },
-      { offset: 1, transform: rot(0) },
-    ];
-    const about = ([x, y]) => a => `rotate3d(${x}, ${y}, 0, ${a}deg)`;
-    const shadeOpen = op([0, 0.7], [0.35, 0.55], [0.65, 0.12], [0.85, 0], [1, 0]);
-    const sheen = op([0, 0], [0.6, 0], [0.78, 1], [1, 0]);
-    const faceOf = (piece, kind) => piece.querySelector(`:scope > .pf--front > ${kind}`);
-    const half = side => paper.querySelector(`[data-half="${side}"]`);
-    const S = this.PAPER_SIGN;
-    const corner = (side, name, at, dur) => {
-      const flap = half(side).querySelector(`[data-flap="${name}"]`), tip = flap.querySelector('[data-tip]'), key = `${side}-${name}`;
-      const rot = about(flap.dataset.ax.split(',').map(Number));
-      return [
-        ...run([flap], fold(rot, S[key] * 179), at, dur),
-        ...run([faceOf(flap, '.pf__shade')], shadeOpen, at, dur),
-        ...run([faceOf(flap, '.pf__sheen')], sheen, at, dur),
-        ...run([tip], fold(rot, -S[key] * S.tip * 178), at + 160, dur - 40),
-        ...run([faceOf(tip, '.pf__shade')], shadeOpen, at + 160, dur - 40),
-        ...run([faceOf(tip, '.pf__sheen')], sheen, at + 160, dur - 40),
-      ];
-    };
     paper.dataset.folding = '';
-    const anims = this.paperAnims = [
-      ...run([paper], [{ transform: `translate(${fx}px, ${fy}px) scale(0.25)`, opacity: 0 }, { transform: 'none', opacity: 1 }], 0, 360, OUT),
-      // the packet is the left half (0–50%); the page re-centres as the centre fold opens
-      ...run([paper.querySelector('[data-paper-shift]')], [{ transform: 'translateX(25%)' }, { transform: 'none' }], 220, 340, FOLD),
-      ...run([half('r')], fold(a => `rotateY(${a}deg)`, -179), 220, 380),
-      ...run([faceOf(half('r').querySelector('[data-base]'), '.pf__shade')], shadeOpen, 220, 380),
-      ...run([faceOf(half('r').querySelector('[data-base]'), '.pf__sheen')], sheen, 220, 380),
-      // the corner triangles, then their tips; top corners lead, left a beat before right
-      ...corner('l', 'top', 480, 340), ...corner('r', 'top', 520, 340),
-      ...corner('l', 'bot', 560, 340), ...corner('r', 'bot', 600, 340),
-      ...run([paper.querySelector('[data-paper-shadow]')], [{ opacity: 0 }, { opacity: 1 }], 820, 320, OUT),
-    ];
-    Promise.all(anims.map(x => x.finished)).catch(() => {}).then(() => { if (this.paperAnims === anims || !paper.isConnected) delete paper.dataset.folding; });
+    const fly = paper.animate([{ transform: `translate(${fx}px, ${fy}px) scale(0.3)`, opacity: 0 }, { transform: 'none', opacity: 1 }],
+      { duration: 320, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' });
+    const shadow = paper.querySelector('[data-paper-shadow]').animate([{ opacity: 0 }, { opacity: 1 }], { delay: 1100, duration: 300, easing: 'ease-out', fill: 'both' });
+    this.paperAnims = [fly, shadow];
+    const START = 180, DUR = 1070, SPAN = 1 - 0.43;   // each vertex opens over 57% of the run, after its delay
+    const ease = x => 1 - Math.pow(1 - x, 3), FOCAL = 1800;
+    const L = [0.35, -0.55, 0.76];                     // light from the upper left, toward the viewer
+    const P = V.map(() => [0, 0, 0]), Q = V.map(() => [0, 0]), order = T.map((t, k) => k), depth = new Float32Array(T.length);
+    const t0 = performance.now();
+    const frame = () => {
+      if (!paper.isConnected) return;
+      const now = performance.now();   // one clock for start and frames (rAF timestamps can use another base)
+      const g = Math.min(1, Math.max(0, (now - t0 - START) / DUR));
+      const spin = (1 - ease(Math.min(1, g * 1.4))) * 2.4, cs = Math.cos(spin), sn = Math.sin(spin); // the ball turns as it opens
+      V.forEach((p, k) => {
+        const e = ease(Math.min(1, Math.max(0, (g - p.delay) / SPAN)));
+        const bx = p.ball[0] - W / 2, bz = p.ball[2];
+        const ballX = W / 2 + bx * cs + bz * sn, ballZ = -bx * sn + bz * cs;
+        const wr = Math.sin(Math.PI * e) * (1 - e * 0.6);   // wrinkles swell mid-way and fade as it flattens
+        const x = ballX + (p.flat[0] - ballX) * e + p.wx * cw * 0.25 * wr;
+        const y = p.ball[1] + (p.flat[1] - p.ball[1]) * e + p.wy * ch * 0.25 * wr;
+        const z = ballZ * (1 - e) + p.wz * R * 0.7 * wr;
+        P[k][0] = x; P[k][1] = y; P[k][2] = z;
+        const f = FOCAL / (FOCAL - z);                      // perspective about the page centre
+        Q[k][0] = W / 2 + (x - W / 2) * f; Q[k][1] = H / 2 + (y - H / 2) * f;
+      });
+      T.forEach((t, k) => { depth[k] = P[t[0]][2] + P[t[1]][2] + P[t[2]][2]; });
+      order.sort((a, b) => depth[a] - depth[b]);           // paint far to near
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
+      const iw = img.naturalWidth, ih = img.naturalHeight, ready = img.complete && iw;
+      for (const k of order) {
+        const [a, b, c] = T[k], A = Q[a], B = Q[b], C = Q[c];
+        // facing: screen-space winding; lighting: 3D normal against the light
+        const cross = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0]);
+        const PA = P[a], PB = P[b], PC = P[c];
+        const ux = PB[0] - PA[0], uy = PB[1] - PA[1], uz = PB[2] - PA[2], vx = PC[0] - PA[0], vy = PC[1] - PA[1], vz = PC[2] - PA[2];
+        let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx; const nl = Math.hypot(nx, ny, nz) || 1;
+        // light relative to the flat page: a flat facet gets none, so the sheet lands exactly as the page looks;
+        // facets turned away darken, facets turned toward the light catch a highlight
+        const lit = Math.abs((nx * L[0] + ny * L[1] + nz * L[2]) / nl), shade = Math.max(0, L[2] - lit) * 0.75, glint = Math.max(0, lit - L[2]) * 1.1;
+        // the triangle, grown by half a pixel from its centre so neighbours overlap and no seams show
+        const gx = (A[0] + B[0] + C[0]) / 3, gy = (A[1] + B[1] + C[1]) / 3, grow = p => { const dx = p[0] - gx, dy = p[1] - gy, l = Math.hypot(dx, dy) || 1; return [p[0] + dx / l * 0.6, p[1] + dy / l * 0.6]; };
+        const [a2, b2, c2] = [A, B, C].map(grow);
+        ctx.setTransform(dpr, 0, 0, dpr, MX * dpr, MY * dpr);
+        ctx.save();
+        ctx.beginPath(); ctx.moveTo(a2[0], a2[1]); ctx.lineTo(b2[0], b2[1]); ctx.lineTo(c2[0], c2[1]); ctx.closePath();
+        if (cross > 0 && ready) {
+          // map the source triangle (the flat page, in image pixels) onto the screen triangle
+          ctx.clip();
+          const s = V[a].flat, s1 = V[b].flat, s2 = V[c].flat, kx = iw / W, ky = ih / H;
+          const sx0 = s[0] * kx, sy0 = s[1] * ky, dxa = s1[0] * kx - sx0, dya = s1[1] * ky - sy0, dxb = s2[0] * kx - sx0, dyb = s2[1] * ky - sy0;
+          const det = dxa * dyb - dxb * dya;
+          const m11 = ((B[0] - A[0]) * dyb - (C[0] - A[0]) * dya) / det, m12 = ((C[0] - A[0]) * dxa - (B[0] - A[0]) * dxb) / det;
+          const m21 = ((B[1] - A[1]) * dyb - (C[1] - A[1]) * dya) / det, m22 = ((C[1] - A[1]) * dxa - (B[1] - A[1]) * dxb) / det;
+          ctx.transform(m11, m21, m12, m22, A[0] - m11 * sx0 - m12 * sy0, A[1] - m21 * sx0 - m22 * sy0);
+          ctx.drawImage(img, 0, 0);
+          ctx.restore(); ctx.save();
+          ctx.beginPath(); ctx.moveTo(a2[0], a2[1]); ctx.lineTo(b2[0], b2[1]); ctx.lineTo(c2[0], c2[1]); ctx.closePath();
+        } else {
+          ctx.fillStyle = cross > 0 ? '#fff' : '#f2eee8'; ctx.fill();   // the back of the sheet (or the page before the image loads)
+        }
+        if (shade > 0.01) { ctx.fillStyle = `rgba(20, 28, 38, ${shade.toFixed(3)})`; ctx.fill(); }
+        else if (glint > 0.01) { ctx.fillStyle = `rgba(255, 255, 255, ${glint.toFixed(3)})`; ctx.fill(); }
+        ctx.restore();
+      }
+      if (g < 1) this.paperRaf = requestAnimationFrame(frame);
+      else { delete paper.dataset.folding; shift.replaceChildren(); }  // flat: the seamless page takes over
+    };
+    frame();
   }
   closePopup() {
     const el = this.rootRef.current, pop = el?.querySelector('[data-popup]'); if (!pop || !this.pgOpen) return;
@@ -1355,7 +1387,7 @@ class SeasonsScene {
       if (done || this.pgOpen) return; done = true;
       pop.removeEventListener('transitionend', onEnd); clearTimeout(this.popupTimer);
       pop.dataset.state = 'closed'; pop.querySelector('[data-popup-content]').replaceChildren();
-      this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null; delete pop.dataset.variant;
+      this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null; cancelAnimationFrame(this.paperRaf); delete pop.dataset.variant;
       this.xpRO?.disconnect(); this.xpRO = null; this.xpAnims?.forEach(a => a.cancel()); this.xpAnims = null;
       this.xpProject = null; this.xpBusy = false; pop.setAttribute('aria-labelledby', 'popup-title');
       this.playStop(pop);
