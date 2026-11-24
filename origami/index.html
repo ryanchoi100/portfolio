@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Origami Unfold</title>
+<meta name="description" content="An interactive 3D origami fortune teller that unfolds into a flat sheet. Drag to orbit, scrub the fold.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<!--
+  ORIGAMI UNFOLD — a single-file Three.js origami simulator.
+  The paper is a square sheet folded into a fortune teller (cootie catcher) by ten rigid folds:
+    1–4  fold each corner to the centre · 5 turn it over · 6–9 fold the new corners to the centre
+    10   lift the four flaps into petals.
+  How it works: every fold is applied to the flat sheet in 2D, splitting the faces it crosses, so the final
+  mesh has an edge on every crease. Each face remembers, for every step, where it lay (a 2D affine transform),
+  its layer in the stack and whether that step moved it. Rendering a fold progress T (0 = flat, 10 = folded)
+  takes the state before step floor(T) and rotates the moving faces about that step's crease by the step's
+  angle × frac(T), blending layer heights so nothing pops. The shown progress follows the slider through a
+  damped spring, so scrubbing feels physical. Faces are rigid and flat, like real paper between creases.
+  Paper: a procedural matte fibre texture (cream front, coloured back), faint creases drawn on both sides,
+  soft shadows from a directional light, including the sheet onto itself.
+-->
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<style>
+  :root {
+    --ink: #2f353c; --ink-muted: #555b61; --hairline: rgba(20, 28, 38, 0.12);
+    --frost: rgba(255, 255, 255, 0.66); --frost-edge: rgba(255, 255, 255, 0.7);
+    --accent: #3f6f78; --bg-top: #efe9df; --bg-bottom: #d9d2c6;
+    --font: 'myriad-pro', 'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --ink: #ece7de; --ink-muted: #b6b0a6; --hairline: rgba(255, 255, 255, 0.14);
+      --frost: rgba(32, 36, 42, 0.62); --frost-edge: rgba(255, 255, 255, 0.12); --bg-top: #2b2e33; --bg-bottom: #17191c; }
+  }
+  html, body { margin: 0; height: 100%; overflow: hidden; color: var(--ink); font-family: var(--font);
+    background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom)); }
+  canvas.stage { position: fixed; inset: 0; display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
+  canvas.stage:active { cursor: grabbing; }
+  .head { position: fixed; top: 24px; left: 24px; right: 24px; max-width: 460px; pointer-events: none; }
+  .head h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.01em; }
+  .head p { margin: 6px 0 0; font-size: 15px; line-height: 1.45; color: var(--ink-muted); }
+  .back { pointer-events: auto; display: inline-block; margin-top: 12px; font-size: 13px; color: var(--ink-muted); }
+  .back:hover { color: var(--ink); }
+  .panel {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+    width: min(560px, calc(100vw - 32px)); box-sizing: border-box; padding: 14px 16px 12px;
+    display: grid; grid-template-columns: auto 1fr auto; gap: 8px 14px; align-items: center;
+    background: var(--frost); -webkit-backdrop-filter: blur(12px) saturate(1.3); backdrop-filter: blur(12px) saturate(1.3);
+    border: 1px solid var(--frost-edge); border-radius: 9px; box-shadow: 0 8px 28px rgba(20, 28, 38, 0.14);
+  }
+  button.play {
+    min-width: 96px; min-height: 40px; padding: 0 16px; border-radius: 9px; border: 1px solid var(--hairline);
+    background: var(--ink); color: var(--bg-top); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1), opacity 150ms ease;
+  }
+  button.play:hover { opacity: 0.9; }
+  button.play:active { transform: scale(0.97); }
+  button.play:focus-visible, input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  input[type=range] { width: 100%; accent-color: var(--accent); margin: 0; height: 28px; cursor: pointer; }
+  .pct { font-size: 15px; font-variant-numeric: tabular-nums; min-width: 4.5ch; text-align: right; }
+  .step { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--ink-muted); }
+  .step b { font-weight: 500; color: var(--ink); }
+  .ends { white-space: nowrap; }
+  @media (max-width: 520px) { .head h1 { font-size: 22px; } .head p { font-size: 14px; } .ends { display: none; } }
+</style>
+</head>
+<body>
+<canvas class="stage" aria-label="3D view of the paper. Drag to orbit, scroll or pinch to zoom."></canvas>
+<header class="head">
+  <h1>Origami unfold</h1>
+  <p>A paper fortune teller, ten folds deep. Drag to look around. Scrub the slider or press Unfold to open it into a flat sheet.</p>
+  <a class="back" href="../">← Back to the lake</a>
+</header>
+<div class="panel" role="group" aria-label="Fold controls">
+  <button class="play" type="button" data-play>Unfold</button>
+  <input type="range" min="0" max="1000" step="1" value="1000" data-slider aria-label="Fold progress, 0% is flat, 100% is folded" aria-valuetext="100% folded">
+  <span class="pct" data-pct aria-hidden="true">100%</span>
+  <div class="step"><span data-step aria-live="polite"><b>Folded</b> · fortune teller</span><span class="ends">0% flat · 100% folded</span></div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+// ---------------------------------------------------------------------------------------------------------
+// 1. The folding sequence, in the paper's current flat coordinates. The sheet is the square [-1, 1]².
+//    Simple fold: crease through a and b, the side containing `moving` swings up and over (valley fold).
+//    `all`: the whole sheet turns over about the crease. `petals`: several flaps lift at once; each flap is
+//    whatever moved in step `ref`, lifted back about that step's crease by `angle` degrees.
+// ---------------------------------------------------------------------------------------------------------
+const STEPS = [
+  { name: 'Fold the corner to the centre', a: [1, 0], b: [0, 1], moving: [1, 1] },
+  { name: 'Fold the corner to the centre', a: [-1, 0], b: [0, 1], moving: [-1, 1] },
+  { name: 'Fold the corner to the centre', a: [-1, 0], b: [0, -1], moving: [-1, -1] },
+  { name: 'Fold the corner to the centre', a: [1, 0], b: [0, -1], moving: [1, -1] },
+  { name: 'Turn the paper over', a: [0, -2], b: [0, 2], all: true, axisZ: 1.1 },
+  { name: 'Fold the new corner to the centre', a: [0.5, -1], b: [0.5, 1], moving: [1, 0] },
+  { name: 'Fold the new corner to the centre', a: [-0.5, -1], b: [-0.5, 1], moving: [-1, 0] },
+  { name: 'Fold the new corner to the centre', a: [-1, 0.5], b: [1, 0.5], moving: [0, 1] },
+  { name: 'Fold the new corner to the centre', a: [-1, -0.5], b: [1, -0.5], moving: [0, -1] },
+  { name: 'Lift the flaps into petals', petals: [5, 6, 7, 8], angle: 96 },
+];
+const N = STEPS.length, EPS = 0.0028;           // EPS: height of one paper layer
+
+// 2D affine transforms [a, b, c, d, e, f]: x' = a·x + b·y + e, y' = c·x + d·y + f
+const ID = [1, 0, 0, 1, 0, 0];
+const apply = (M, p) => [M[0] * p[0] + M[1] * p[1] + M[4], M[2] * p[0] + M[3] * p[1] + M[5]];
+const compose = (R, M) => [R[0] * M[0] + R[1] * M[2], R[0] * M[1] + R[1] * M[3], R[2] * M[0] + R[3] * M[2], R[2] * M[1] + R[3] * M[3],
+  R[0] * M[4] + R[1] * M[5] + R[4], R[2] * M[4] + R[3] * M[5] + R[5]];
+const lineOf = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); return { p: a, u: [dx / l, dy / l], n: [-dy / l, dx / l] }; };
+const reflect = L => { const [nx, ny] = L.n, c = L.p[0] * nx + L.p[1] * ny;
+  return [1 - 2 * nx * nx, -2 * nx * ny, -2 * nx * ny, 1 - 2 * ny * ny, 2 * c * nx, 2 * c * ny]; };
+const side = (L, q) => (q[0] - L.p[0]) * L.n[0] + (q[1] - L.p[1]) * L.n[1];
+
+// ---------------------------------------------------------------------------------------------------------
+// 2. Fold the flat sheet once, recording each face's history (where it lay, its layer, whether it moved).
+// ---------------------------------------------------------------------------------------------------------
+let faces = [{ poly: [[-1, -1], [1, -1], [1, 1], [-1, 1]], M: ID, L: 0, hist: [] }];
+const centroid = f => { const c = f.poly.map(p => apply(f.M, p)); return [c.reduce((s, p) => s + p[0], 0) / c.length, c.reduce((s, p) => s + p[1], 0) / c.length]; };
+function split(f, L) {
+  const d = f.poly.map(p => side(L, apply(f.M, p))), T = 1e-9;
+  if (d.every(v => v >= -T) || d.every(v => v <= T)) return [f];
+  const A = [], B = [];
+  f.poly.forEach((p, i) => {
+    const j = (i + 1) % f.poly.length, q = f.poly[j];
+    if (d[i] >= -T) A.push(p); if (d[i] <= T) B.push(p);
+    if ((d[i] > T && d[j] < -T) || (d[i] < -T && d[j] > T)) {
+      const t = d[i] / (d[i] - d[j]), x = [p[0] + t * (q[0] - p[0]), p[1] + t * (q[1] - p[1])];
+      A.push(x); B.push(x);
+    }
+  });
+  return [A, B].map(poly => ({ poly, M: f.M, L: f.L, hist: f.hist.slice() }));
+}
+STEPS.forEach((s, k) => {
+  if (s.petals) {
+    faces.forEach(f => { const sub = s.petals.findIndex(r => f.hist[r].mv); f.hist.push({ M: f.M, L: f.L, mv: sub >= 0, sub }); });
+    s.lines = s.petals.map(r => STEPS[r].line);
+    return;
+  }
+  s.line = lineOf(s.a, s.b);
+  if (!s.all) {
+    faces = faces.flatMap(f => split(f, s.line));
+    if (side(s.line, s.moving) < 0) s.line = lineOf(s.b, s.a);   // normal points to the moving side
+  }
+  faces.forEach(f => f.hist.push({ M: f.M, L: f.L, mv: !!s.all || side(s.line, centroid(f)) > 0 }));
+  // complete the fold: reflect the moving faces and stack them, reversed, on top
+  const mv = faces.filter(f => f.hist[k].mv), maxAll = Math.max(...faces.map(f => f.L)), maxMv = Math.max(...mv.map(f => f.L));
+  const R = reflect(s.line);
+  mv.forEach(f => { f.M = compose(R, f.M); f.L = maxAll + 1 + (maxMv - f.L); });
+  const ranks = [...new Set(faces.map(f => f.L))].sort((a, b) => a - b);
+  faces.forEach(f => { f.L = ranks.indexOf(f.L); });
+});
+faces.forEach(f => f.hist.push({ M: f.M, L: f.L }));
+
+// ---------------------------------------------------------------------------------------------------------
+// 3. Paper textures: matte fibre, cream front, coloured back, with faint creases on both sides.
+// ---------------------------------------------------------------------------------------------------------
+const creases = [];
+faces.forEach(f => f.poly.forEach((p, i) => {
+  const q = f.poly[(i + 1) % f.poly.length];
+  const outer = (Math.abs(p[0]) > 0.999 && Math.abs(q[0]) > 0.999 && p[0] === q[0]) || (Math.abs(p[1]) > 0.999 && Math.abs(q[1]) > 0.999 && p[1] === q[1]);
+  if (!outer) creases.push([p, q]);
+}));
+function paperTexture(base, tint, fibre) {
+  const S = 1024, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d');
+  g.fillStyle = base; g.fillRect(0, 0, S, S);
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const img = g.getImageData(0, 0, S, S), d = img.data;              // fine grain
+  for (let i = 0; i < d.length; i += 4) { const n = (rnd() - 0.5) * 10; d[i] += n; d[i + 1] += n; d[i + 2] += n; }
+  g.putImageData(img, 0, 0);
+  for (let i = 0; i < 2600; i++) {                                     // fibres
+    const x = rnd() * S, y = rnd() * S, a = rnd() * Math.PI * 2, l = 6 + rnd() * 22;
+    g.strokeStyle = rnd() < 0.5 ? `rgba(${fibre}, ${0.05 + rnd() * 0.08})` : `rgba(255, 255, 255, ${0.05 + rnd() * 0.08})`;
+    g.lineWidth = 0.5 + rnd() * 0.9; g.beginPath(); g.moveTo(x, y);
+    g.quadraticCurveTo(x + Math.cos(a + 0.6) * l * 0.5, y + Math.sin(a + 0.6) * l * 0.5, x + Math.cos(a) * l, y + Math.sin(a) * l); g.stroke();
+  }
+  const uv = p => [(p[0] + 1) / 2 * S, (1 - (p[1] + 1) / 2) * S];      // creases: a soft valley with a lit edge
+  creases.forEach(([p, q]) => {
+    const [x1, y1] = uv(p), [x2, y2] = uv(q);
+    g.lineCap = 'round';
+    g.strokeStyle = `rgba(${tint}, 0.16)`; g.lineWidth = 2.2; g.beginPath(); g.moveTo(x1, y1); g.lineTo(x2, y2); g.stroke();
+    g.strokeStyle = 'rgba(255, 255, 255, 0.22)'; g.lineWidth = 0.9; g.beginPath(); g.moveTo(x1 + 1.2, y1 + 1.2); g.lineTo(x2 + 1.2, y2 + 1.2); g.stroke();
+  });
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+function bumpTexture() {
+  const S = 512, c = document.createElement('canvas'); c.width = c.height = S;
+  const g = c.getContext('2d'), img = g.createImageData(S, S), d = img.data;
+  let seed = 11; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let i = 0; i < d.length; i += 4) { const v = 118 + rnd() * 20; d[i] = d[i + 1] = d[i + 2] = v; d[i + 3] = 255; }
+  g.putImageData(img, 0, 0);
+  for (let i = 0; i < 900; i++) { g.strokeStyle = `rgba(${rnd() < 0.5 ? 0 : 255}, ${rnd() < 0.5 ? 0 : 255}, ${rnd() < 0.5 ? 0 : 255}, 0.08)`;
+    const x = rnd() * S, y = rnd() * S, a = rnd() * 6.28; g.lineWidth = 0.6; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a) * 12, y + Math.sin(a) * 12); g.stroke(); }
+  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// 4. Scene: renderer with soft shadows, two lights, a shadow-catching table, the paper mesh.
+// ---------------------------------------------------------------------------------------------------------
+const canvas = document.querySelector('canvas.stage');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(35, 1, 0.05, 50);
+camera.position.set(1.6, 2.4, 3.2);
+const controls = new OrbitControls(camera, canvas);
+controls.target.set(0, 0.12, 0); controls.enableDamping = true; controls.dampingFactor = 0.08;
+controls.minDistance = 1.6; controls.maxDistance = 9; controls.maxPolarAngle = Math.PI * 0.47; controls.enablePan = false;
+
+scene.add(new THREE.HemisphereLight(0xfff6e8, 0x9aa0a6, 1.25));
+const sun = new THREE.DirectionalLight(0xfff3e0, 2.1);
+sun.position.set(-2.2, 4.2, 1.6); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); sun.shadow.radius = 5; sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.012;
+Object.assign(sun.shadow.camera, { left: -2.2, right: 2.2, top: 2.2, bottom: -2.2, near: 0.5, far: 12 });
+scene.add(sun);
+const table = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.2 }));
+table.rotation.x = -Math.PI / 2; table.position.y = -0.002; table.receiveShadow = true; scene.add(table);
+
+// geometry: every face fan-triangulated, non-indexed so each facet is flat-shaded like rigid paper
+const tris = faces.flatMap((f, fi) => f.poly.slice(1, -1).map((_, i) => [fi, 0, i + 1, i + 2]));
+const pos = new Float32Array(tris.length * 9), uvs = new Float32Array(tris.length * 6);
+tris.forEach(([fi, a, b, c], t) => [a, b, c].forEach((v, j) => {
+  const p = faces[fi].poly[v]; uvs[t * 6 + j * 2] = (p[0] + 1) / 2; uvs[t * 6 + j * 2 + 1] = (p[1] + 1) / 2;
+}));
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uvs, 2));
+const bump = bumpTexture(); bump.repeat.set(3, 3);
+const paperMat = (map, s) => new THREE.MeshStandardMaterial({ map, side: s, roughness: 0.94, metalness: 0, bumpMap: bump, bumpScale: 0.6,
+  polygonOffset: true, polygonOffsetFactor: 1, polygonOffsetUnits: 1 });
+const front = new THREE.Mesh(geo, paperMat(paperTexture('#f2ead9', '120, 100, 70', '150, 130, 100'), THREE.FrontSide));
+const back = new THREE.Mesh(geo, paperMat(paperTexture('#3f6f78', '10, 30, 35', '20, 50, 58'), THREE.BackSide));
+front.castShadow = back.castShadow = true; front.receiveShadow = back.receiveShadow = true;
+const paper = new THREE.Group(); paper.add(front, back);
+paper.rotation.x = -Math.PI / 2;     // folds are computed with z up; the table is the xz plane
+scene.add(paper);
+
+// ---------------------------------------------------------------------------------------------------------
+// 5. Pose the sheet for a fold progress T in [0, N].
+// ---------------------------------------------------------------------------------------------------------
+function rotateAbout(L, zc, th, x, y, z) {          // Rodrigues rotation about the crease (in the plane z = zc)
+  const [ux, uy] = L.u, vx = x - L.p[0], vy = y - L.p[1], vz = z - zc, c = Math.cos(th), s = Math.sin(th), dot = ux * vx + uy * vy;
+  return [L.p[0] + vx * c + uy * vz * s + ux * dot * (1 - c), L.p[1] + vy * c - ux * vz * s + uy * dot * (1 - c), zc + vz * c + (ux * vy - uy * vx) * s];
+}
+// which way is "up" for each fold: try a small turn on a moving face and keep the sign that lifts it
+STEPS.forEach((s, k) => {
+  const lines = s.petals ? s.lines : [s.line];
+  s.sign = lines.map((L, i) => {
+    const f = faces.find(f => f.hist[k].mv && (!s.petals || f.hist[k].sub === i));
+    const h = f.hist[k], [x, y] = apply(h.M, f.poly.map(p => p).reduce((a, p) => [a[0] + p[0] / f.poly.length, a[1] + p[1] / f.poly.length], [0, 0]));
+    const z0 = h.L * EPS, zc = s.axisZ || 0;
+    return rotateAbout(L, zc, 0.2, x, y, z0)[2] >= z0 ? 1 : -1;
+  });
+});
+function pose(T) {
+  const k = Math.min(N - 1, Math.floor(T)), p = T - k, s = STEPS[k], zc = s.axisZ || 0;
+  tris.forEach(([fi, a, b, c], t) => {
+    const f = faces[fi], h = f.hist[k], nx = f.hist[k + 1];
+    [a, b, c].forEach((v, j) => {
+      let [x, y] = apply(h.M, f.poly[v]), z = h.L * EPS, out;
+      if (s.petals) {
+        out = h.mv ? rotateAbout(s.lines[h.sub], 0, s.sign[h.sub] * p * s.angle * Math.PI / 180, x, y, z) : [x, y, z];
+      } else if (h.mv) {
+        out = rotateAbout(s.line, zc, s.sign[0] * p * Math.PI, x, y, z);
+        out[2] += p * (nx.L * EPS - (2 * zc - z));                    // glide into its new layer
+      } else out = [x, y, z + p * (nx.L - h.L) * EPS];
+      pos.set(out, t * 9 + j * 3);
+    });
+  });
+  geo.attributes.position.needsUpdate = true; geo.computeVertexNormals(); geo.computeBoundingSphere();
+}
+
+// ---------------------------------------------------------------------------------------------------------
+// 6. Controls: the slider sets a target; the shown progress follows it through a damped spring.
+//    Play/Unfold sweeps the target to the other end. Reduced motion: critically damped, no overshoot.
+// ---------------------------------------------------------------------------------------------------------
+const slider = document.querySelector('[data-slider]'), playBtn = document.querySelector('[data-play]');
+const pctEl = document.querySelector('[data-pct]'), stepEl = document.querySelector('[data-step]');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+let x = N, v = 0, target = N, playing = 0;     // start folded
+const K = 110, ZETA = () => (reduce.matches ? 1 : 0.58), SPEED = N / 7.5;   // a full unfold takes about 7.5s
+function setTarget(t, fromSlider) {
+  target = Math.min(N, Math.max(0, t));
+  if (!fromSlider) slider.value = Math.round(target / N * 1000);
+  const pct = Math.round(target / N * 100);
+  slider.setAttribute('aria-valuetext', `${pct}% folded`); pctEl.textContent = pct + '%';
+  playBtn.textContent = playing ? 'Pause' : target > N / 2 ? 'Unfold' : 'Fold';
+}
+slider.addEventListener('input', () => { playing = 0; setTarget(slider.value / 1000 * N, true); });
+playBtn.addEventListener('click', () => {
+  if (playing) { playing = 0; } else playing = target > N / 2 ? -1 : 1;
+  setTarget(target);
+});
+function caption(T) {
+  if (T >= N - 0.001) return '<b>Folded</b> · fortune teller';
+  if (T <= 0.001) return '<b>Flat</b> · one square sheet';
+  const k = Math.min(N - 1, Math.floor(T));
+  return `<b>Step ${k + 1} of ${N}</b> · ${STEPS[k].name}`;
+}
+let shown = '';
+function resize() {
+  const w = innerWidth, h = innerHeight; renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.fov = w < h ? 50 : 35; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+let last = performance.now();
+renderer.setAnimationLoop(now => {
+  const dt = Math.min(0.033, (now - last) / 1000); last = now;
+  if (playing) { setTarget(target + playing * SPEED * dt); if (target <= 0 || target >= N) { playing = 0; setTarget(target); } }
+  // spring: x'' = K (target − x) − c x'
+  const c = 2 * Math.sqrt(K) * ZETA();
+  for (let i = 0; i < 4; i++) { const h = dt / 4; v += (K * (target - x) - c * v) * h; x += v * h; }
+  const T = Math.min(N, Math.max(0, x));
+  pose(T);
+  const cap = caption(target === N || target === 0 ? target : T); if (cap !== shown) { shown = cap; stepEl.innerHTML = cap; }
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>
