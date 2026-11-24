@@ -178,9 +178,7 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
 
 /* ======================================================================
    PAPER VARIANT (Resume) — the shell drops its glass sheet and shows the PDF page itself, sized so the
-   whole page fits a desktop screen with no scrolling. The page is cut into 2 × 3 tiles: each half holds a
-   middle tile plus a top and bottom flap. Folded: flaps over the middle (rotateX ±179°) and the right half
-   over the left (rotateY −179°). unfoldPaper() animates them open with the Web Animations API.
+   whole page fits a desktop screen with no scrolling. revealPaper() fades and zooms it in.
    ====================================================================== */
 .popup[data-variant="paper"] { overflow: hidden; }
 .popup[data-variant="paper"] .popup__panel {
@@ -192,23 +190,15 @@ a.pop-row:focus-visible { background: var(--frost-dense); border-color: var(--fr
   /* 5vh top/bottom margin like the glass panel; where the page would run under the top-right buttons
      (narrow desktop windows) it drops below them instead; phones are limited by width */
   --paper-h: min(calc(100vh - 2 * max(12px, 5vh)), calc((100vw - 32px) * 792 / 612), max(calc(100vh - 128px), calc((100vw - 600px) * 792 / 612)));
-  position: absolute; inset: 0; display: grid; place-items: center; perspective: 2000px;
+  position: absolute; inset: 0; display: grid; place-items: center;
 }
 .paper-actions { position: absolute; top: 12px; right: 68px; z-index: 2; display: flex; gap: 8px; }
 .paper {
   position: relative; display: block; height: var(--paper-h); aspect-ratio: 612 / 792;
-  transform-style: preserve-3d; cursor: zoom-in; outline-offset: 4px;
+  cursor: zoom-in; outline-offset: 4px;
 }
 .paper__shadow { position: absolute; inset: 0; border-radius: var(--radius-paper); box-shadow: 0 18px 48px rgba(20, 28, 38, 0.28), 0 3px 10px rgba(20, 28, 38, 0.16); }
-.paper__shift { position: absolute; inset: 0; }
-/* Origami unfold (unfoldPaper): one canvas, larger than the page, that the folding sheet is
-   painted onto each frame; it sits where the page will be and is removed once the page lies flat */
-.paper__canvas { position: absolute; left: -25%; top: -25%; width: 150%; height: 150%; pointer-events: none; }
-/* At rest the page is one seamless image (the six folding pieces leave hairline seams where they meet), clean with no
-   creases; the pieces are shown only while data-folding is set by unfoldPaper */
-.paper__flat { position: absolute; inset: 0; background: var(--paper) url("resume/resume-page-2026-11.webp") 0 0 / 100% 100% no-repeat; }
-.paper:not([data-folding]) .paper__shift { visibility: hidden; }
-.paper[data-folding] .paper__flat { visibility: hidden; }
+.paper__flat { position: absolute; inset: 0; border-radius: var(--radius-paper); background: var(--paper) url("resume/resume-page-2026-11.webp") 0 0 / 100% 100% no-repeat; }
 /* ======================================================================
    EXPERIENCE — two views stacked in one grid cell of the panel. Sizes come from JS (xpLayout):
    --list-h / --proj-h = the two scrollers' heights, --shot-w / --shot-h = one image size shared by the
@@ -617,9 +607,8 @@ button, input, select, textarea { font-family: inherit; }
 
   <!-- When the resume changes, re-render the page image under a new dated name (resume/resume-page-YYYY-MM.webp)
        and update the two url()s in the PAPER styles, so browsers can't keep showing a cached old page. -->
-  <!-- Resume — opened from the tree. The PDF page unfolds like origami (unfoldPaper): a folded packet flies out
-       of the tree, opens its vertical fold, then its top and bottom flaps. Each tile shows its slice of
-       resume/resume-page-2026-11.webp (rendered from the PDF). Text alternative for screen readers below. -->
+  <!-- Resume — opened from the tree. The PDF page (resume/resume-page-2026-11.webp, rendered from the PDF) fades
+       and zooms in (revealPaper). Text alternative for screen readers below. -->
   <template data-popup-page="resume" data-variant="paper">
     <div class="paper-stage" data-backdrop="">
       <div class="paper-actions">
@@ -628,8 +617,6 @@ button, input, select, textarea { font-family: inherit; }
       </div>
       <a class="paper" data-paper="" href="resume/RyanChoi_DesignResume.pdf" target="_blank" rel="noopener" aria-label="Ryan Choi’s resume, opens the PDF">
         <div class="paper__shadow" data-paper-shadow=""></div>
-        <div class="paper__shift" data-paper-shift="">
-        </div>
         <div class="paper__flat" aria-hidden="true"></div>
       </a>
       <div class="sr-only">
@@ -1251,7 +1238,7 @@ class SeasonsScene {
     content.querySelectorAll('[data-reveal]').forEach((n, i) => n.style.setProperty('--i', i));
     pop.dataset.page = page;
     if (tpl.dataset.variant) pop.dataset.variant = tpl.dataset.variant; else delete pop.dataset.variant;
-    this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null; cancelAnimationFrame(this.paperRaf);
+    this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null;
     pop.dataset.state = 'closed';
     // transform-origin = the clicked point, clamped into the panel (panel is centred; offset* ignore its scale)
     const pr = pop.getBoundingClientRect(), w = panel.offsetWidth, h = panel.offsetHeight;
@@ -1260,167 +1247,21 @@ class SeasonsScene {
     panel.style.transformOrigin = `${ox}px ${oy}px`;
     void pop.offsetWidth; // commit the closed state so the open transition runs
     pop.dataset.state = 'open';
-    if (pop.dataset.variant === 'paper') this.unfoldPaper(pop, origin);
+    if (pop.dataset.variant === 'paper') this.revealPaper(pop);
     if (page === 'experience') this.xpInit(pop);
     if (page === 'playground') this.playInit(pop);
     pop.querySelector('[data-popup-close]')?.focus({ preventScroll: true });
   }
-  // ORIGAMI UNFOLD (Resume): the rigid fold engine from origami/index.html, seen from straight above. The page
-  // starts as a tiny packet at the centre: its four corners folded to the centre six rounds over, each round folding
-  // the shape the last one made, so the triangles nest smaller and smaller. It opens from the centre outward the
-  // moment it appears, one round at a time and four triangles at once (lightly staggered), until the first corners
-  // open out to the page's four corners. Folds are computed
-  // on a square and stretched to the page's proportions, so every corner still meets the centre exactly. Faces are
-  // rigid; each fold turns about its crease. It is painted onto one canvas, back to front, each triangle mapping
-  // its slice of the resume image (or the back of the sheet when it faces away), shaded by its angle.
-  //   0–260ms     the folded packet flies out of the tree, already opening
-  //   0–1500ms    the six rounds open, centre first, easing in (slow, then fast); the shadow lands at the end
-  // When it is flat the canvas is removed and the seamless page shows (no seams, no creases).
-  // Reduced motion: no unfold; the shell's 150ms fade shows the page flat.
-  foldModel() {
-    if (this.paperModel) return this.paperModel;
-    // ROUNDS rounds of "fold the four corners to the centre", each folding the shape the last one made (square →
-    // diamond → half-size square → …), so the triangles get smaller and smaller toward the centre. A round's four
-    // folds touch separate corners, so they can open together.
-    const ROUNDS = 6, STEPS = [];
-    for (let k = 0, r = 1; k < ROUNDS; k++) {
-      if (k % 2 === 0) STEPS.push({ a: [r, 0], b: [0, r], moving: [r, r] }, { a: [-r, 0], b: [0, r], moving: [-r, r] },
-        { a: [-r, 0], b: [0, -r], moving: [-r, -r] }, { a: [r, 0], b: [0, -r], moving: [r, -r] });
-      else { const h = r / 2; STEPS.push({ a: [h, -1], b: [h, 1], moving: [r, 0] }, { a: [-h, -1], b: [-h, 1], moving: [-r, 0] },
-        { a: [-1, h], b: [1, h], moving: [0, r] }, { a: [-1, -h], b: [1, -h], moving: [0, -r] }); r = h; }
-    }
-    const ID = [1, 0, 0, 1, 0, 0];
-    const apply = (M, p) => [M[0] * p[0] + M[1] * p[1] + M[4], M[2] * p[0] + M[3] * p[1] + M[5]];
-    const compose = (R, M) => [R[0] * M[0] + R[1] * M[2], R[0] * M[1] + R[1] * M[3], R[2] * M[0] + R[3] * M[2], R[2] * M[1] + R[3] * M[3],
-      R[0] * M[4] + R[1] * M[5] + R[4], R[2] * M[4] + R[3] * M[5] + R[5]];
-    const lineOf = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); return { p: a, u: [dx / l, dy / l], n: [-dy / l, dx / l] }; };
-    const reflect = L => { const [nx, ny] = L.n, c = L.p[0] * nx + L.p[1] * ny; return [1 - 2 * nx * nx, -2 * nx * ny, -2 * nx * ny, 1 - 2 * ny * ny, 2 * c * nx, 2 * c * ny]; };
-    const side = (L, q) => (q[0] - L.p[0]) * L.n[0] + (q[1] - L.p[1]) * L.n[1];
-    const centroid = f => { const c = f.poly.map(p => apply(f.M, p)); return [c.reduce((s, p) => s + p[0], 0) / c.length, c.reduce((s, p) => s + p[1], 0) / c.length]; };
-    const split = (f, L) => {
-      const d = f.poly.map(p => side(L, apply(f.M, p))), T = 1e-9;
-      if (d.every(v => v >= -T) || d.every(v => v <= T)) return [f];
-      const A = [], B = [];
-      f.poly.forEach((p, i) => {
-        const j = (i + 1) % f.poly.length, q = f.poly[j];
-        if (d[i] >= -T) A.push(p); if (d[i] <= T) B.push(p);
-        if ((d[i] > T && d[j] < -T) || (d[i] < -T && d[j] > T)) { const t = d[i] / (d[i] - d[j]), x = [p[0] + t * (q[0] - p[0]), p[1] + t * (q[1] - p[1])]; A.push(x); B.push(x); }
-      });
-      return [A, B].map(poly => ({ poly, M: f.M, L: f.L, hist: f.hist.slice() }));
-    };
-    let faces = [{ poly: [[-1, -1], [1, -1], [1, 1], [-1, 1]], M: ID, L: 0, hist: [] }];
-    STEPS.forEach((s, k) => {
-      s.line = lineOf(s.a, s.b);
-      faces = faces.flatMap(f => split(f, s.line)); if (side(s.line, s.moving) < 0) s.line = lineOf(s.b, s.a);
-      faces.forEach(f => f.hist.push({ M: f.M, L: f.L, mv: side(s.line, centroid(f)) > 0 }));
-      const mv = faces.filter(f => f.hist[k].mv), maxAll = Math.max(...faces.map(f => f.L)), maxMv = Math.max(...mv.map(f => f.L)), R = reflect(s.line);
-      mv.forEach(f => { f.M = compose(R, f.M); f.L = maxAll + 1 + (maxMv - f.L); });
-      const ranks = [...new Set(faces.map(f => f.L))].sort((a, b) => a - b);
-      faces.forEach(f => { f.L = ranks.indexOf(f.L); });
-    });
-    faces.forEach(f => f.hist.push({ M: f.M, L: f.L }));
-    const EPS = 0.05 / Math.max(...faces.map(f => f.L));   // the whole stack stays thin, however many layers
-    const rot = (L, th, x, y, z) => { const [ux, uy] = L.u, vx = x - L.p[0], vy = y - L.p[1], c = Math.cos(th), s = Math.sin(th), dot = ux * vx + uy * vy;
-      return [L.p[0] + vx * c + uy * z * s + ux * dot * (1 - c), L.p[1] + vy * c - ux * z * s + uy * dot * (1 - c), z * c + (ux * vy - uy * vx) * s]; };
-    // every fold lifts toward the viewer: keep the turn direction that raises a moving face
-    STEPS.forEach((s, k) => {
-      s.sign = [s.line].map(L => {
-        const f = faces.find(f => f.hist[k].mv), h = f.hist[k];
-        const c = apply(h.M, f.poly.reduce((a, p) => [a[0] + p[0] / f.poly.length, a[1] + p[1] / f.poly.length], [0, 0]));
-        return rot(L, 0.2, c[0], c[1], h.L * EPS)[2] >= h.L * EPS ? 1 : -1;
-      });
-    });
-    const tris = faces.flatMap((f, fi) => f.poly.slice(1, -1).map((_, i) => [fi, 0, i + 1, i + 2]));
-    // 3D position (square space, z toward the viewer) of every triangle corner at fold progress T: 0 flat … 3 folded,
-    // one unit per round. In a round the four folds run together, each 12% of the round after the last.
-    const GROUPS = STEPS.length / 4, ST = 0.12;
-    const pose = (T, out) => {
-      const g = Math.min(GROUPS - 1, Math.floor(T)), q = T - g, g0 = g * 4, g1 = g0 + 4;
-      const prog = i => { const x = Math.min(1, Math.max(0, (q - i * ST) / (1 - 3 * ST))); return x * (2 - x) * 0.6 + x * x * (3 - 2 * x) * 0.4; };
-      tris.forEach(([fi, a, b, c], t) => {
-        const f = faces[fi], h0 = f.hist[g0], h1 = f.hist[g1], i = [0, 1, 2, 3].find(i => f.hist[g0 + i].mv);
-        [a, b, c].forEach((v, j) => {
-          const [x, y] = apply(h0.M, f.poly[v]), z = h0.L * EPS; let o;
-          if (i !== undefined) {                       // turned by fold i of this round, gliding into its new layer
-            const s = STEPS[g0 + i], p = prog(i);
-            o = rot(s.line, s.sign[0] * p * Math.PI, x, y, z); o[2] += p * (h1.L * EPS + z);
-          } else o = [x, y, z + q * (h1.L - h0.L) * EPS];
-          out[t * 3 + j] = o;
-        });
-      });
-    };
-    return (this.paperModel = { N: GROUPS, faces, tris, pose });
-  }
-  unfoldPaper(pop, origin) {
+  // RESUME REVEAL — the whole page fades in while zooming gently from 94% to full size, its shadow a beat behind
+  // (transform and opacity only, expo ease-out). Reduced motion: no zoom; the shell's 150ms fade shows it.
+  revealPaper(pop) {
     const paper = pop.querySelector('[data-paper]'); if (!paper) return;
-    cancelAnimationFrame(this.paperRaf);
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const img = this.paperImg || (this.paperImg = Object.assign(new Image(), { src: getComputedStyle(paper.querySelector('.paper__flat')).backgroundImage.slice(5, -2) }));
-    const { N, faces, tris, pose } = this.foldModel();
-    const shift = paper.querySelector('[data-paper-shift]'), W = paper.offsetWidth, H = paper.offsetHeight, ZS = (W + H) / 4;
-    const toPage = q => [(q[0] + 1) / 2 * W, (q[1] + 1) / 2 * H];   // square space → page pixels (y down)
-    // each triangle's corners on the flat page, and which way round they wind there (= its front)
-    const src = tris.map(([fi, a, b, c]) => [a, b, c].map(v => toPage(faces[fi].poly[v])));
-    const wind = src.map(([A, B, C]) => Math.sign((B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0])));
-    const cv = document.createElement('canvas'); cv.className = 'paper__canvas'; cv.setAttribute('aria-hidden', 'true');
-    const dpr = Math.min(2, devicePixelRatio || 1), MX = W * 0.25, MY = H * 0.25;
-    cv.width = Math.round((W + 2 * MX) * dpr); cv.height = Math.round((H + 2 * MY) * dpr);
-    shift.replaceChildren(cv);
-    const ctx = cv.getContext('2d');
-    const r = paper.getBoundingClientRect();
-    const fx = origin ? origin.x - (r.left + r.width / 2) : 0, fy = origin ? origin.y - (r.top + r.height / 2) : 0;
-    paper.dataset.folding = '';
-    const fly = paper.animate([{ transform: `translate(${fx}px, ${fy}px) scale(0.3)`, opacity: 0 }, { transform: 'none', opacity: 1 }],
-      { duration: 260, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' });
-    const shadow = paper.querySelector('[data-paper-shadow]').animate([{ opacity: 0 }, { opacity: 1 }], { delay: 1350, duration: 250, easing: 'ease-out', fill: 'both' });
-    this.paperAnims = [fly, shadow];
-    const START = 0, DUR = 1500, FOCAL = 2600, L3 = [0.35, -0.55, 0.76];
-    const ease = x => Math.pow(x, 2.4);   // ease in: starts slow, speeds up, opens out fast at the end
-    const P = new Array(tris.length * 3), order = tris.map((_, k) => k), depth = new Float32Array(tris.length);
-    const t0 = performance.now();
-    const frame = () => {
-      if (!paper.isConnected) return;
-      const g = Math.min(1, Math.max(0, (performance.now() - t0 - START) / DUR));
-      pose(N * (1 - ease(g)), P);
-      const S = P.map(([x, y, z]) => { const [px, py] = toPage([x, y]), zz = z * ZS, f = FOCAL / (FOCAL - zz);
-        return [W / 2 + (px - W / 2) * f, H / 2 + (py - H / 2) * f, zz, px, py]; });
-      tris.forEach((_, k) => { depth[k] = S[k * 3][2] + S[k * 3 + 1][2] + S[k * 3 + 2][2]; });
-      order.sort((a, b) => depth[a] - depth[b]);            // paint far to near
-      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height);
-      const iw = img.naturalWidth, ih = img.naturalHeight, ready = img.complete && iw;
-      for (const k of order) {
-        const A = S[k * 3], B = S[k * 3 + 1], C = S[k * 3 + 2];
-        const cross = (B[0] - A[0]) * (C[1] - A[1]) - (B[1] - A[1]) * (C[0] - A[0]);
-        // light, measured against the flat page: a flat facet gets none
-        const ux = B[3] - A[3], uy = B[4] - A[4], uz = B[2] - A[2], vx = C[3] - A[3], vy = C[4] - A[4], vz = C[2] - A[2];
-        const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx, nl = Math.hypot(nx, ny, nz) || 1;
-        const lit = Math.abs((nx * L3[0] - ny * L3[1] + nz * L3[2]) / nl), shade = Math.max(0, L3[2] - lit) * 0.7, glint = Math.max(0, lit - L3[2]) * 1.1;
-        const gx = (A[0] + B[0] + C[0]) / 3, gy = (A[1] + B[1] + C[1]) / 3;
-        const grow = p => { const dx = p[0] - gx, dy = p[1] - gy, l = Math.hypot(dx, dy) || 1; return [p[0] + dx / l * 0.6, p[1] + dy / l * 0.6]; };
-        const [a2, b2, c2] = [A, B, C].map(grow);
-        const path = () => { ctx.beginPath(); ctx.moveTo(a2[0], a2[1]); ctx.lineTo(b2[0], b2[1]); ctx.lineTo(c2[0], c2[1]); ctx.closePath(); };
-        ctx.setTransform(dpr, 0, 0, dpr, MX * dpr, MY * dpr); ctx.save(); path();
-        if (Math.sign(cross) === wind[k] && ready) {          // front: the resume, mapped onto the folded triangle
-          ctx.clip();
-          const [s0, s1, s2] = src[k], kx = iw / W, ky = ih / H;
-          const sx0 = s0[0] * kx, sy0 = s0[1] * ky, dxa = s1[0] * kx - sx0, dya = s1[1] * ky - sy0, dxb = s2[0] * kx - sx0, dyb = s2[1] * ky - sy0;
-          const det = dxa * dyb - dxb * dya;
-          const m11 = ((B[0] - A[0]) * dyb - (C[0] - A[0]) * dya) / det, m12 = ((C[0] - A[0]) * dxa - (B[0] - A[0]) * dxb) / det;
-          const m21 = ((B[1] - A[1]) * dyb - (C[1] - A[1]) * dya) / det, m22 = ((C[1] - A[1]) * dxa - (B[1] - A[1]) * dxb) / det;
-          ctx.transform(m11, m21, m12, m22, A[0] - m11 * sx0 - m12 * sy0, A[1] - m21 * sx0 - m22 * sy0);
-          ctx.drawImage(img, 0, 0);
-          ctx.restore(); ctx.save(); path();
-        } else { ctx.fillStyle = Math.sign(cross) === wind[k] ? '#fff' : '#f2eee8'; ctx.fill(); }   // the back of the sheet
-        // a hairline on every facet edge while folded, so stacked layers read as layers; gone once flat
-        if (g < 0.97) { ctx.strokeStyle = `rgba(20, 28, 38, ${(0.14 * (1 - g)).toFixed(3)})`; ctx.lineWidth = 0.6; ctx.stroke(); }
-        if (shade > 0.01) { ctx.fillStyle = `rgba(20, 28, 38, ${shade.toFixed(3)})`; ctx.fill(); }
-        else if (glint > 0.01) { ctx.fillStyle = `rgba(255, 255, 255, ${glint.toFixed(3)})`; ctx.fill(); }
-        ctx.restore();
-      }
-      if (g < 1) this.paperRaf = requestAnimationFrame(frame);
-      else { delete paper.dataset.folding; shift.replaceChildren(); }
-    };
-    frame();
+    const OUT = 'cubic-bezier(0.16, 1, 0.3, 1)';
+    this.paperAnims = [
+      paper.animate([{ opacity: 0, transform: 'scale(0.94)' }, { opacity: 1, transform: 'none' }], { duration: 520, easing: OUT, fill: 'both' }),
+      paper.querySelector('[data-paper-shadow]').animate([{ opacity: 0 }, { opacity: 1 }], { delay: 120, duration: 520, easing: OUT, fill: 'both' }),
+    ];
   }
   closePopup() {
     const el = this.rootRef.current, pop = el?.querySelector('[data-popup]'); if (!pop || !this.pgOpen) return;
@@ -1432,7 +1273,7 @@ class SeasonsScene {
       if (done || this.pgOpen) return; done = true;
       pop.removeEventListener('transitionend', onEnd); clearTimeout(this.popupTimer);
       pop.dataset.state = 'closed'; pop.querySelector('[data-popup-content]').replaceChildren();
-      this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null; cancelAnimationFrame(this.paperRaf); delete pop.dataset.variant;
+      this.paperAnims?.forEach(a => a.cancel()); this.paperAnims = null; delete pop.dataset.variant;
       this.xpRO?.disconnect(); this.xpRO = null; this.xpAnims?.forEach(a => a.cancel()); this.xpAnims = null;
       this.xpProject = null; this.xpBusy = false; pop.setAttribute('aria-labelledby', 'popup-title');
       this.playStop(pop);
