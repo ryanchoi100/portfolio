@@ -1265,25 +1265,28 @@ class SeasonsScene {
     if (page === 'playground') this.playInit(pop);
     pop.querySelector('[data-popup-close]')?.focus({ preventScroll: true });
   }
-  // ORIGAMI UNFOLD (Resume): the same rigid fold engine as origami/index.html, seen from straight above.
-  // The page starts folded into a fortune teller (four corners to the centre, turned over, four corners to the
-  // centre again, flaps lifted into petals) and unfolds step by step into the flat page. Folds are computed on a
-  // square and stretched to the page's proportions, so every corner still meets the centre exactly. Faces are
+  // ORIGAMI UNFOLD (Resume): the rigid fold engine from origami/index.html, seen from straight above. The page
+  // starts as a small packet at the centre: its four corners folded to the centre three times over, each round
+  // folding the shape the last one made. It opens from the centre outward, one round at a time and four triangles
+  // at once (lightly staggered), until the first corners open out to the page's four corners. Folds are computed
+  // on a square and stretched to the page's proportions, so every corner still meets the centre exactly. Faces are
   // rigid; each fold turns about its crease. It is painted onto one canvas, back to front, each triangle mapping
   // its slice of the resume image (or the back of the sheet when it faces away), shaded by its angle.
-  //   0–300ms     the folded fortune teller flies out of the tree
-  //   200–2000ms  it unfolds, ten folds in reverse, each easing in and out; then the page shadow lands
+  //   0–300ms     the folded packet flies out of the tree
+  //   200–1800ms  the three rounds open, centre first; then the page shadow lands
   // When it is flat the canvas is removed and the seamless page shows (no seams, no creases).
   // Reduced motion: no unfold; the shell's 150ms fade shows the page flat.
   foldModel() {
     if (this.paperModel) return this.paperModel;
+    // three rounds of "fold the four corners to the centre", each round folding the shape the last one made;
+    // a round's four folds touch separate corners, so they can open together
     const STEPS = [
       { a: [1, 0], b: [0, 1], moving: [1, 1] }, { a: [-1, 0], b: [0, 1], moving: [-1, 1] },
       { a: [-1, 0], b: [0, -1], moving: [-1, -1] }, { a: [1, 0], b: [0, -1], moving: [1, -1] },
-      { a: [0, -2], b: [0, 2], all: true },
       { a: [0.5, -1], b: [0.5, 1], moving: [1, 0] }, { a: [-0.5, -1], b: [-0.5, 1], moving: [-1, 0] },
       { a: [-1, 0.5], b: [1, 0.5], moving: [0, 1] }, { a: [-1, -0.5], b: [1, -0.5], moving: [0, -1] },
-      { petals: [5, 6, 7, 8], angle: 58 },   // petals half-raised, so they read from straight above
+      { a: [0.5, 0], b: [0, 0.5], moving: [0.5, 0.5] }, { a: [-0.5, 0], b: [0, 0.5], moving: [-0.5, 0.5] },
+      { a: [-0.5, 0], b: [0, -0.5], moving: [-0.5, -0.5] }, { a: [0.5, 0], b: [0, -0.5], moving: [0.5, -0.5] },
     ];
     const ID = [1, 0, 0, 1, 0, 0];
     const apply = (M, p) => [M[0] * p[0] + M[1] * p[1] + M[4], M[2] * p[0] + M[3] * p[1] + M[5]];
@@ -1306,13 +1309,9 @@ class SeasonsScene {
     };
     let faces = [{ poly: [[-1, -1], [1, -1], [1, 1], [-1, 1]], M: ID, L: 0, hist: [] }];
     STEPS.forEach((s, k) => {
-      if (s.petals) {
-        faces.forEach(f => { const sub = s.petals.findIndex(r => f.hist[r].mv); f.hist.push({ M: f.M, L: f.L, mv: sub >= 0, sub }); });
-        s.lines = s.petals.map(r => STEPS[r].line); return;
-      }
       s.line = lineOf(s.a, s.b);
-      if (!s.all) { faces = faces.flatMap(f => split(f, s.line)); if (side(s.line, s.moving) < 0) s.line = lineOf(s.b, s.a); }
-      faces.forEach(f => f.hist.push({ M: f.M, L: f.L, mv: !!s.all || side(s.line, centroid(f)) > 0 }));
+      faces = faces.flatMap(f => split(f, s.line)); if (side(s.line, s.moving) < 0) s.line = lineOf(s.b, s.a);
+      faces.forEach(f => f.hist.push({ M: f.M, L: f.L, mv: side(s.line, centroid(f)) > 0 }));
       const mv = faces.filter(f => f.hist[k].mv), maxAll = Math.max(...faces.map(f => f.L)), maxMv = Math.max(...mv.map(f => f.L)), R = reflect(s.line);
       mv.forEach(f => { f.M = compose(R, f.M); f.L = maxAll + 1 + (maxMv - f.L); });
       const ranks = [...new Set(faces.map(f => f.L))].sort((a, b) => a - b);
@@ -1324,28 +1323,32 @@ class SeasonsScene {
       return [L.p[0] + vx * c + uy * z * s + ux * dot * (1 - c), L.p[1] + vy * c - ux * z * s + uy * dot * (1 - c), z * c + (ux * vy - uy * vx) * s]; };
     // every fold lifts toward the viewer: keep the turn direction that raises a moving face
     STEPS.forEach((s, k) => {
-      s.sign = (s.petals ? s.lines : [s.line]).map((L, i) => {
-        const f = faces.find(f => f.hist[k].mv && (!s.petals || f.hist[k].sub === i)), h = f.hist[k];
+      s.sign = [s.line].map(L => {
+        const f = faces.find(f => f.hist[k].mv), h = f.hist[k];
         const c = apply(h.M, f.poly.reduce((a, p) => [a[0] + p[0] / f.poly.length, a[1] + p[1] / f.poly.length], [0, 0]));
         return rot(L, 0.2, c[0], c[1], h.L * EPS)[2] >= h.L * EPS ? 1 : -1;
       });
     });
     const tris = faces.flatMap((f, fi) => f.poly.slice(1, -1).map((_, i) => [fi, 0, i + 1, i + 2]));
-    // 3D position (square space, z toward the viewer) of every triangle corner at fold progress T (0 flat … N folded)
+    // 3D position (square space, z toward the viewer) of every triangle corner at fold progress T: 0 flat … 3 folded,
+    // one unit per round. In a round the four folds run together, each 12% of the round after the last.
+    const GROUPS = STEPS.length / 4, ST = 0.12;
     const pose = (T, out) => {
-      const N = STEPS.length, k = Math.min(N - 1, Math.floor(T)), p0 = T - k, p = p0 * p0 * (3 - 2 * p0), s = STEPS[k];
+      const g = Math.min(GROUPS - 1, Math.floor(T)), q = T - g, g0 = g * 4, g1 = g0 + 4;
+      const prog = i => { const x = Math.min(1, Math.max(0, (q - i * ST) / (1 - 3 * ST))); return x * x * (3 - 2 * x); };
       tris.forEach(([fi, a, b, c], t) => {
-        const f = faces[fi], h = f.hist[k], nx = f.hist[k + 1];
+        const f = faces[fi], h0 = f.hist[g0], h1 = f.hist[g1], i = [0, 1, 2, 3].find(i => f.hist[g0 + i].mv);
         [a, b, c].forEach((v, j) => {
-          const [x, y] = apply(h.M, f.poly[v]), z = h.L * EPS; let o;
-          if (s.petals) o = h.mv ? rot(s.lines[h.sub], s.sign[h.sub] * p * s.angle * Math.PI / 180, x, y, z) : [x, y, z];
-          else if (h.mv) { o = rot(s.line, s.sign[0] * p * Math.PI, x, y, z); o[2] += p * (nx.L * EPS + z); }
-          else o = [x, y, z + p * (nx.L - h.L) * EPS];
+          const [x, y] = apply(h0.M, f.poly[v]), z = h0.L * EPS; let o;
+          if (i !== undefined) {                       // turned by fold i of this round, gliding into its new layer
+            const s = STEPS[g0 + i], p = prog(i);
+            o = rot(s.line, s.sign[0] * p * Math.PI, x, y, z); o[2] += p * (h1.L * EPS + z);
+          } else o = [x, y, z + q * (h1.L - h0.L) * EPS];
           out[t * 3 + j] = o;
         });
       });
     };
-    return (this.paperModel = { N: STEPS.length, faces, tris, pose });
+    return (this.paperModel = { N: GROUPS, faces, tris, pose });
   }
   unfoldPaper(pop, origin) {
     const paper = pop.querySelector('[data-paper]'); if (!paper) return;
@@ -1368,9 +1371,9 @@ class SeasonsScene {
     paper.dataset.folding = '';
     const fly = paper.animate([{ transform: `translate(${fx}px, ${fy}px) scale(0.3)`, opacity: 0 }, { transform: 'none', opacity: 1 }],
       { duration: 300, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' });
-    const shadow = paper.querySelector('[data-paper-shadow]').animate([{ opacity: 0 }, { opacity: 1 }], { delay: 1850, duration: 300, easing: 'ease-out', fill: 'both' });
+    const shadow = paper.querySelector('[data-paper-shadow]').animate([{ opacity: 0 }, { opacity: 1 }], { delay: 1650, duration: 300, easing: 'ease-out', fill: 'both' });
     this.paperAnims = [fly, shadow];
-    const START = 200, DUR = 1800, FOCAL = 2600, L3 = [0.35, -0.55, 0.76];
+    const START = 200, DUR = 1600, FOCAL = 2600, L3 = [0.35, -0.55, 0.76];
     const ease = x => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
     const P = new Array(tris.length * 3), order = tris.map((_, k) => k), depth = new Float32Array(tris.length);
     const t0 = performance.now();
