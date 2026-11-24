@@ -1266,28 +1266,29 @@ class SeasonsScene {
     pop.querySelector('[data-popup-close]')?.focus({ preventScroll: true });
   }
   // ORIGAMI UNFOLD (Resume): the rigid fold engine from origami/index.html, seen from straight above. The page
-  // starts as a small packet at the centre: its four corners folded to the centre three times over, each round
-  // folding the shape the last one made. It opens from the centre outward, one round at a time and four triangles
-  // at once (lightly staggered), until the first corners open out to the page's four corners. Folds are computed
+  // starts as a tiny packet at the centre: its four corners folded to the centre six rounds over, each round folding
+  // the shape the last one made, so the triangles nest smaller and smaller. It opens from the centre outward the
+  // moment it appears, one round at a time and four triangles at once (lightly staggered), until the first corners
+  // open out to the page's four corners. Folds are computed
   // on a square and stretched to the page's proportions, so every corner still meets the centre exactly. Faces are
   // rigid; each fold turns about its crease. It is painted onto one canvas, back to front, each triangle mapping
   // its slice of the resume image (or the back of the sheet when it faces away), shaded by its angle.
-  //   0–300ms     the folded packet flies out of the tree
-  //   200–1800ms  the three rounds open, centre first; then the page shadow lands
+  //   0–300ms     the folded packet flies out of the tree, already opening
+  //   0–2000ms    the six rounds open, centre first, fast at first and settling at the end; then the shadow lands
   // When it is flat the canvas is removed and the seamless page shows (no seams, no creases).
   // Reduced motion: no unfold; the shell's 150ms fade shows the page flat.
   foldModel() {
     if (this.paperModel) return this.paperModel;
-    // three rounds of "fold the four corners to the centre", each round folding the shape the last one made;
-    // a round's four folds touch separate corners, so they can open together
-    const STEPS = [
-      { a: [1, 0], b: [0, 1], moving: [1, 1] }, { a: [-1, 0], b: [0, 1], moving: [-1, 1] },
-      { a: [-1, 0], b: [0, -1], moving: [-1, -1] }, { a: [1, 0], b: [0, -1], moving: [1, -1] },
-      { a: [0.5, -1], b: [0.5, 1], moving: [1, 0] }, { a: [-0.5, -1], b: [-0.5, 1], moving: [-1, 0] },
-      { a: [-1, 0.5], b: [1, 0.5], moving: [0, 1] }, { a: [-1, -0.5], b: [1, -0.5], moving: [0, -1] },
-      { a: [0.5, 0], b: [0, 0.5], moving: [0.5, 0.5] }, { a: [-0.5, 0], b: [0, 0.5], moving: [-0.5, 0.5] },
-      { a: [-0.5, 0], b: [0, -0.5], moving: [-0.5, -0.5] }, { a: [0.5, 0], b: [0, -0.5], moving: [0.5, -0.5] },
-    ];
+    // ROUNDS rounds of "fold the four corners to the centre", each folding the shape the last one made (square →
+    // diamond → half-size square → …), so the triangles get smaller and smaller toward the centre. A round's four
+    // folds touch separate corners, so they can open together.
+    const ROUNDS = 6, STEPS = [];
+    for (let k = 0, r = 1; k < ROUNDS; k++) {
+      if (k % 2 === 0) STEPS.push({ a: [r, 0], b: [0, r], moving: [r, r] }, { a: [-r, 0], b: [0, r], moving: [-r, r] },
+        { a: [-r, 0], b: [0, -r], moving: [-r, -r] }, { a: [r, 0], b: [0, -r], moving: [r, -r] });
+      else { const h = r / 2; STEPS.push({ a: [h, -1], b: [h, 1], moving: [r, 0] }, { a: [-h, -1], b: [-h, 1], moving: [-r, 0] },
+        { a: [-1, h], b: [1, h], moving: [0, r] }, { a: [-1, -h], b: [1, -h], moving: [0, -r] }); r = h; }
+    }
     const ID = [1, 0, 0, 1, 0, 0];
     const apply = (M, p) => [M[0] * p[0] + M[1] * p[1] + M[4], M[2] * p[0] + M[3] * p[1] + M[5]];
     const compose = (R, M) => [R[0] * M[0] + R[1] * M[2], R[0] * M[1] + R[1] * M[3], R[2] * M[0] + R[3] * M[2], R[2] * M[1] + R[3] * M[3],
@@ -1318,7 +1319,7 @@ class SeasonsScene {
       faces.forEach(f => { f.L = ranks.indexOf(f.L); });
     });
     faces.forEach(f => f.hist.push({ M: f.M, L: f.L }));
-    const EPS = 0.004;
+    const EPS = 0.05 / Math.max(...faces.map(f => f.L));   // the whole stack stays thin, however many layers
     const rot = (L, th, x, y, z) => { const [ux, uy] = L.u, vx = x - L.p[0], vy = y - L.p[1], c = Math.cos(th), s = Math.sin(th), dot = ux * vx + uy * vy;
       return [L.p[0] + vx * c + uy * z * s + ux * dot * (1 - c), L.p[1] + vy * c - ux * z * s + uy * dot * (1 - c), z * c + (ux * vy - uy * vx) * s]; };
     // every fold lifts toward the viewer: keep the turn direction that raises a moving face
@@ -1335,7 +1336,7 @@ class SeasonsScene {
     const GROUPS = STEPS.length / 4, ST = 0.12;
     const pose = (T, out) => {
       const g = Math.min(GROUPS - 1, Math.floor(T)), q = T - g, g0 = g * 4, g1 = g0 + 4;
-      const prog = i => { const x = Math.min(1, Math.max(0, (q - i * ST) / (1 - 3 * ST))); return x * x * (3 - 2 * x); };
+      const prog = i => { const x = Math.min(1, Math.max(0, (q - i * ST) / (1 - 3 * ST))); return x * (2 - x) * 0.6 + x * x * (3 - 2 * x) * 0.4; };
       tris.forEach(([fi, a, b, c], t) => {
         const f = faces[fi], h0 = f.hist[g0], h1 = f.hist[g1], i = [0, 1, 2, 3].find(i => f.hist[g0 + i].mv);
         [a, b, c].forEach((v, j) => {
@@ -1371,10 +1372,10 @@ class SeasonsScene {
     paper.dataset.folding = '';
     const fly = paper.animate([{ transform: `translate(${fx}px, ${fy}px) scale(0.3)`, opacity: 0 }, { transform: 'none', opacity: 1 }],
       { duration: 300, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' });
-    const shadow = paper.querySelector('[data-paper-shadow]').animate([{ opacity: 0 }, { opacity: 1 }], { delay: 1650, duration: 300, easing: 'ease-out', fill: 'both' });
+    const shadow = paper.querySelector('[data-paper-shadow]').animate([{ opacity: 0 }, { opacity: 1 }], { delay: 1700, duration: 300, easing: 'ease-out', fill: 'both' });
     this.paperAnims = [fly, shadow];
-    const START = 200, DUR = 1600, FOCAL = 2600, L3 = [0.35, -0.55, 0.76];
-    const ease = x => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+    const START = 0, DUR = 2000, FOCAL = 2600, L3 = [0.35, -0.55, 0.76];
+    const ease = x => 1 - Math.pow(1 - x, 2.2);   // moving from the first frame, settling at the end
     const P = new Array(tris.length * 3), order = tris.map((_, k) => k), depth = new Float32Array(tris.length);
     const t0 = performance.now();
     const frame = () => {
