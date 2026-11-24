@@ -1274,7 +1274,7 @@ class SeasonsScene {
   // rigid; each fold turns about its crease. It is painted onto one canvas, back to front, each triangle mapping
   // its slice of the resume image (or the back of the sheet when it faces away), shaded by its angle.
   //   0–260ms     the folded packet flies out of the tree, already opening
-  //   0–950ms     the six rounds open, centre first, easing in and out (cubic); the shadow lands by 1s
+  //   0–1500ms    the six rounds open, centre first, easing in (slow, then fast); the shadow lands at the end
   // When it is flat the canvas is removed and the seamless page shows (no seams, no creases).
   // Reduced motion: no unfold; the shell's 150ms fade shows the page flat.
   foldModel() {
@@ -1372,10 +1372,10 @@ class SeasonsScene {
     paper.dataset.folding = '';
     const fly = paper.animate([{ transform: `translate(${fx}px, ${fy}px) scale(0.3)`, opacity: 0 }, { transform: 'none', opacity: 1 }],
       { duration: 260, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' });
-    const shadow = paper.querySelector('[data-paper-shadow]').animate([{ opacity: 0 }, { opacity: 1 }], { delay: 750, duration: 250, easing: 'ease-out', fill: 'both' });
+    const shadow = paper.querySelector('[data-paper-shadow]').animate([{ opacity: 0 }, { opacity: 1 }], { delay: 1350, duration: 250, easing: 'ease-out', fill: 'both' });
     this.paperAnims = [fly, shadow];
-    const START = 0, DUR = 950, FOCAL = 2600, L3 = [0.35, -0.55, 0.76];
-    const ease = x => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);   // ease in and out (cubic)
+    const START = 0, DUR = 1500, FOCAL = 2600, L3 = [0.35, -0.55, 0.76];
+    const ease = x => Math.pow(x, 2.4);   // ease in: starts slow, speeds up, opens out fast at the end
     const P = new Array(tris.length * 3), order = tris.map((_, k) => k), depth = new Float32Array(tris.length);
     const t0 = performance.now();
     const frame = () => {
